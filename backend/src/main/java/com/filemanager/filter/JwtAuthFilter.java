@@ -1,0 +1,56 @@
+package com.filemanager.filter;
+
+import com.filemanager.security.JwtUtil;
+import io.jsonwebtoken.Claims;
+import jakarta.annotation.Priority;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Priorities;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
+
+@Provider
+@Priority(Priorities.AUTHENTICATION)
+public class JwtAuthFilter implements ContainerRequestFilter {
+
+    @Inject
+    private JwtUtil jwtUtil;
+
+    @Override
+    public void filter(ContainerRequestContext requestContext) {
+        // 1. Cho phép mọi request OPTIONS (Pre-flight CORS) đi qua mà không cần check token
+        if (requestContext.getMethod().equalsIgnoreCase("OPTIONS")) {
+            return;
+        }
+
+        String path = requestContext.getUriInfo().getPath();
+        
+        // 2. MỞ KHÓA TẠI ĐÂY: Bỏ qua xác thực cho các endpoint Auth và Share public
+        // Gộp chung vào 1 lệnh if và đặt TRƯỚC khi kiểm tra Token
+        if (path.contains("auth") || path.contains("shared")) {
+            return;
+        }
+
+        // 3. Kiểm tra Token cho các request còn lại (đã an toàn)
+        String authHeader = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
+                    .entity("Thiếu hoặc sai định dạng Authorization header").build());
+            return;
+        }
+
+        String token = authHeader.substring(7);
+        try {
+            Claims claims = jwtUtil.validateTokenAndGetClaims(token);
+            // Lưu userId vào context để các endpoint khác sử dụng
+            requestContext.setProperty("userId", claims.get("userId"));
+            requestContext.setProperty("username", claims.getSubject());
+        } catch (Exception e) {
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
+                    .entity("Token không hợp lệ hoặc đã hết hạn").build());
+        }
+    }
+}

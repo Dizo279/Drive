@@ -1,0 +1,377 @@
+
+<style>
+.phase { border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-lg); margin-bottom:16px; overflow:hidden; }
+.phase-header { display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; user-select:none; }
+.phase-header:hover { background:var(--color-background-secondary); }
+.badge { font-size:11px; font-weight:500; padding:3px 10px; border-radius:20px; white-space:nowrap; }
+.badge-blue { background:var(--color-background-info); color:var(--color-text-info); }
+.badge-teal { background:#E1F5EE; color:#0F6E56; }
+.badge-amber { background:#FAEEDA; color:#854F0B; }
+.badge-purple { background:#EEEDFE; color:#534AB7; }
+@media (prefers-color-scheme:dark) {
+  .badge-teal { background:#085041; color:#9FE1CB; }
+  .badge-amber { background:#412402; color:#FAC775; }
+  .badge-purple { background:#26215C; color:#CECBF6; }
+}
+.phase-title { font-size:14px; font-weight:500; color:var(--color-text-primary); flex:1; }
+.phase-sub { font-size:12px; color:var(--color-text-secondary); }
+.chevron { font-size:12px; color:var(--color-text-tertiary); transition:transform .2s; }
+.chevron.open { transform:rotate(90deg); }
+.phase-body { padding:0 16px 14px; display:none; }
+.phase-body.open { display:block; }
+.task-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+.task-card { background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:10px 12px; }
+.task-card .tag { font-size:10px; font-weight:500; padding:2px 7px; border-radius:10px; display:inline-block; margin-bottom:6px; }
+.tag-be { background:#E6F1FB; color:#185FA5; }
+.tag-fe { background:#EEEDFE; color:#534AB7; }
+.tag-db { background:#EAF3DE; color:#3B6D11; }
+@media (prefers-color-scheme:dark) {
+  .tag-be { background:#042C53; color:#B5D4F4; }
+  .tag-fe { background:#26215C; color:#CECBF6; }
+  .tag-db { background:#173404; color:#C0DD97; }
+}
+.task-card .task-name { font-size:13px; font-weight:500; color:var(--color-text-primary); margin:0 0 2px; }
+.task-card .task-desc { font-size:11px; color:var(--color-text-secondary); margin:0; line-height:1.5; }
+.btn-start { margin-top:12px; padding:7px 16px; font-size:13px; border-radius:var(--border-radius-md); border:0.5px solid var(--color-border-secondary); background:transparent; color:var(--color-text-primary); cursor:pointer; }
+.btn-start:hover { background:var(--color-background-secondary); }
+.divider { border:none; border-top:0.5px solid var(--color-border-tertiary); margin:10px 0; }
+</style>
+
+<h2 class="sr-only">Lộ trình phát triển ứng dụng quản lý file đa nền tảng</h2>
+
+<div style="padding:4px 0 12px">
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p0')">
+      <span class="badge badge-teal">Khởi động</span>
+      <div>
+        <div class="phase-title">Giai đoạn 0 — Chuẩn bị dự án</div>
+        <div class="phase-sub">Setup môi trường · Database · Cấu trúc Spring</div>
+      </div>
+      <span class="chevron open" id="ch-p0">▶</span>
+    </div>
+    <div class="phase-body open" id="p0">
+      <div class="task-grid">
+        <div class="task-card">
+          <span class="tag tag-db">Database</span>
+          <p class="task-name">Tạo MySQL schema</p>
+          <p class="task-desc">Tạo 4 bảng: users, files, file_shares, storage_quota</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">Khởi tạo Spring Boot</p>
+          <p class="task-desc">pom.xml: Spring MVC, JPA, Jersey (JAX-RS), MySQL, JWT</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">Cấu hình application.properties</p>
+          <p class="task-desc">DataSource, Hibernate, file upload path, JWT secret</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Khởi tạo Angular project</p>
+          <p class="task-desc">ng new + HttpClientModule + cấu trúc thư mục module</p>
+        </div>
+      </div>
+      <button class="btn-start" onclick="sendPrompt('Bắt đầu giai đoạn 0: setup MySQL schema và Spring Boot project cho ứng dụng quản lý file')">Bắt đầu giai đoạn này ↗</button>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p1')">
+      <span class="badge badge-blue">Giai đoạn 1</span>
+      <div>
+        <div class="phase-title">Đăng ký / Đăng nhập (Auth)</div>
+        <div class="phase-sub">Backend JWT · Spring Security · Angular login page</div>
+      </div>
+      <span class="chevron" id="ch-p1">▶</span>
+    </div>
+    <div class="phase-body" id="p1">
+      <div class="task-grid">
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">Entity User + JPA</p>
+          <p class="task-desc">User.java, UserRepository, BCrypt password hash</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">AuthResource (JAX-RS)</p>
+          <p class="task-desc">POST /api/auth/register và /api/auth/login → trả JWT</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">JWT Filter + Spring Security</p>
+          <p class="task-desc">Xác thực token mỗi request, bảo vệ các endpoint</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Angular: Auth module</p>
+          <p class="task-desc">Login/Register form, AuthService, lưu JWT vào localStorage</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Angular: HTTP Interceptor</p>
+          <p class="task-desc">Tự động gắn Authorization header vào mọi request</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Angular: Auth Guard</p>
+          <p class="task-desc">Bảo vệ route, redirect về login nếu chưa đăng nhập</p>
+        </div>
+      </div>
+      <button class="btn-start" onclick="sendPrompt('Bắt đầu giai đoạn 1: xây dựng chức năng đăng ký và đăng nhập với Spring Security JWT và Angular')">Bắt đầu giai đoạn này ↗</button>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p2')">
+      <span class="badge badge-blue">Giai đoạn 2</span>
+      <div>
+        <div class="phase-title">Upload file</div>
+        <div class="phase-sub">Multipart upload · Lưu disk · Lưu metadata vào DB</div>
+      </div>
+      <span class="chevron" id="ch-p2">▶</span>
+    </div>
+    <div class="phase-body" id="p2">
+      <div class="task-grid">
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">Entity FileMetadata + JPA</p>
+          <p class="task-desc">FileMetadata.java, FileRepository, liên kết owner_id</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">StorageService</p>
+          <p class="task-desc">Lưu file vật lý lên disk, sinh UUID tên file</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">POST /api/files/upload</p>
+          <p class="task-desc">Nhận multipart, gọi StorageService, lưu metadata</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Angular: Upload component</p>
+          <p class="task-desc">Drag & drop hoặc input file, progress bar, gọi API</p>
+        </div>
+      </div>
+      <button class="btn-start" onclick="sendPrompt('Bắt đầu giai đoạn 2: xây dựng chức năng upload file với Spring JAX-RS multipart và Angular')">Bắt đầu giai đoạn này ↗</button>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p3')">
+      <span class="badge badge-blue">Giai đoạn 3</span>
+      <div>
+        <div class="phase-title">Danh sách file &amp; Chi tiết file</div>
+        <div class="phase-sub">GET list · GET detail · Hiển thị Angular table</div>
+      </div>
+      <span class="chevron" id="ch-p3">▶</span>
+    </div>
+    <div class="phase-body" id="p3">
+      <div class="task-grid">
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">GET /api/files</p>
+          <p class="task-desc">Trả danh sách file của user hiện tại (lấy từ JWT)</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">GET /api/files/{id}</p>
+          <p class="task-desc">Trả chi tiết: tên, size, mime_type, ngày tạo</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Angular: File list page</p>
+          <p class="task-desc">Bảng danh sách file, hiển thị tên, kích thước, ngày</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Angular: File detail modal</p>
+          <p class="task-desc">Popup/dialog hiển thị đầy đủ thông tin file</p>
+        </div>
+      </div>
+      <button class="btn-start" onclick="sendPrompt('Bắt đầu giai đoạn 3: xây dựng API lấy danh sách và chi tiết file, hiển thị trên Angular')">Bắt đầu giai đoạn này ↗</button>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p4')">
+      <span class="badge badge-blue">Giai đoạn 4</span>
+      <div>
+        <div class="phase-title">Download file</div>
+        <div class="phase-sub">Stream file · Content-Disposition · Angular trigger</div>
+      </div>
+      <span class="chevron" id="ch-p4">▶</span>
+    </div>
+    <div class="phase-body" id="p4">
+      <div class="task-grid">
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">GET /api/files/{id}/download</p>
+          <p class="task-desc">StreamingOutput, set Content-Disposition, kiểm tra quyền</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Angular: Download trigger</p>
+          <p class="task-desc">Gọi API, tạo Blob URL, tự động kích hoạt download</p>
+        </div>
+      </div>
+      <button class="btn-start" onclick="sendPrompt('Bắt đầu giai đoạn 4: xây dựng chức năng download file với Spring streaming và Angular Blob download')">Bắt đầu giai đoạn này ↗</button>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p5')">
+      <span class="badge badge-teal">Tích hợp</span>
+      <div>
+        <div class="phase-title">Giai đoạn 5 — Hoàn thiện &amp; Test cơ bản</div>
+        <div class="phase-sub">Error handling · Validation · Test end-to-end</div>
+      </div>
+      <span class="chevron" id="ch-p5">▶</span>
+    </div>
+    <div class="phase-body" id="p5">
+      <div class="task-grid">
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">Global Exception Handler</p>
+          <p class="task-desc">ExceptionMapper JAX-RS, trả JSON lỗi chuẩn</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">Validation & phân quyền</p>
+          <p class="task-desc">Kiểm tra user chỉ thao tác file của mình</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Xử lý lỗi Angular</p>
+          <p class="task-desc">Toast notification, loading spinner, empty state</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Test end-to-end</p>
+          <p class="task-desc">Đăng ký → login → upload → xem → download → OK</p>
+        </div>
+      </div>
+      <button class="btn-start" onclick="sendPrompt('Bắt đầu giai đoạn 5: hoàn thiện error handling, validation và test toàn bộ chức năng cơ bản')">Bắt đầu giai đoạn này ↗</button>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p6')">
+      <span class="badge badge-amber">Nâng cao</span>
+      <div>
+        <div class="phase-title">Giai đoạn 6 — Quản lý dung lượng &amp; Quota</div>
+        <div class="phase-sub">Tổng dung lượng · Giới hạn · Nâng cấp · Admin</div>
+      </div>
+      <span class="chevron" id="ch-p6">▶</span>
+    </div>
+    <div class="phase-body" id="p6">
+      <div class="task-grid">
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">QuotaService</p>
+          <p class="task-desc">Kiểm tra used_bytes + fileSize ≤ max_bytes trước upload</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">GET /api/users/quota</p>
+          <p class="task-desc">Trả used_bytes, max_bytes, phần trăm đã dùng</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">PUT /api/admin/users/{id}/quota</p>
+          <p class="task-desc">Admin nâng cấp dung lượng cho user</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Thanh hiển thị quota</p>
+          <p class="task-desc">Progress bar dung lượng đã dùng / tổng</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p7')">
+      <span class="badge badge-amber">Nâng cao</span>
+      <div>
+        <div class="phase-title">Giai đoạn 7 — Chia sẻ file</div>
+        <div class="phase-sub">Share với user khác · Xem file được share</div>
+      </div>
+      <span class="chevron" id="ch-p7">▶</span>
+    </div>
+    <div class="phase-body" id="p7">
+      <div class="task-grid">
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">POST /api/files/{id}/share</p>
+          <p class="task-desc">Chia sẻ file với user_id khác, lưu file_shares</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-be">Backend</span>
+          <p class="task-name">GET /api/files/shared-with-me</p>
+          <p class="task-desc">Lấy danh sách file người khác chia sẻ cho mình</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Share dialog</p>
+          <p class="task-desc">Tìm user theo username, chọn quyền và chia sẻ</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">Frontend</span>
+          <p class="task-name">Tab "Được chia sẻ"</p>
+          <p class="task-desc">Danh sách file được share, có thể download</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p8')">
+      <span class="badge badge-purple">Đa nền tảng</span>
+      <div>
+        <div class="phase-title">Giai đoạn 8 — Các client khác</div>
+        <div class="phase-sub">Android · JSP · JSF · HTML+JS</div>
+      </div>
+      <span class="chevron" id="ch-p8">▶</span>
+    </div>
+    <div class="phase-body" id="p8">
+      <div class="task-grid">
+        <div class="task-card">
+          <span class="tag tag-fe">Android</span>
+          <p class="task-name">Retrofit + OkHttp</p>
+          <p class="task-desc">Gọi cùng REST API, lưu JWT vào SharedPreferences</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">HTML + JS</span>
+          <p class="task-name">Static web client</p>
+          <p class="task-desc">Fetch API, vanilla JS, không cần framework</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">JSP</span>
+          <p class="task-name">Server-side render</p>
+          <p class="task-desc">JSTL, Spring MVC controller trả view JSP</p>
+        </div>
+        <div class="task-card">
+          <span class="tag tag-fe">JSF</span>
+          <p class="task-name">Facelets + PrimeFaces</p>
+          <p class="task-desc">.xhtml pages, ManagedBean/CDI, FileUpload component</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggle(id) {
+  const body = document.getElementById(id);
+  const ch = document.getElementById('ch-' + id);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  ch.classList.toggle('open', !isOpen);
+}
+</script>

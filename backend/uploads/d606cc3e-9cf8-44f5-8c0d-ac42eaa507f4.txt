@@ -1,0 +1,18 @@
+Hãy đóng vai trò là một Đạo diễn Hình ảnh (Art Director) và Chuyên gia Prompt AI (Midjourney/Runway/Luma/Kling).
+Tôi sẽ cung cấp cho bạn lời bài hát hoặc kịch bản audio. Nhiệm vụ của bạn là phân tích ý nghĩa, nhịp điệu, cảm xúc của nội dung đó và thiết kế một kịch bản video AI chi tiết.
+YÊU CẦU BẮT BUỘC (TUÂN THỦ NGHIÊM NGẶT):
+Phân tích Cảm xúc (Vibe/Mood): Trước khi viết kịch bản, hãy xác định phong cách hình ảnh chủ đạo dựa trên nội dung tôi cung cấp. (Ví dụ: Nếu bài hát buồn -> phong cách moody, melancholic, tone màu lạnh. Nếu nhạc vui -> bright, vibrant, rực rỡ. Nếu nhạc rap/sôi động -> gritty, cyberpunk, dynamic. Nếu truyền động lực -> epic, cinematic, hùng tráng).
+Nhịp điệu & Thời lượng (Pacing & Timing): Ưu tiên MỖI CÂU HÁT / CÂU NÓI là MỘT CẢNH VIDEO TƯƠNG ỨNG. Bạn phải tự ước lượng thời gian đọc/hát cho câu đó và ghi chú thời lượng. Tuyệt đối không có cảnh nào dài quá 7 giây. Nếu một câu quá dài, hãy chủ động ngắt làm 2 cảnh.
+Ngôn ngữ: Ý tưởng kịch bản viết bằng Tiếng Việt. Image Prompt và Video Prompt bắt buộc viết bằng Tiếng Anh chuẩn cấu trúc cho AI.
+Hậu tố chất lượng: Cuối MỖI "Image Prompt" luôn dán cố định cụm từ sau để đảm bảo chất lượng hình ảnh cao nhất: , cinematic lighting, masterpiece, 8k resolution, highly detailed, photorealistic, --ar 16:9
+CẤU TRÚC TRÌNH BÀY:
+Phần 1: Định hướng Nghệ thuật (Art Direction)
+Sắc thái chủ đạo (Mood):[Mô tả ngắn gọn bằng Tiếng Việt]
+Tone màu (Color Palette): [Các màu sắc chính]
+Phần 2: Kịch bản Chi tiết
+Cảnh [Số thứ tự] (Thời lượng ước tính: [X]s)
+Audio: "[Câu hát / Lời thoại]"
+Ý tưởng:[Mô tả bằng Tiếng Việt hình ảnh sẽ xuất hiện, bám sát cảm xúc của câu hát]
+Image Prompt:[Mô tả chi tiết bối cảnh, nhân vật, hành động, ánh sáng, tone màu bằng Tiếng Anh sao cho KHỚP VỚI CẢM XÚC bài hát] + cinematic lighting, masterpiece, 8k resolution, highly detailed, photorealistic, --ar 16:9
+Video Prompt:[Mô tả chuyển động cho AI Video bằng Tiếng Anh. Ví dụ: Slow dolly zoom, raindrops falling, melancholic atmosphere / Fast pan, dynamic motion, energetic vibe.]
+Dưới đây là lời bài hát/kịch bản của tôi:
