@@ -1,0 +1,92 @@
+<div class="upload-page-wrapper">
+  
+  <div class="upload-pro-card">
+    <button class="btn-back-icon" routerLink="/files" title="Quay lại Dashboard">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>Quay lại</span>
+    </button>
+
+    <div class="upload-content-split">
+      
+      <div class="upload-left"
+           [class.is-dragging]="isDragging"
+           (dragover)="onDragOver($event)"
+           (dragleave)="onDragLeave($event)"
+           (drop)="onDrop($event)">
+        
+        <div class="cloud-icon-wrapper">
+          <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+            <path d="M12 15V9"/>
+            <path d="m9 12 3-3 3 3"/>
+          </svg>
+        </div>
+        <h2 class="dz-heading">Kéo thả file vào khu vực này</h2>
+        <p class="dz-subtext">Hỗ trợ mọi định dạng: Hình ảnh, Tài liệu, Video...</p>
+        
+        <label class="btn-select-file">
+          Duyệt file trên máy tính
+          <input type="file" multiple hidden (change)="onFileSelect($event)">
+        </label>
+      </div>
+
+      <div class="upload-right">
+        <div class="right-header">
+          <h3>File đã chọn</h3>
+          <span class="file-badge">{{ selectedFiles.length }} file</span>
+        </div>
+
+        <div class="empty-file-list" *ngIf="selectedFiles.length === 0">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#cbd5e1" stroke-width="1.5">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+            <polyline points="13 2 13 9 20 9"/>
+          </svg>
+          <p>Chưa có file nào được chọn.</p>
+        </div>
+
+        <div class="pro-file-list" *ngIf="selectedFiles.length > 0">
+          <div class="pro-file-item" *ngFor="let file of selectedFiles; let i = index">
+            <div class="pfi-icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="pfi-info">
+              <div class="pfi-name">{{ file.name }}</div>
+              <div class="pfi-size">{{ formatSize(file.size) }}</div>
+            </div>
+            <button class="pfi-remove" (click)="removeFile(i)" [disabled]="uploading">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="right-footer">
+          <div class="error-banner" *ngIf="errorMsg">
+            {{ errorMsg }}
+          </div>
+          
+          <button class="btn-pro-submit" 
+                  [disabled]="selectedFiles.length === 0 || uploading" 
+                  (click)="upload()">
+            <ng-container *ngIf="uploading">
+              <div class="loader-ring"></div>
+              Đang tải lên...
+            </ng-container>
+            <ng-container *ngIf="!uploading">
+              Bắt đầu Upload
+            </ng-container>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
