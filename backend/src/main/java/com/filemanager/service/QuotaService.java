@@ -17,17 +17,22 @@ public class QuotaService {
     }
 
     @Transactional
-    public void validateAndAddQuota(Long userId, Long fileSize) {
+    public void validateAndAddQuota(Long userId, long fileSizeToAdd) {
+        // 1. Chỉ tìm đúng 1 dòng User trong Database
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new WebApplicationException("Không tìm thấy người dùng", Response.Status.NOT_FOUND));
+                .orElseThrow(() -> new WebApplicationException("Không tìm thấy User", Response.Status.NOT_FOUND));
 
-        // Kiểm tra dung lượng: Đã dùng + File chuẩn bị tải lên > Mức cho phép
-        if (user.getUsedQuota() + fileSize > user.getMaxQuota()) {
-            throw new WebApplicationException("Bạn đã hết dung lượng lưu trữ! Vui lòng nâng cấp.", Response.Status.BAD_REQUEST);
+        // 2. Lấy dung lượng hiện tại và giới hạn
+        long currentUsed = user.getUsedQuota() != null ? user.getUsedQuota() : 0L;
+        long maxQuota = user.getMaxQuota() != null ? user.getMaxQuota() : 1073741824L;
+
+        // 3. Kiểm tra xem file mới tải lên có làm tràn dung lượng không
+        if (currentUsed + fileSizeToAdd > maxQuota) {
+            throw new WebApplicationException("Đã vượt quá dung lượng lưu trữ cho phép (1GB)!", Response.Status.BAD_REQUEST);
         }
 
-        // Cập nhật lại dung lượng đã sử dụng
-        user.setUsedQuota(user.getUsedQuota() + fileSize);
+        // 4. Nếu hợp lệ -> Cập nhật trực tiếp vào User và Lưu lại
+        user.setUsedQuota(currentUsed + fileSizeToAdd);
         userRepository.save(user);
     }
 }

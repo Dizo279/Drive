@@ -2,53 +2,81 @@ package com.filemanager.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import jakarta.annotation.PostConstruct;
+
 import java.io.InputStream;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
-import java.io.IOException;
 
 @Service
 public class StorageService {
 
+    // Đọc đường dẫn từ file application.properties
     @Value("${app.storage.upload-dir}")
     private String uploadDir;
 
-    public String storeFile(InputStream inputStream, String originalFilename) throws Exception {
-        Path dirPath = Paths.get(uploadDir);
-        if (!Files.exists(dirPath)) {
-            Files.createDirectories(dirPath); // Tự động tạo thư mục nếu chưa có
-        }
-        
-        // Lấy phần mở rộng của file (ví dụ: .pdf, .jpg)
-        String extension = "";
-        int dotIndex = originalFilename.lastIndexOf('.');
-        if (dotIndex > 0) {
-            extension = originalFilename.substring(dotIndex);
-        }
-        
-        // Tạo tên file ngẫu nhiên để không bị ghi đè
-        String uniqueName = UUID.randomUUID().toString() + extension;
-        Path targetLocation = dirPath.resolve(uniqueName);
-        
-        // Ghi file xuống disk
-        Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
-        return uniqueName;
-    }
+    private Path rootLocation;
 
-    public long getFileSize(String fileName) throws Exception {
-        return Files.size(Paths.get(uploadDir).resolve(fileName));
+    // Chạy ngay khi Backend vừa khởi động
+    @PostConstruct
+    public void init() {
+        try {
+            rootLocation = Paths.get(uploadDir);
+            // Tự động tạo thư mục nếu trên ổ cứng chưa có
+            Files.createDirectories(rootLocation);
+            System.out.println("Thư mục lưu trữ file được đặt tại: " + rootLocation.toAbsolutePath());
+        } catch (Exception e) {
+            throw new RuntimeException("Không thể khởi tạo thư mục lưu trữ file!", e);
+        }
     }
 
     public String getUploadDir() {
-        return this.uploadDir;
+        return uploadDir;
     }
 
-    public void deletePhysicalFile(String fileName) {
+    // Hàm lưu file (Đã đổi tên file thành UUID để chống trùng lặp tên)
+    public String storeFile(InputStream fileInputStream, String originalName) {
         try {
-            Path filePath = Paths.get(this.uploadDir).resolve(fileName).normalize();
-            Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            System.err.println("Không thể xóa file vật lý: " + e.getMessage());
+            // Giữ lại phần đuôi mở rộng của file (vd: .pdf, .png)
+            String extension = "";
+            int i = originalName.lastIndexOf('.');
+            if (i > 0) {
+                extension = originalName.substring(i);
+            }
+            
+            // Tạo tên file mới để tránh người dùng up 2 file trùng tên
+            String savedFileName = UUID.randomUUID().toString() + extension;
+            Path destinationFile = rootLocation.resolve(Paths.get(savedFileName)).normalize().toAbsolutePath();
+
+            // Copy luồng dữ liệu vào ổ cứng
+            Files.copy(fileInputStream, destinationFile, StandardCopyOption.REPLACE_EXISTING);
+            return savedFileName;
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi lưu file vật lý: " + e.getMessage(), e);
+        }
+    }
+
+    // Hàm lấy dung lượng file
+    public long getFileSize(String savedFileName) {
+        try {
+            Path file = rootLocation.resolve(savedFileName);
+            return Files.size(file);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    // Hàm xóa file vật lý
+    public void deletePhysicalFile(String savedFileName) {
+        try {
+            Path file = rootLocation.resolve(savedFileName);
+            Files.deleteIfExists(file);
+        } catch (Exception e) {
+            throw new RuntimeException("Không thể xóa file vật lý: " + e.getMessage(), e);
         }
     }
 }

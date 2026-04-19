@@ -25,6 +25,12 @@ public class FileMetadata {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "is_folder")
+    private Boolean isFolder = false;
+
+    @Column(name = "parent_id")
+    private Long parentId;
+
     // Getters
     public Long getId() { return id; }
     public Long getOwnerId() { return ownerId; }
@@ -32,6 +38,8 @@ public class FileMetadata {
     public String getFilePath() { return filePath; }
     public Long getFileSize() { return fileSize; }
     public java.time.LocalDateTime getCreatedAt() { return createdAt; }
+    public Boolean getIsFolder() { return isFolder; }
+    public Long getParentId() { return parentId; }
 
     // Setters
     public void setId(Long id) { this.id = id; }
@@ -40,4 +48,6 @@ public class FileMetadata {
     public void setFilePath(String filePath) { this.filePath = filePath; }
     public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
     public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setIsFolder(Boolean isFolder) { this.isFolder = isFolder; }
+    public void setParentId(Long parentId) { this.parentId = parentId; }
 }

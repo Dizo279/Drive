@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.beans.factory.annotation.Value;
 
 import jakarta.ws.rs.core.Response;
 import com.filemanager.entity.FileMetadata;
@@ -48,6 +49,9 @@ public class FileResource {
     @Inject
     private FileRepository fileRepository;
 
+    @Value("${app.storage.upload-dir}")
+    private String uploadDir;
+
     @Inject
     private QuotaService quotaService;
 
@@ -57,13 +61,14 @@ public class FileResource {
     @Inject
     FileShareRepository fileShareRepository;
 
-    @POST
+   @POST
     @Path("/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     public Response uploadFile(
             @FormDataParam("file") InputStream fileInputStream,
             @FormDataParam("file") FormDataContentDisposition fileDetail,
+            @FormDataParam("parentId") Long parentId,
             @Context ContainerRequestContext requestContext) {
         
         try {
@@ -93,6 +98,8 @@ public class FileResource {
             metadata.setFileName(originalName);
             metadata.setFilePath(savedFileName);
             metadata.setFileSize(exactSizeBytes);
+            metadata.setIsFolder(false); // Xác nhận đây là file, không phải thư mục
+            metadata.setParentId(parentId);
             
             fileRepository.save(metadata);
             
@@ -105,16 +112,25 @@ public class FileResource {
         }
     }
 
+    // CẬP NHẬT API LẤY DANH SÁCH FILE THEO THƯ MỤC
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getMyFiles(@Context ContainerRequestContext requestContext) {
+    public Response getMyFiles(@QueryParam("parentId") Long parentId, @Context ContainerRequestContext requestContext) {
         Object userIdObj = requestContext.getProperty("userId");
         if (userIdObj == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Cần đăng nhập").build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Cần đăng nhập\"}").build();
         }
         
         Long userId = ((Number) userIdObj).longValue();
-        List<FileMetadata> files = fileRepository.findByOwnerId(userId);
+        List<FileMetadata> files;
+
+        // Nếu client truyền parentId, lấy các file trong thư mục đó. Nếu không, lấy ở thư mục gốc.
+        if (parentId != null) {
+            files = fileRepository.findByOwnerIdAndParentId(userId, parentId);
+        } else {
+            files = fileRepository.findByOwnerIdAndParentIdIsNull(userId);
+        }
+        
         return Response.ok(files).build();
     }
 
@@ -180,42 +196,51 @@ public class FileResource {
                 .build();
     }
 
-    @DELETE
+   @DELETE
     @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response deleteFile(@PathParam("id") Long id) {
         try {
-            // 1. Dùng đúng tên Entity là FileMetadata
-            FileMetadata file = fileRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy file"));
-
-            // 2. Hoàn lại dung lượng (Quota) cho User
-            Long ownerId = file.getOwnerId(); // Sử dụng hàm getOwnerId() từ FileMetadata
-            
-            if (ownerId != null) {
-                // Lấy đối tượng User từ Database thông qua ID
-                User user = userRepository.findById(ownerId).orElse(null);
-                
-                if (user != null && user.getUsedQuota() != null) {
-                    long newQuota = user.getUsedQuota() - file.getFileSize();
-                    user.setUsedQuota(Math.max(0L, newQuota)); // Đảm bảo không bị âm
-                    userRepository.save(user);
-                }
+            FileMetadata target = fileRepository.findById(id).orElse(null);
+            if (target == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
             }
 
-            // 3. Xóa file vật lý trên ổ cứng qua StorageService
-            storageService.deletePhysicalFile(file.getFileName());
+            // Gọi hàm đệ quy để xóa tận gốc
+            deleteFileAndChildrenRecursively(target);
 
-            // 4. Xóa bản ghi trong Database
-            fileRepository.delete(file);
-
-            // Trả về JAX-RS Response thay vì ResponseEntity
-            return Response.ok("{\"message\": \"Xóa file thành công\"}").build();
-            
+            return Response.ok().build();
         } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\": \"" + e.getMessage() + "\"}")
-                    .build();
+            e.printStackTrace();
+            return Response.serverError().build();
         }
+    }
+
+    // Thêm hàm đệ quy này vào ngay bên dưới trong cùng class
+    private void deleteFileAndChildrenRecursively(FileMetadata item) {
+        if (Boolean.TRUE.equals(item.getIsFolder())) {
+            List<FileMetadata> children = fileRepository.findByParentId(item.getId());
+            for (FileMetadata child : children) {
+                deleteFileAndChildrenRecursively(child);
+            }
+        } else {
+            try {
+                java.nio.file.Path physicalPath = java.nio.file.Paths.get(uploadDir, item.getFilePath());
+                java.nio.file.Files.deleteIfExists(physicalPath);
+                
+                // THÊM ĐOẠN NÀY ĐỂ TRỪ DUNG LƯỢNG KHI XÓA FILE:
+                User user = userRepository.findById(item.getOwnerId()).orElse(null);
+                if (user != null && item.getFileSize() != null) {
+                    long newQuota = Math.max(0, user.getUsedQuota() - item.getFileSize());
+                    user.setUsedQuota(newQuota);
+                    userRepository.save(user);
+                }
+                
+            } catch (Exception e) {
+                System.err.println("Không thể xóa file vật lý trên ổ cứng: " + item.getFilePath());
+            }
+        }
+        fileRepository.delete(item);
     }
 
    // 1. API TẠO LINK CHIA SẺ
@@ -306,6 +331,63 @@ public class FileResource {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("{\"error\": \"" + e.getMessage() + "\"}")
                     .build();
+        }
+    }
+
+    // API TẠO THƯ MỤC MỚI
+    @POST
+    @Path("/folder")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createFolder(FileMetadata requestData, @Context ContainerRequestContext requestContext) {
+        try {
+            Object userIdObj = requestContext.getProperty("userId");
+            if (userIdObj == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Cần đăng nhập\"}").build();
+            }
+            Long userId = ((Number) userIdObj).longValue();
+
+            // Kiểm tra tên thư mục
+            if (requestData.getFileName() == null || requestData.getFileName().trim().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Tên thư mục không được để trống\"}").build();
+            }
+
+            FileMetadata newFolder = new FileMetadata();
+            newFolder.setOwnerId(userId);
+            newFolder.setFileName(requestData.getFileName());
+            newFolder.setIsFolder(true); // Đánh dấu đây là thư mục
+            newFolder.setParentId(requestData.getParentId()); // Thư mục này nằm trong thư mục nào?
+            newFolder.setFileSize(0L);
+            newFolder.setFilePath("");
+            
+            fileRepository.save(newFolder);
+            
+            return Response.ok(newFolder).build();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"" + e.getMessage() + "\"}").build();
+        }
+    }
+
+    @GET
+    @Path("/list/all") // Đổi từ "/all" thành "/list/all"
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAllFilesOfUser(@Context ContainerRequestContext requestContext) {
+        try {
+            // Ép kiểu an toàn hơn đề phòng userId bị null
+            Object userIdObj = requestContext.getProperty("userId");
+            if (userIdObj == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
+            Long userId = Long.valueOf(userIdObj.toString());
+            
+            List<FileMetadata> allFiles = fileRepository.findByOwnerId(userId);
+            return Response.ok(allFiles).build();
+            
+        } catch (Exception e) {
+            e.printStackTrace(); // In chi tiết lỗi ra màn hình Terminal của Backend
+            return Response.serverError().build();
         }
     }
 }

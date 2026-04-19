@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpEvent } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
 
@@ -11,10 +11,19 @@ export class FileService {
 
   constructor(private http: HttpClient) {}
 
-  uploadFile(file: File): Observable<any> {
+  uploadFile(file: File, parentId: number | null): Observable<HttpEvent<any>> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post(`${this.apiUrl}/upload`, formData);
+    
+    if (parentId !== null && parentId !== undefined) {
+      formData.append('parentId', parentId.toString());
+    }
+    
+    // Thêm config reportProgress và observe 'events'
+    return this.http.post<any>(`${this.apiUrl}/upload`, formData, {
+      reportProgress: true,
+      observe: 'events'
+    });
   }
 
   downloadFile(id: number): Observable<Blob> {
@@ -22,8 +31,20 @@ export class FileService {
     return this.http.get(`${this.apiUrl}/${id}/download`, { responseType: 'blob' });
   }
 
-  getFiles(): Observable<any[]> {
-    return this.http.get<any[]>(this.apiUrl);
+  getFiles(parentId?: number | null): Observable<any[]> {
+    let params = new HttpParams();
+    if (parentId) {
+      params = params.set('parentId', parentId.toString());
+    }
+    return this.http.get<any[]>(this.apiUrl, { params });
+  }
+
+  createFolder(folderName: string, parentId?: number | null): Observable<any> {
+    const body = {
+      fileName: folderName,
+      parentId: parentId || null
+    };
+    return this.http.post(`${this.apiUrl}/folder`, body);
   }
 
   getFileDetail(id: number): Observable<any> {
@@ -40,5 +61,9 @@ export class FileService {
 
   shareFile(id: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/share`, {});
+  }
+
+  getAllGlobalFiles(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/list/all`);
   }
 }

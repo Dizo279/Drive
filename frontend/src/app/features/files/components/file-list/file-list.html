@@ -1,80 +1,95 @@
-<div class="dashboard-wrapper">
+<div class="app-layout" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
   
+  <div class="drag-overlay" [class.show]="isDragging">
+    <div class="drag-box">
+      <svg viewBox="0 0 24 24" width="80" height="80" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+      </svg>
+      <h2>Drop files to Ethereal</h2>
+      <p>Your files will be uploaded to the current folder.</p>
+    </div>
+  </div>
+
+  <div class="upload-toast" [class.show]="isUploading">
+    <div class="toast-header">
+      <span>Uploading {{ uploadingCount > 1 ? uploadingCount + ' items' : '1 item' }}</span>
+      <span class="pct">{{ uploadProgress }}%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+    </div>
+    <div class="toast-footer">{{ formatSize(totalLoadedSize) }} / {{ formatSize(totalUploadSize) }}</div>
+  </div>
+
   <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="brand-icon">
-        <svg viewBox="0 0 24 24" fill="white" width="20" height="20">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" fill="white" width="18" height="18">
           <path d="M3 6a3 3 0 013-3h12a3 3 0 013 3v2H3V6zm0 4h18v8a3 3 0 01-3 3H6a3 3 0 01-3-3v-8z"/>
         </svg>
       </div>
-      <span class="brand-name">MyDrive</span>
+      <span class="brand-text">Ethereal <span class="highlight">Drive</span></span>
     </div>
 
-    <nav class="sidebar-menu">
-      <a class="menu-item active">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+    <nav class="nav-menu">
+      <a class="nav-item" [class.active]="currentParentId === null" (click)="navigateToBreadcrumb(null)">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
           <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
         </svg>
-        Dashboard
+        MyDrive (Home)
       </a>
-      
-      <a class="menu-item" routerLink="/profile">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
+
+      <a class="nav-item">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
-        Hồ sơ
+        Shared
       </a>
-      <div class="menu-item" (click)="showNotifPanel = !showNotifPanel">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
+
+      <a class="nav-item">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
         </svg>
-        Thông báo
-      </div>
+        Recent
+      </a>
+
+      <a class="nav-item" style="margin-top: auto;">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path>
+        </svg>
+        Trash
+      </a>
     </nav>
 
-    <div class="sidebar-recent" *ngIf="allFiles.length > 0">
-      <div class="sr-title">File gần đây</div>
-      <div class="sr-list">
-        <div class="sr-item" *ngFor="let file of allFiles.slice(0, 4)" (click)="viewDetail(file)">
-          <div class="sr-icon" [ngClass]="getIconClass(file.mimeType)">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-              <path [attr.d]="getFileIconPath(file.mimeType)"/>
-            </svg>
-          </div>
-          <div class="sr-info">
-            <div class="sr-name">{{ file.name }}</div>
-            <div class="sr-size">{{ formatSize(file.sizeBytes) }}</div>
-          </div>
+    <div class="quota-box">
+      <div class="quota-header">
+        <span>Storage</span><span class="badge">FREE</span>
+      </div>
+      <div class="quota-content">
+        <div class="quota-ring">
+          <svg viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="28" class="ring-bg"/>
+            <circle cx="32" cy="32" r="28" class="ring-fill"
+                    [attr.stroke-dasharray]="175.9" [attr.stroke-dashoffset]="175.9 - (175.9 * quotaPercent / 100)"/>
+          </svg>
+          <span class="pct-text">{{ quotaPercent }}%</span>
+        </div>
+        <div class="quota-info">
+          <div class="used">{{ formatSize(usedBytes) }}</div>
+          <div class="total">used of 1 GB</div>
         </div>
       </div>
     </div>
 
-    <div class="sidebar-quota">
-      <div class="quota-ring">
-        <svg viewBox="0 0 64 64" width="64" height="64">
-          <circle cx="32" cy="32" r="28" fill="none" stroke="#f1f5f9" stroke-width="6"/>
-          <circle cx="32" cy="32" r="28" fill="none" stroke="#534AB7" stroke-width="6"
-                  [attr.stroke-dasharray]="175.9"
-                  [attr.stroke-dashoffset]="175.9 - (175.9 * quotaPercent / 100)"
-                  stroke-linecap="round" transform="rotate(-90 32 32)"/>
-          <text x="32" y="36" text-anchor="middle" font-size="12" font-weight="600" fill="#534AB7">{{ quotaPercent }}%</text>
-        </svg>
+    <div class="user-footer">
+      <div class="avatar">{{ currentUser?.username?.charAt(0)?.toUpperCase() }}</div>
+      <div class="user-info">
+        <div class="name">{{ currentUser?.username }}</div>
+        <div class="email">{{ currentUser?.email }}</div>
       </div>
-      <div class="quota-text">Dung lượng</div>
-      <div class="quota-value">{{ formatSize(usedBytes) }} / 5 GB</div>
-      <span class="badge-free">FREE</span>
-    </div>
-
-    <div class="sidebar-footer">
-      <div class="avatar-small">{{ currentUser?.username?.charAt(0)?.toUpperCase() }}</div>
-      <div class="user-details">
-        <div class="u-name">{{ currentUser?.username }}</div>
-        <div class="u-role">{{ currentUser?.role }}</div>
-      </div>
-      <button class="logout-icon" (click)="logout()">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2">
+      <button class="logout-btn" (click)="logout()" title="Logout">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
         </svg>
       </button>
@@ -82,151 +97,105 @@
   </aside>
 
   <main class="main-content">
-    
     <header class="top-nav">
-      <h1 class="page-title">Dashboard</h1>
+      <div class="breadcrumb">
+        <button (click)="navigateToBreadcrumb(null)" class="bc-link">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l-7 7-7-7M19 10v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg> Drive
+        </button>
+        <ng-container *ngFor="let folder of folderHistory; let i = index">
+            <svg class="bc-sep" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+            <button (click)="navigateToBreadcrumb(i)" class="bc-link">{{ folder.name }}</button>
+        </ng-container>
+        <ng-container *ngIf="currentParentId != null">
+            <svg class="bc-sep" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+            <span class="bc-current">{{ allFiles.find(f => f.id === currentParentId)?.name || 'Current' }}</span>
+        </ng-container>
+      </div>
       
-      <div class="search-container">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input type="text" placeholder="Tìm kiếm file..." [(ngModel)]="searchQuery" (input)="onSearch()">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search files, folders..." [(ngModel)]="searchQuery" (input)="onSearch()">
       </div>
 
-      <button class="btn-upload" routerLink="/files/upload">
-        <span style="display: flex; align-items: center; gap: 8px; pointer-events: none;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="17 8 12 3 7 8"></polyline>
-            <line x1="12" y1="3" x2="12" y2="15"></line>
-          </svg>
-          Upload
-        </span>
+      <button class="icon-action-btn" title="Notifications">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
+        </svg>
+        <span class="notif-badge"></span>
+      </button>
+
+      <input type="file" multiple #fileInput style="display: none" (change)="onFileSelected($event)">
+      
+      <button class="btn-primary" (click)="fileInput.click()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        Upload
+      </button>
+
+      <button class="btn-secondary" (click)="createFolder()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+        New Folder
       </button>
     </header>
 
-    <div class="overview-cards">
-      <div class="folder-card" *ngFor="let f of smartFolders"
-           [class.active]="activeFilter === f.key" (click)="setFilter(f.key)">
-        <div class="folder-icon" [ngClass]="'folder-' + f.key">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-            <path [attr.d]="f.icon"/>
-          </svg>
-        </div>
-        <div class="folder-title">{{ f.label }}</div>
-        <div class="folder-stats">{{ getFolderCount(f.key) }} file · {{ getFolderSize(f.key) }}</div>
-      </div>
-    </div>
-
-    <div class="filter-row">
-      <button class="filter-chip" *ngFor="let f of filters"
-              [class.active]="activeFilter === f.key" (click)="setFilter(f.key)">
-        {{ f.label }}
-      </button>
-      <select class="sort-select" [(ngModel)]="sortBy" (change)="setSort(sortBy)">
-        <option value="date">Mới nhất</option>
-        <option value="name">Tên A-Z</option>
-        <option value="size">Dung lượng</option>
-      </select>
-    </div>
-
-    <div class="section-title-row">
-      <h2>{{ searchQuery ? 'Kết quả tìm kiếm' : 'Tất cả file' }}</h2>
-      <span>{{ files.length }} file</span>
-    </div>
-
-    <div class="table-container">
-      
-      <div *ngIf="loading" class="center-spinner">
-        <div class="ring"></div>
+    <div class="content-scroll">
+      <div *ngIf="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading your archive...</p>
       </div>
 
-      <div class="empty-view" *ngIf="!loading && files.length === 0">
-        <div class="empty-svg">
-          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#cbd5e1" stroke-width="1.5">
-            <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
-          </svg>
+      <div class="empty-state" *ngIf="!loading && items.length === 0">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
         </div>
-        <p>Chưa có file nào</p>
-        <button *ngIf="!searchQuery" routerLink="/files/upload">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="17 8 12 3 7 8"></polyline>
-            <line x1="12" y1="3" x2="12" y2="15"></line>
-          </svg>
-          Upload ngay
-        </button>
+        <h3>Thư mục này đang trống</h3>
+        <p>Kéo thả file vào đây hoặc nhấn nút Upload để bắt đầu.</p>
       </div>
 
-      <div class="data-table" *ngIf="!loading && files.length > 0">
-        <div class="th-row">
-          <div class="th-name">Tên file</div>
-          <div class="th-size">Kích thước</div>
-          <div class="th-type">Loại</div>
-          <div class="th-date">Ngày tạo</div>
-        </div>
-        
-        <div class="tr-row" *ngFor="let file of files" (click)="viewDetail(file)">
-          <div class="td-name">
-            <div class="td-icon" [ngClass]="getIconClass(file.mimeType)">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8">
-                <path [attr.d]="getFileIconPath(file.mimeType)"/>
-              </svg>
+      <section *ngIf="!loading && items.length > 0">
+        <div class="section-header">
+            <div class="sh-left">
+                <h2>{{ currentParentId == null ? 'My Drive' : (allFiles.find(f => f.id === currentParentId)?.name || 'Folder') }}</h2>
+                <select class="sort-select" [(ngModel)]="sortBy" (change)="setSort(sortBy)">
+                    <option value="date">Sort by Date</option><option value="name">Sort by Name</option><option value="size">Sort by Size</option>
+                </select>
             </div>
-            <span [innerHTML]="highlightMatch(file.name, searchQuery)"></span>
-          </div>
-          <div class="td-size">{{ formatSize(file.sizeBytes) }}</div>
-          <div class="td-type">
-            <span class="type-pill" [ngClass]="getIconClass(file.mimeType)">
-              {{ (file.mimeType?.split('/') ?? [])[1]?.toUpperCase() || 'FILE' }}
-            </span>
-          </div>
-          <div class="td-date">{{ file.createdAt | date:'dd/MM/yyyy' }}</div>
-          
-          <div class="td-actions" (click)="$event.stopPropagation()">
-            <button (click)="share(file)" title="Chia sẻ link">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-              </svg>
-            </button>
-            <button (click)="download(file)" title="Tải xuống">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-              </svg>
-            </button>
-            <button class="del" (click)="delete(file)" title="Xóa">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="modal-overlay" *ngIf="isShareModalOpen" (click)="closeShareModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        
-        <div class="modal-header">
-          <h3>Chia sẻ file công khai</h3>
-          <button class="btn-close" (click)="closeShareModal()">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-        
-        <div class="modal-body">
-          <p>Bất kỳ ai có đường liên kết này đều có thể tải xuống tệp tin của bạn mà không cần đăng nhập.</p>
-          <div class="share-input-group">
-            <input type="text" readonly [value]="shareLink">
-            <button class="btn-copy" (click)="copyLink()">Copy Link</button>
-          </div>
+            <span>{{ items.length }} items</span>
         </div>
 
-      </div>
+        <div class="file-table">
+          <div class="table-head">
+            <div>Name</div><div>Size</div><div>Date Created</div><div class="txt-right">Actions</div>
+          </div>
+          <div class="table-body">
+            
+            <div class="file-row" *ngFor="let item of items" (dblclick)="openFolder(item)" style="cursor: pointer;">
+              <div class="r-name">
+                
+                <div class="r-icon" [ngClass]="item.isFolder ? 'cat-folder' : 'cat-' + item.category">
+                  <svg *ngIf="item.isFolder" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                  <svg *ngIf="!item.isFolder" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path [attr.d]="getIconPath(item.category)"/></svg>
+                </div>
+                
+                <div class="r-info">
+                    <div class="title" [innerHTML]="highlightMatch(item.name, searchQuery)"></div>
+                    <div class="type">{{ item.isFolder ? 'FOLDER' : ((item.mimeType?.split('/') ?? [])[1] || 'FILE') | uppercase }}</div>
+                </div>
+              </div>
+              
+              <div class="r-size">{{ item.isFolder ? '--' : formatSize(item.sizeBytes) }}</div>
+              <div class="r-date">{{ item.createdAt | date:'dd MMM yyyy, HH:mm' }}</div>
+              
+              <div class="r-actions" (click)="$event.stopPropagation()">
+                <button *ngIf="!item.isFolder" (click)="download(item)" title="Download"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
+                <button class="del-btn" (click)="delete(item)" title="Delete"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 </div>

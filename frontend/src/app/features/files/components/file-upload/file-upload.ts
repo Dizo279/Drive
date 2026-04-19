@@ -62,7 +62,7 @@ export class FileUploadComponent {
     this.uploading = true;
     this.errorMsg = '';
 
-    const uploadRequests = this.selectedFiles.map(file => this.fileService.uploadFile(file));
+    const uploadRequests = this.selectedFiles.map(file => this.fileService.uploadFile(file, null));
 
     forkJoin(uploadRequests).subscribe({
       next: () => {
