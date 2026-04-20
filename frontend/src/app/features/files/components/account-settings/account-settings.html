@@ -1,0 +1,105 @@
+<div class="apple-settings">
+  <nav class="settings-nav">
+    <div class="nav-content">
+      <a routerLink="/files" class="nav-back">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+        Quay lại
+      </a>
+      <div class="nav-links">
+        <span class="current-page">Account Settings</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-canvas">
+    <header class="settings-hero">
+      <h1 class="hero-title">Quản lý ID của bạn.</h1>
+      <p class="hero-subtitle">Cập nhật thông tin cá nhân và quản lý gói lưu trữ của bạn.</p>
+    </header>
+
+    <div class="content-grid">
+      <section class="apple-card profile-preview">
+        <div class="avatar-section">
+          <div class="avatar-container">
+            <img *ngIf="user.avatarUrl" [src]="user.avatarUrl" alt="Avatar" class="avatar-large">
+            <div *ngIf="!user.avatarUrl" class="avatar-placeholder">
+              {{ (user.fullName || user.username)?.charAt(0).toUpperCase() }}
+            </div>
+          </div>
+          <input type="file" #fileInput accept="image/*" style="display: none" (change)="onAvatarSelected($event)">
+          <button type="button" class="btn-change-avatar" (click)="fileInput.click()">Thay đổi ảnh</button>
+        </div>
+
+        <div class="preview-info">
+          <h2>{{ user.fullName || user.username }}</h2>
+          <p class="text-secondary">{{ user.email || 'Chưa cập nhật email' }}</p>
+          <div class="tier-tag" [class.premium]="user.tier === 'PREMIUM'">
+            {{ user.tier || 'FREE' }} ACCOUNT
+          </div>
+        </div>
+      </section>
+
+      <section class="apple-card edit-form">
+        <h3 class="card-heading">Thông tin tài khoản</h3>
+        <form (ngSubmit)="onUpdateProfile()">
+          <div class="input-row">
+            <label>Họ và tên</label>
+            <input type="text" [(ngModel)]="user.fullName" name="fullName" placeholder="Nhập tên thật của bạn">
+          </div>
+
+          <hr style="margin: 24px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+
+          <h4 style="font-size: 14px; color: var(--apple-text-secondary); margin-bottom: 16px;">Đăng nhập & Bảo mật</h4>
+          
+          <div class="input-row">
+            <label>Username</label>
+            <input type="text" [(ngModel)]="securityData.username" name="username">
+          </div>
+          
+          <div class="input-row">
+            <label>Email</label>
+            <input type="email" [(ngModel)]="securityData.email" name="email" placeholder="Cập nhật địa chỉ email">
+          </div>
+
+          <div class="input-row">
+            <label>Mật khẩu mới (Bỏ trống nếu không muốn đổi)</label>
+            <input type="password" [(ngModel)]="securityData.newPassword" name="newPassword" placeholder="Nhập mật khẩu mới">
+          </div>
+
+          <div class="input-row" *ngIf="securityData.newPassword">
+            <label>Xác nhận mật khẩu mới</label>
+            <input type="password" [(ngModel)]="securityData.confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu mới">
+          </div>
+
+          <div class="input-row" style="background: rgba(255, 59, 48, 0.05); padding: 12px; border-radius: 8px;">
+            <label style="color: #ff3b30;">Mật khẩu hiện tại (Bắt buộc để lưu)</label>
+            <input type="password" [(ngModel)]="securityData.currentPassword" name="currentPassword" placeholder="Nhập mật khẩu hiện tại để xác thực" required>
+          </div>
+
+          <div class="feedback-area">
+            <p class="msg-success" *ngIf="successMsg">{{ successMsg }}</p>
+            <p class="msg-error" *ngIf="errorMsg">{{ errorMsg }}</p>
+          </div>
+
+          <button type="submit" class="apple-btn-primary" [disabled]="loading">
+            {{ loading ? 'Đang lưu...' : 'Lưu thay đổi' }}
+          </button>
+        </form>
+      </section>
+
+      <section class="apple-card storage-summary">
+        <h3 class="card-heading">Dung lượng lưu trữ</h3>
+        <div class="storage-stats">
+          <div class="stat-main">{{ formatSize(user.usedQuota) }}</div>
+          <div class="stat-sub">đã dùng trong tổng số {{ formatSize(user.maxQuota) }}</div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="(user.usedQuota / user.maxQuota) * 100"></div>
+        </div>
+        <p class="storage-desc">Gói lưu trữ của bạn được bảo mật bằng mã hóa đầu cuối Ethereal.</p>
+      </section>
+    </div>
+  </main>
+</div>

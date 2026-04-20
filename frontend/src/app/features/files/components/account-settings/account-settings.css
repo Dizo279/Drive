@@ -1,0 +1,228 @@
+/* --- APPLE DESIGN SYSTEM --- */
+:host {
+  --apple-black: #1d1d1f;
+  --apple-gray: #f5f5f7;
+  --apple-blue: #0071e3;
+  --apple-link: #0066cc;
+  --apple-text-secondary: rgba(0, 0, 0, 0.48);
+  --apple-shadow: 3px 5px 30px 0px rgba(0, 0, 0, 0.06);
+}
+
+.apple-settings {
+  min-height: 100vh;
+  background-color: #ffffff; /* Nền trắng thuần khiết */
+  color: var(--apple-black);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Navigation phụ */
+.settings-nav {
+  height: 48px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: saturate(180%) blur(20px); /* Glassmorphism */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-content {
+  max-width: 980px; /* Chiều rộng tối đa chuẩn */
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+}
+
+.nav-brand {
+  font-size: 21px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--apple-black);
+  letter-spacing: -0.01em;
+}
+
+.current-page {
+  font-size: 12px;
+  color: var(--apple-text-secondary);
+}
+
+/* Hero Section */
+.settings-hero {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 80px 22px 40px;
+  text-align: center;
+}
+
+.hero-title {
+  font-size: 48px; /* Section Heading */
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.07;
+  margin-bottom: 12px;
+}
+
+.hero-subtitle {
+  font-size: 21px;
+  color: var(--apple-text-secondary);
+  font-weight: 400;
+}
+
+/* Grid Layout */
+.main-canvas { padding-bottom: 100px; }
+.content-grid {
+  max-width: 980px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  padding: 0 22px;
+}
+
+/* Apple Cards */
+.apple-card {
+  background-color: var(--apple-gray);
+  border-radius: 18px;
+  padding: 30px;
+  transition: transform 0.3s ease;
+}
+
+.profile-preview {
+  grid-column: span 2;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  background-color: var(--apple-black);
+  color: #ffffff;
+}
+
+.avatar-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+.avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #3a3a3c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 600;
+}
+
+.preview-info h2 { font-size: 32px; font-weight: 600; margin-bottom: 4px; }
+.tier-tag {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 980px;
+  background: rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.05em;
+}
+
+.tier-tag.premium { color: var(--apple-blue); background: #ffffff; }
+
+/* Form Elements */
+.card-heading { font-size: 24px; font-weight: 600; margin-bottom: 24px; }
+.input-row { margin-bottom: 20px; }
+.input-row label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--apple-text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.input-row input {
+  width: 100%;
+  height: 44px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: 17px; /* Body Size */
+  outline: none;
+}
+
+.input-row input:focus {
+  border-color: var(--apple-blue);
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+}
+
+/* Nút Quay lại */
+.nav-back {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--apple-blue);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 15px;
+  transition: 0.2s;
+}
+.nav-back:hover { color: var(--apple-link); }
+
+/* Khu vực Avatar */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.btn-change-avatar {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 980px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-change-avatar:hover { background: rgba(255, 255, 255, 0.3); }
+
+/* Buttons */
+.apple-btn-primary {
+  background: var(--apple-blue);
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 980px; /* Pill-shaped */
+  font-size: 17px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.apple-btn-primary:hover { background: var(--apple-link); }
+
+/* Storage Stat */
+.stat-main { font-size: 40px; font-weight: 600; color: var(--apple-black); }
+.stat-sub { font-size: 17px; color: var(--apple-text-secondary); margin-bottom: 20px; }
+.progress-bar {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.progress-fill { height: 100%; background: var(--apple-black); border-radius: 4px; }
+.storage-desc { font-size: 14px; color: var(--apple-text-secondary); }
+
+.msg-success { color: #248a3d; font-size: 14px; margin-bottom: 10px; }
+.msg-error { color: #ff3b30; font-size: 14px; margin-bottom: 10px; }

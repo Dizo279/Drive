@@ -10,14 +10,14 @@ import { AuthService } from '../../auth';
   styleUrls: ['./login.css'],
   standalone: true,
   // Import đầy đủ các module cần thiết cho HTML
-  imports: [ReactiveFormsModule, FormsModule, CommonModule, RouterLink] 
+  imports: [ReactiveFormsModule, FormsModule, CommonModule, RouterLink]
 })
 export class LoginComponent {
   loginForm: FormGroup;
   
   // Khai báo các biến trạng thái mới cho giao diện
-  errorMsg: string = ''; 
-  hidePassword: boolean = true; 
+  errorMsg: string = '';
+  hidePassword: boolean = true;
   rememberMe: boolean = false;
   loading: boolean = false;
 

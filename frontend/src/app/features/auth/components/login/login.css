@@ -1,209 +1,140 @@
-/* Reset nhẹ */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-/* Background */
-.auth-page {
-  height: 100vh;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+/* --- APPLE DESIGN: AUTHENTICATION --- */
+.auth-wrapper {
+  min-height: 100vh;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  background-color: #f5f5f7; /* Nền xám nhạt chuẩn Apple */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+  padding: 24px;
 }
 
-/* Card */
 .auth-card {
-  width: 380px;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 30px 28px;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  backdrop-filter: blur(10px);
-}
-
-/* Brand */
-.brand {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 48px 40px;
+  box-shadow: 3px 5px 30px 0px rgba(0, 0, 0, 0.06); /* Đổ bóng mềm mại */
   text-align: center;
-  margin-bottom: 20px;
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.brand-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-logo {
+  width: 56px;
+  height: 56px;
+  background: #1d1d1f;
+  border-radius: 14px;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  margin: 0 auto 10px;
+  margin: 0 auto 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.brand-name {
-  font-size: 22px;
+.auth-title {
+  font-size: 1.75rem;
   font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
 }
 
-.brand-subtitle {
-  font-size: 13px;
-  color: #6b7280;
+.auth-subtitle {
+  font-size: 0.95rem;
+  color: rgba(0, 0, 0, 0.48);
+  margin-bottom: 32px;
 }
 
-/* Tabs */
-.tab-row {
-  display: flex;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.tab {
-  flex: 1;
-  text-align: center;
-  padding: 10px;
-  cursor: pointer;
-  color: #6b7280;
-  text-decoration: none;
-}
-
-.tab.active {
-  color: #4f46e5;
-  font-weight: 600;
-  border-bottom: 2px solid #4f46e5;
-}
-
-/* Field */
-.field {
+.input-group {
   margin-bottom: 16px;
+  text-align: left;
 }
 
-.field label {
-  font-size: 13px;
-  margin-bottom: 6px;
-  display: block;
-  color: #374151;
-}
-
-.input-wrap {
-  position: relative;
-}
-
-input {
+.input-group input {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
+  height: 52px;
+  border: 1px solid #d2d2d7;
+  border-radius: 12px;
+  padding: 0 16px;
+  font-size: 1.05rem;
+  color: #1d1d1f;
   outline: none;
-  transition: 0.2s;
+  transition: all 0.2s ease;
+  background: #ffffff;
 }
 
-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+.input-group input::placeholder {
+  color: rgba(0, 0, 0, 0.48);
 }
 
-input.invalid {
-  border-color: #ef4444;
+/* Hiệu ứng Focus viền xanh đặc trưng */
+.input-group input:focus {
+  border-color: #0071e3;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.2);
 }
 
-/* Eye button */
-.eye-btn {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: #6b7280;
-}
-
-/* Error */
-.field-error {
-  font-size: 12px;
-  color: #ef4444;
-  margin-top: 4px;
-  display: block;
-}
-
-/* Remember */
-.remember-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  margin-bottom: 15px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.forgot-link {
-  color: #6366f1;
-  cursor: pointer;
-}
-
-/* Error banner */
-.error-banner {
-  background: #fee2e2;
-  color: #b91c1c;
-  padding: 8px;
-  border-radius: 8px;
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  margin-bottom: 12px;
-  font-size: 13px;
-}
-
-/* Button */
-.btn-primary {
+.auth-btn {
   width: 100%;
-  padding: 10px;
-  border-radius: 10px;
+  height: 52px;
+  background: #0071e3;
+  color: #ffffff;
   border: none;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  font-weight: 600;
+  border-radius: 980px; /* Nút hình viên thuốc */
+  font-size: 1.05rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: 0.25s;
+  transition: 0.2s ease;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+.auth-btn:hover {
+  background: #0066cc;
 }
 
-.btn-primary:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
+.auth-btn:active {
+  transform: scale(0.98);
 }
 
-/* Spinner */
-.spinner {
-  animation: spin 1s linear infinite;
+.auth-links {
+  margin-top: 32px;
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.48);
+  border-top: 1px solid #d2d2d7;
+  padding-top: 24px;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Footer */
-.footer-link {
-  text-align: center;
-  font-size: 13px;
-  margin-top: 15px;
-}
-
-.footer-link a {
-  color: #6366f1;
+.auth-links a {
+  color: #0066cc; /* Màu Link text */
   text-decoration: none;
   font-weight: 500;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.auth-links a:hover {
+  text-decoration: underline;
+}
+
+/* Tùy chỉnh thông báo lỗi */
+.error-text {
+  color: #ff3b30;
+  font-size: 0.85rem;
+  margin-top: 24px;
+  font-weight: 500;
+}
+
+.auth-btn:disabled {
+  background: #a1c9f2;
+  cursor: not-allowed;
 }

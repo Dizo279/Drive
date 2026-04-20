@@ -1,17 +1,17 @@
 import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
-import { HttpEventType } from '@angular/common/http';
+import { HttpEventType, HttpClient, HttpHeaders } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FileService } from '../../file';
 import { AuthService } from '../../../auth/auth';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-file-list',
   templateUrl: './file-list.html',
   styleUrls: ['./file-list.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, RouterLink]
 })
 export class FileListComponent implements OnInit {
   allFiles: any[] = [];
@@ -41,23 +41,31 @@ export class FileListComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     public cdr: ChangeDetectorRef,
-    private zone: NgZone
+    private zone: NgZone,
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
-    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-      const token = localStorage.getItem('jwt_token');
-      if (token) {
-          try {
-              const payload = JSON.parse(atob(token.split('.')[1]));
-              this.currentUser = { username: payload.sub, email: payload.sub + '@ethereal.com' };
-          } catch (e) {
-              this.currentUser = { username: 'User' };
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+    const token = localStorage.getItem('jwt_token');
+    if (token) {
+        // Gọi API để lấy dữ liệu Full từ Database
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        this.http.get('http://localhost:8080/api/users/me', { headers }).subscribe({
+          next: (data: any) => {
+            this.currentUser = data; // Gán toàn bộ data (bao gồm fullName, avatarUrl)
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            // Fallback nếu API lỗi (giải mã từ token như cũ)
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            this.currentUser = { username: payload.sub };
           }
-      }
-      this.loadData();
+        });
     }
+    this.loadData();
   }
+}
 
   loadData(): void {
     this.loading = true;
@@ -163,7 +171,8 @@ export class FileListComponent implements OnInit {
 
   openFolder(folder: any): void {
     if (folder.isFolder) {
-      this.folderHistory.push({ id: this.currentParentId, name: folder.id == null ? 'Drive' : (this.allFiles.find(f=>f.id === this.currentParentId)?.name || 'Back') });
+      // Ghi nhận trực tiếp ID và Tên của thư mục vừa click vào lịch sử
+      this.folderHistory.push({ id: folder.id, name: folder.name });
       this.currentParentId = folder.id;
       this.loadData();
     }
@@ -171,12 +180,15 @@ export class FileListComponent implements OnInit {
 
   navigateToBreadcrumb(index: number | null): void {
     if (index === null) {
+      // Về trang chủ (Drive)
       this.currentParentId = null;
       this.folderHistory = [];
     } else {
+      // Quay lại một thư mục cụ thể trong lịch sử
       const target = this.folderHistory[index];
       this.currentParentId = target.id;
-      this.folderHistory = this.folderHistory.slice(0, index);
+      // Cắt bỏ các thư mục phía sau thư mục được click
+      this.folderHistory = this.folderHistory.slice(0, index + 1);
     }
     this.loadData();
   }

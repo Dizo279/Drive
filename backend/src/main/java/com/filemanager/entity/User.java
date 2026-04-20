@@ -16,6 +16,23 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    // --- CÁC CỘT MỚI BỔ SUNG CHO PROFILE ---
+    @Column(unique = true, length = 100)
+    private String email;
+
+    @Column(name = "full_name", length = 100)
+    private String fullName;
+
+    @Lob
+    @Column(name = "avatar_url", columnDefinition = "LONGTEXT")
+    private String avatarUrl;
+
+    @Column(length = 20)
+    private String role = "USER"; // "USER" hoặc "ADMIN"
+
+    @Column(length = 20)
+    private String tier = "FREE"; // "FREE" hoặc "PREMIUM"
+
     @Column(name = "max_quota")
     private Long maxQuota = 1073741824L; // Mặc định 1GB
 
@@ -25,14 +42,25 @@ public class User {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // Getter và Setter (bạn tự generate bằng IDE hoặc dùng Lombok @Data nhé)
+    // --- GETTER VÀ SETTER ---
     public Long getId() { return id; }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
-    public Long getUsedQuota() {return usedQuota;}
-    public void setUsedQuota(Long usedQuota) {this.usedQuota = usedQuota;}
-    public Long getMaxQuota() {return maxQuota;}
-    public void setMaxQuota(Long maxQuota) {this.maxQuota = maxQuota;}
+    public Long getUsedQuota() { return usedQuota; }
+    public void setUsedQuota(Long usedQuota) { this.usedQuota = usedQuota; }
+    public Long getMaxQuota() { return maxQuota; }
+    public void setMaxQuota(Long maxQuota) { this.maxQuota = maxQuota; }
+    
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+    public String getTier() { return tier; }
+    public void setTier(String tier) { this.tier = tier; }
 }

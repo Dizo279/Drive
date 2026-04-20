@@ -13,7 +13,7 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
     @Override
     public Response toResponse(Throwable exception) {
         // Ghi log lỗi ra console để dev dễ debug
-        exception.printStackTrace(); 
+        exception.printStackTrace();
 
         int statusCode = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
         String message = "Đã xảy ra lỗi hệ thống!";
