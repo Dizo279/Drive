@@ -8,6 +8,10 @@
   --apple-shadow: 3px 5px 30px 0px rgba(0, 0, 0, 0.06);
 }
 
+* {
+  box-sizing: border-box;
+}
+
 .apple-settings {
   min-height: 100vh;
   background-color: #ffffff; /* Nền trắng thuần khiết */
@@ -153,8 +157,10 @@
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
   padding: 0 14px;
-  font-size: 17px; /* Body Size */
+  font-size: 17px;
   outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
 .input-row input:focus {

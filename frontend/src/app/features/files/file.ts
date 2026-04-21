@@ -59,8 +59,8 @@ export class FileService {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
 
-  shareFile(id: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/${id}/share`, {});
+  shareFile(id: number, payload: any = {}): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/share`, payload);
   }
 
   getAllGlobalFiles(): Observable<any[]> {

@@ -1,0 +1,73 @@
+<div class="apple-settings">
+  <nav class="settings-nav">
+    <div class="nav-content">
+      <a routerLink="/files" class="nav-back">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        Drive
+      </a>
+      <div class="nav-links">
+        <span class="current-page">Quản lý Chia sẻ</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-canvas">
+    <header class="settings-hero">
+      <h1 class="hero-title">Trung tâm Chia sẻ.</h1>
+      <p class="hero-subtitle">Quản lý những tệp bạn gửi đi và những tệp bạn được nhận.</p>
+    </header>
+
+    <div class="content-grid">
+      <section class="apple-card">
+        
+        <div class="tabs-container">
+          <button class="tab-btn" [class.active]="activeTab === 'by-me'" (click)="setTab('by-me')">
+            Do tôi chia sẻ
+          </button>
+          <button class="tab-btn" [class.active]="activeTab === 'with-me'" (click)="setTab('with-me')">
+            Chia sẻ với tôi
+          </button>
+        </div>
+
+        <div class="list-container">
+          <div *ngIf="loading" style="text-align: center; padding: 40px; color: #86868b;">Đang tải dữ liệu...</div>
+          
+          <div *ngIf="!loading && sharedItems.length === 0" class="empty-state">
+            <p>Không có tệp nào ở đây cả.</p>
+          </div>
+
+          <table class="apple-table" *ngIf="!loading && sharedItems.length > 0">
+            <thead>
+              <tr>
+                <th>Tên Tệp</th>
+                <th>{{ activeTab === 'by-me' ? 'Chia sẻ cho' : 'Chia sẻ từ' }}</th>
+                <th>Hết hạn</th>
+                <th style="text-align: right;">Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of sharedItems" [class.expired]="isExpired(item.expiresAt)">
+                <td class="file-name">{{ item.fileName }}</td>
+                <td class="email-tag">
+                  <span class="badge">{{ item.targetEmail }}</span>
+                </td>
+                <td class="date-col">
+                  <span *ngIf="!item.expiresAt">Vĩnh viễn</span>
+                  <span *ngIf="item.expiresAt" [class.text-red]="isExpired(item.expiresAt)">
+                    {{ item.expiresAt | date:'dd/MM/yyyy' }}
+                    {{ isExpired(item.expiresAt) ? '(Đã hết hạn)' : '' }}
+                  </span>
+                </td>
+                <td class="actions-col">
+                  <button *ngIf="activeTab === 'by-me'" class="btn-revoke" (click)="revokeAccess(item.shareId)">Thu hồi</button>
+                  <button *ngIf="activeTab === 'with-me' && !isExpired(item.expiresAt)" class="btn-download" (click)="downloadShared(item.shareToken)">Tải xuống</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+    </div>
+  </main>
+</div>

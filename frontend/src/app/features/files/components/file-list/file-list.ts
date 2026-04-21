@@ -36,6 +36,17 @@ export class FileListComponent implements OnInit {
   quotaBytes: number = 1073741824;
   quotaPercent: number = 0;
 
+  showToast: boolean = false;
+  toastMessage: string = '';
+  toastTimeout: any;
+
+  isShareModalOpen: boolean = false;
+  shareLink: string = '';
+  selectedFileForShare: any = null;
+  shareEmailsInput: string = '';
+  expireDays: number | null = null;
+  isSharing: boolean = false;
+
   constructor(
     private fileService: FileService,
     private authService: AuthService,
@@ -346,4 +357,86 @@ export class FileListComponent implements OnInit {
         default: return 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z';
     }
   }
+
+  openShareModal(file: any) {
+    if (event) event.stopPropagation();
+    this.selectedFileForShare = file;
+    this.shareLink = ''; // Xóa link cũ nếu có
+    this.shareEmailsInput = '';
+    this.expireDays = null;
+    this.isShareModalOpen = true;
+  }
+
+  generatePublicLink() {
+    this.isSharing = true;
+    const payload = { emails: [], expireDays: this.expireDays };
+
+    this.fileService.shareFile(this.selectedFileForShare.id, payload).subscribe({
+      next: (res: any) => {
+        this.isSharing = false;
+        const token = res.shareToken || res.token || res;
+        // Trỏ trực tiếp vào API Backend để tải luôn khi bấm vào link
+        this.shareLink = `http://localhost:8080/api/files/shared/${token}`;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isSharing = false;
+        this.displayToast('Lỗi: ' + (err.error?.error || 'Không thể tạo link.'));
+      }
+    });
+  }
+
+  // --- CHIA SẺ QUA EMAIL ---
+  submitEmailShare() {
+    if (!this.shareEmailsInput.trim()) {
+      this.displayToast('Vui lòng nhập ít nhất 1 địa chỉ email!');
+      return;
+    }
+
+    this.isSharing = true;
+    // Tách email bằng dấu phẩy, loại bỏ khoảng trắng thừa
+    const emailList = this.shareEmailsInput.split(',').map(e => e.trim()).filter(e => e !== '');
+    const payload = { emails: emailList, expireDays: this.expireDays };
+
+    this.fileService.shareFile(this.selectedFileForShare.id, payload).subscribe({
+      next: (res: any) => {
+        this.isSharing = false;
+        this.displayToast(res.message || 'Đã cấp quyền truy cập thành công!');
+        this.shareEmailsInput = ''; // Xóa ô nhập sau khi thành công
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isSharing = false;
+        this.displayToast('Lỗi: ' + (err.error?.error || 'Không thể chia sẻ.'));
+      }
+    });
+  }
+
+  // --- COPY LINK ---
+  copyLink(): void {
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(this.shareLink).then(() => {
+        this.displayToast('Đã copy liên kết chia sẻ!');
+      });
+    }
+  }
+
+  closeShareModal(): void {
+    this.isShareModalOpen = false;
+    this.selectedFileForShare = null;
+  }
+
+  displayToast(message: string) {
+    this.toastMessage = message;
+    this.showToast = true;
+    
+    // Xóa bộ đếm cũ nếu người dùng bấm liên tục
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    
+    this.toastTimeout = setTimeout(() => {
+      this.showToast = false;
+      this.cdr.detectChanges(); // Ép Angular cập nhật UI
+    }, 3000);
+  }
+
 }

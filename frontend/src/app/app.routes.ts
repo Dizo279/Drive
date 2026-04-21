@@ -4,6 +4,8 @@ import { RegisterComponent } from './features/auth/components/register/register'
 import { FileUploadComponent } from './features/files/components/file-upload/file-upload';
 import { FileListComponent } from './features/files/components/file-list/file-list';
 import { AccountSettingsComponent } from './features/files/components/account-settings/account-settings';
+import { SharedListComponent } from './features/files/components/shared-list/shared-list';
+
 
 
 export const routes: Routes = [
@@ -12,5 +14,6 @@ export const routes: Routes = [
   { path: 'files', component: FileListComponent }, // MỚI THÊM
   { path: 'files/upload', component: FileUploadComponent },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: 'settings', component: AccountSettingsComponent }
+  { path: 'settings', component: AccountSettingsComponent },
+  { path: 'shared', component: SharedListComponent }
 ];

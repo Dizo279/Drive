@@ -21,6 +21,14 @@
     <div class="toast-footer">{{ formatSize(totalLoadedSize) }} / {{ formatSize(totalUploadSize) }}</div>
   </div>
 
+  <div class="apple-toast" [class.show]="showToast">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#34c759" stroke-width="2">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <span>{{ toastMessage }}</span>
+  </div>
+
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-logo">
@@ -39,7 +47,7 @@
         </svg>
         My Drive
       </a>
-      <a class="nav-item">
+      <a class="nav-item" routerLink="/shared">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
@@ -85,7 +93,7 @@
         </div>
         <div class="quota-info">
           <div class="used">{{ formatSize(usedBytes) }}</div>
-          <div class="total">used of 1 GB</div>
+          <div class="total">used of {{ formatSize(currentUser?.maxQuota || 1073741824) }}</div>
         </div>
       </div>
     </div>
@@ -205,6 +213,12 @@
               <div class="r-date">{{ item.createdAt | date:'dd MMM yyyy' }}</div>
               
               <div class="r-actions" (click)="$event.stopPropagation()">
+                <button *ngIf="!item.isFolder" (click)="openShareModal(item)" title="Share">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                  </svg>
+                </button>
                 <button *ngIf="!item.isFolder" (click)="download(item)" title="Download"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
                 <button class="del-btn" (click)="delete(item)" title="Delete"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
               </div>
@@ -216,4 +230,55 @@
 
     </div>
   </main>
+  <div class="modal-overlay" *ngIf="isShareModalOpen" (click)="closeShareModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h3>Chia sẻ tệp tin</h3>
+        <button class="btn-close" (click)="closeShareModal()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="setting-group">
+          <label>Thời hạn truy cập</label>
+          <select class="apple-select" [(ngModel)]="expireDays">
+            <option [ngValue]="null">Không giới hạn (Vĩnh viễn)</option>
+            <option [ngValue]="1">Hết hạn sau 1 Ngày</option>
+            <option [ngValue]="7">Hết hạn sau 7 Ngày</option>
+            <option [ngValue]="30">Hết hạn sau 30 Ngày</option>
+          </select>
+        </div>
+
+        <div class="share-box">
+          <h4>Chia sẻ riêng tư</h4>
+          <p>Chỉ những email được cấp quyền mới có thể truy cập.</p>
+          <div class="share-input-group">
+            <input type="text" [(ngModel)]="shareEmailsInput" placeholder="Nhập email, cách nhau bằng dấu phẩy...">
+            <button class="btn-primary" (click)="submitEmailShare()" [disabled]="isSharing">
+              {{ isSharing ? 'Đang gửi...' : 'Mời' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-divider"><span>HOẶC</span></div>
+
+        <div class="share-box">
+          <h4>Liên kết công khai</h4>
+          <p>Bất kỳ ai có đường liên kết này đều có thể tải xuống tệp.</p>
+          <div class="share-input-group">
+            <input type="text" readonly [value]="shareLink || 'Nhấn nút tạo liên kết để bắt đầu ->'">
+            <button class="btn-copy" *ngIf="shareLink" (click)="copyLink()">Copy</button>
+            <button class="btn-secondary" *ngIf="!shareLink" (click)="generatePublicLink()" [disabled]="isSharing">
+              Tạo Liên kết
+            </button>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
 </div>

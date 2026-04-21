@@ -73,17 +73,17 @@ public class UserResource {
 
             // 1. KIỂM TRA LOGIC THÔNG MINH HƠN:
             // Chỉ bắt isChanging... = true NẾU dữ liệu gửi lên THỰC SỰ KHÁC trong Database
-            boolean isChangingUsername = updateData.username != null 
-                    && !updateData.username.trim().isEmpty() 
+            boolean isChangingUsername = updateData.username != null
+                    && !updateData.username.trim().isEmpty()
                     && !updateData.username.equals(user.getUsername());
             
             // Xử lý cẩn thận trường hợp Email trong DB lúc đầu có thể bị null
             boolean currentEmailIsNull = user.getEmail() == null;
-            boolean isChangingEmail = updateData.email != null 
-                    && !updateData.email.trim().isEmpty() 
+            boolean isChangingEmail = updateData.email != null
+                    && !updateData.email.trim().isEmpty()
                     && (currentEmailIsNull || !updateData.email.equals(user.getEmail()));
             
-            boolean isChangingPassword = updateData.newPassword != null 
+            boolean isChangingPassword = updateData.newPassword != null
                     && !updateData.newPassword.trim().isEmpty();
 
             // Đánh dấu xem có đang update thông tin nhạy cảm hay không

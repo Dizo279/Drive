@@ -9,22 +9,14 @@ export class ErrorInterceptor implements HttpInterceptor {
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        let errorMsg = 'Đã xảy ra lỗi không xác định!';
-        
-        if (typeof ErrorEvent !== 'undefined' && error.error instanceof ErrorEvent) {
-          // Xử lý lỗi client-side
-          errorMsg = `Lỗi Client: ${error.error.message}`;
-        } else {
-          // Xử lý lỗi server-side
-          errorMsg = `Lỗi Server: Mã ${error.status}, Thông báo: ${error.message}`;
-        }
-
-        // Bảo vệ SSR
+        // Chỉ in ngầm ra console để lập trình viên kiểm tra khi cần
         if (typeof window !== 'undefined') {
-          alert(`Hệ thống thông báo: ${errorMsg}`);
+          console.error('HTTP Error Intercepted:', error);
         }
         
-        return throwError(() => new Error(errorMsg));
+        // QUAN TRỌNG: Trả lại nguyên bản object error (chứa status 400 và JSON từ Backend)
+        // về cho Component để Account Settings có thể tự bóc tách thông báo tiếng Việt
+        return throwError(() => error);
       })
     );
   }

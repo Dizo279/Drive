@@ -46,4 +46,7 @@ public class FileShare {
 
     public LocalDateTime getExpiresAt() { return expiresAt; }
     public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
+
+    public Long getSharedWith() { return sharedWith; }
+    public void setSharedWith(Long sharedWith) { this.sharedWith = sharedWith; }
 }

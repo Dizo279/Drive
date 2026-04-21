@@ -177,6 +177,144 @@
   background-color: var(--bg-surface-hover);
 }
 
+/* --- APPLE TOAST NOTIFICATION --- */
+.apple-toast {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px); /* Ẩn xuống dưới */
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 12px 24px;
+  border-radius: 980px; /* Hình viên thuốc */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1d1d1f;
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); /* Gia tốc chuyển động chuẩn Apple */
+  pointer-events: none;
+}
+
+.apple-toast.show {
+  transform: translateX(-50%) translateY(0); /* Trượt lên */
+  opacity: 1;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.2); 
+  backdrop-filter: blur(8px); /* Hiệu ứng kính mờ chuẩn Apple */
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+  background: #ffffff;
+  width: 100%;
+  max-width: 440px;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.modal-header h3 { font-size: 18px; font-weight: 600; color: #1d1d1f; margin: 0; }
+
+.btn-close {
+  background: #f5f5f7;
+  border: none;
+  color: #86868b;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-close:hover { background: #e8e8ed; color: #1d1d1f; }
+
+.modal-body p { font-size: 14px; color: #86868b; margin-bottom: 20px; line-height: 1.4; }
+
+.share-input-group { display: flex; gap: 8px; }
+
+.share-input-group input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 12px;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  box-sizing: border-box; /* Chống tràn viền */
+}
+
+.btn-copy {
+  background: #0071e3;
+  color: #ffffff;
+  border: none;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-copy:hover { background: #0077ED; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* --- CSS BỔ SUNG CHO MODAL CHIA SẺ NÂNG CAO --- */
+.setting-group { margin-bottom: 20px; }
+.setting-group label { display: block; font-size: 13px; font-weight: 600; color: #86868b; margin-bottom: 8px; text-transform: uppercase; }
+
+.apple-select {
+  width: 100%; padding: 12px 16px; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px;
+  background: #f5f5f7; color: #1d1d1f; font-size: 14px; font-weight: 500; outline: none; box-sizing: border-box; cursor: pointer;
+}
+
+.share-box { background: #fbfbfd; border: 1px solid rgba(0,0,0,0.05); border-radius: 16px; padding: 16px; }
+.share-box h4 { font-size: 15px; font-weight: 600; margin: 0 0 4px 0; color: #1d1d1f; }
+.share-box p { font-size: 13px; margin: 0 0 12px 0; color: #86868b; }
+
+.modal-divider { display: flex; align-items: center; text-align: center; margin: 20px 0; color: #86868b; font-size: 12px; font-weight: 600; }
+.modal-divider::before, .modal-divider::after { content: ''; flex: 1; border-bottom: 1px solid rgba(0,0,0,0.1); }
+.modal-divider span { padding: 0 10px; }
+
+.btn-primary { background: #0071e3; color: white; border: none; padding: 0 20px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+.btn-primary:hover:not(:disabled) { background: #0077ED; }
+.btn-primary:disabled { background: #a1c6ea; cursor: not-allowed; }
+
+.btn-secondary { background: #e8e8ed; color: #1d1d1f; border: none; padding: 0 20px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+.btn-secondary:hover:not(:disabled) { background: #d2d2d7; }
+.btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
+
 .drag-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); z-index: 50; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.3s; }
 .drag-overlay.show { opacity: 1; pointer-events: auto; }
 .drag-box { text-align: center; padding: 48px; border: 2px dashed var(--accent-blue); border-radius: var(--radius-card); background: var(--bg-surface); box-shadow: var(--shadow-apple); }

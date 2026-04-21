@@ -42,6 +42,37 @@ import com.filemanager.entity.User;
 @Component
 @Path("/files")
 public class FileResource {
+    public static class ShareRequest {
+        public java.util.List<String> emails;
+        public Integer expireDays; // Số ngày hết hạn
+    }
+
+    public static class SharedItemDTO {
+        private Long shareId;
+        private Long fileId;
+        private String fileName;
+        private String targetEmail;
+        private LocalDateTime expiresAt;
+        private String shareToken;
+
+        public Long getShareId() { return shareId; }
+        public void setShareId(Long shareId) { this.shareId = shareId; }
+        
+        public Long getFileId() { return fileId; }
+        public void setFileId(Long fileId) { this.fileId = fileId; }
+        
+        public String getFileName() { return fileName; }
+        public void setFileName(String fileName) { this.fileName = fileName; }
+        
+        public String getTargetEmail() { return targetEmail; }
+        public void setTargetEmail(String targetEmail) { this.targetEmail = targetEmail; }
+        
+        public LocalDateTime getExpiresAt() { return expiresAt; }
+        public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
+        
+        public String getShareToken() { return shareToken; }
+        public void setShareToken(String shareToken) { this.shareToken = shareToken; }
+    }
 
     @Inject
     private StorageService storageService;
@@ -246,8 +277,9 @@ public class FileResource {
    // 1. API TẠO LINK CHIA SẺ
     @POST
     @Path("/{id}/share")
+    @Consumes(MediaType.APPLICATION_JSON) // Bổ sung Consumes để nhận JSON Body
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createShareLink(@PathParam("id") Long fileId, @Context ContainerRequestContext requestContext) {
+    public Response createShareLink(@PathParam("id") Long fileId, ShareRequest requestData, @Context ContainerRequestContext requestContext) {
         try {
             Object userIdObj = requestContext.getProperty("userId");
             if (userIdObj == null) {
@@ -258,34 +290,63 @@ public class FileResource {
             FileMetadata file = fileRepository.findById(fileId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy file"));
 
-            // BẢO MẬT & CHỐNG LỖI: Kiểm tra ownerId có bị null không (với các file cũ)
             if (file.getOwnerId() == null || !file.getOwnerId().equals(userId)) {
                 return Response.status(Response.Status.FORBIDDEN)
-                        .entity("{\"error\": \"Bạn không có quyền chia sẻ file này (hoặc file không có chủ sở hữu)\"}").build();
+                        .entity("{\"error\": \"Bạn không có quyền chia sẻ file này\"}").build();
             }
 
-            FileShare existingShare = fileShareRepository.findByFileId(fileId).orElse(null);
-            if (existingShare != null) {
-                return Response.ok("{\"shareToken\": \"" + existingShare.getShareToken() + "\"}").build();
+            // LUỒNG 1: CHIA SẺ PUBLIC LINK (Nếu không nhập email nào)
+            if (requestData == null || requestData.emails == null || requestData.emails.isEmpty()) {
+                FileShare existingPublic = fileShareRepository.findByFileIdAndSharedWithIsNull(fileId).orElse(null);
+                if (existingPublic != null) {
+                    return Response.ok("{\"shareToken\": \"" + existingPublic.getShareToken() + "\"}").build();
+                }
+
+                FileShare newShare = new FileShare();
+                newShare.setFileId(fileId);
+                newShare.setShareToken(UUID.randomUUID().toString());
+                newShare.setCreatedAt(LocalDateTime.now());
+                newShare.setSharedBy(userId);
+                if (requestData != null && requestData.expireDays != null) {
+                    newShare.setExpiresAt(LocalDateTime.now().plusDays(requestData.expireDays));
+                }
+                fileShareRepository.save(newShare);
+                return Response.ok("{\"shareToken\": \"" + newShare.getShareToken() + "\"}").build();
             }
 
-            FileShare newShare = new FileShare();
-            newShare.setFileId(fileId);
-            newShare.setShareToken(UUID.randomUUID().toString());
-            newShare.setCreatedAt(LocalDateTime.now());
-            newShare.setSharedBy(userId);
-            newShare.setExpiresAt(LocalDateTime.now().plusDays(7));
-            
-            fileShareRepository.save(newShare);
+            // LUỒNG 2: CHIA SẺ ĐỊNH DANH QUA EMAIL
+            int successCount = 0;
+            for (String email : requestData.emails) {
+                // Tìm ID người nhận dựa trên Email
+                User targetUser = userRepository.findByEmail(email.trim()).orElse(null);
+                if (targetUser == null || targetUser.getId().equals(userId)) {
+                    continue; // Bỏ qua nếu email không tồn tại hoặc tự share cho chính mình
+                }
 
-            return Response.ok("{\"shareToken\": \"" + newShare.getShareToken() + "\"}").build();
-            
+                // Kiểm tra xem đã share cho người này trước đó chưa
+                FileShare existing = fileShareRepository.findByFileIdAndSharedWith(fileId, targetUser.getId()).orElse(null);
+                if (existing == null) {
+                    FileShare newShare = new FileShare();
+                    newShare.setFileId(fileId);
+                    newShare.setShareToken(UUID.randomUUID().toString());
+                    newShare.setCreatedAt(LocalDateTime.now());
+                    newShare.setSharedBy(userId);
+                    newShare.setSharedWith(targetUser.getId()); // Gắn định danh người nhận
+                    
+                    if (requestData.expireDays != null) {
+                        newShare.setExpiresAt(LocalDateTime.now().plusDays(requestData.expireDays));
+                    }
+                    fileShareRepository.save(newShare);
+                }
+                successCount++;
+            }
+
+            return Response.ok("{\"message\": \"Đã chia sẻ thành công cho " + successCount + " người\"}").build();
+
         } catch (Exception e) {
-            // IN LỖI RA TERMINAL ĐỂ DỄ DÀNG TÌM DIỆT
             e.printStackTrace();
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\": \"" + e.getMessage() + "\"}")
-                    .build();
+                    .entity("{\"error\": \"" + e.getMessage() + "\"}").build();
         }
     }
 
@@ -390,4 +451,96 @@ public class FileResource {
             return Response.serverError().build();
         }
     }
+
+    @GET
+    @Path("/shared/by-me")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getFilesSharedByMe(@Context ContainerRequestContext requestContext) {
+        try {
+            // KIỂM TRA NULL AN TOÀN TRƯỚC KHI ÉP KIỂU
+            Object userIdObj = requestContext.getProperty("userId");
+            if (userIdObj == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Phiên đăng nhập hết hạn hoặc không hợp lệ\"}").build();
+            }
+            Long userId = ((Number) userIdObj).longValue();
+            
+            List<FileShare> shares = fileShareRepository.findBySharedBy(userId);
+            List<SharedItemDTO> result = new java.util.ArrayList<>();
+
+            for (FileShare s : shares) {
+                SharedItemDTO dto = new SharedItemDTO();
+                dto.setShareId(s.getId());
+                dto.setFileId(s.getFileId());
+                dto.setExpiresAt(s.getExpiresAt());
+                dto.setShareToken(s.getShareToken());
+
+                fileRepository.findById(s.getFileId()).ifPresent(f -> dto.setFileName(f.getFileName()));
+
+                if (s.getSharedWith() != null) {
+                    userRepository.findById(s.getSharedWith()).ifPresent(u -> dto.setTargetEmail(u.getEmail()));
+                } else {
+                    dto.setTargetEmail("Public Link (Bất kỳ ai)");
+                }
+                result.add(dto);
+            }
+            return Response.ok(result).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity("{\"error\": \"" + e.getMessage() + "\"}").build();
+        }
+    }
+
+   // 2. API: Lấy danh sách các file NGƯỜI KHÁC chia sẻ cho mình
+    @GET
+    @Path("/shared/with-me")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getFilesSharedWithMe(@Context ContainerRequestContext requestContext) {
+        try {
+            // KIỂM TRA NULL AN TOÀN TRƯỚC KHI ÉP KIỂU
+            Object userIdObj = requestContext.getProperty("userId");
+            if (userIdObj == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Phiên đăng nhập hết hạn hoặc không hợp lệ\"}").build();
+            }
+            Long userId = ((Number) userIdObj).longValue();
+            
+            List<FileShare> shares = fileShareRepository.findBySharedWith(userId);
+            List<SharedItemDTO> result = new java.util.ArrayList<>();
+
+            for (FileShare s : shares) {
+                SharedItemDTO dto = new SharedItemDTO();
+                dto.setShareId(s.getId());
+                dto.setFileId(s.getFileId());
+                dto.setExpiresAt(s.getExpiresAt());
+                dto.setShareToken(s.getShareToken());
+
+                fileRepository.findById(s.getFileId()).ifPresent(f -> dto.setFileName(f.getFileName()));
+                
+                userRepository.findById(s.getSharedBy()).ifPresent(u -> dto.setTargetEmail(u.getEmail()));
+                result.add(dto);
+            }
+            return Response.ok(result).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity("{\"error\": \"" + e.getMessage() + "\"}").build(); 
+        }
+    }
+
+    // API THU HỒI QUYỀN CHIA SẺ
+    @DELETE
+    @Path("/shared/{shareId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response revokeShare(@PathParam("shareId") Long shareId, @Context ContainerRequestContext requestContext) {
+        try {
+            Long userId = ((Number) requestContext.getProperty("userId")).longValue();
+            FileShare share = fileShareRepository.findById(shareId).orElse(null);
+            
+            // Chỉ chủ sở hữu (người tạo ra lượt share) mới được thu hồi
+            if (share != null && share.getSharedBy().equals(userId)) {
+                fileShareRepository.delete(share);
+                return Response.ok("{\"message\": \"Đã thu hồi quyền truy cập\"}").build();
+            }
+            return Response.status(Response.Status.FORBIDDEN).entity("{\"error\": \"Không có quyền thu hồi\"}").build();
+        } catch (Exception e) { return Response.serverError().build(); }
+    }
+   
 }
