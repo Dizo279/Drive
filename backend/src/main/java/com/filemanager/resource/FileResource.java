@@ -350,48 +350,52 @@ public class FileResource {
         }
     }
 
-    // 2. API TẢI FILE CÔNG KHAI QUA TOKEN
     @GET
     @Path("/shared/{token}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM) // Đổi từ JSON sang OCTET_STREAM để tải file
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response downloadSharedFile(@PathParam("token") String token) {
+        System.out.println("\n========== BẮT ĐẦU TẢI FILE ==========");
         try {
-            // Tìm file thông qua Token
             FileShare share = fileShareRepository.findByShareToken(token)
-                    .orElseThrow(() -> new RuntimeException("Link chia sẻ không tồn tại hoặc đã hết hạn"));
+                    .orElseThrow(() -> new RuntimeException("Liên kết không hợp lệ hoặc đã hết hạn"));
+
+            if (share.getExpiresAt() != null && share.getExpiresAt().isBefore(LocalDateTime.now())) {
+                return Response.status(Response.Status.GONE).entity("Liên kết đã hết hạn").build();
+            }
 
             FileMetadata metadata = fileRepository.findById(share.getFileId())
-                    .orElseThrow(() -> new RuntimeException("File gốc đã bị xóa"));
+                    .orElseThrow(() -> new RuntimeException("Tệp tin không tồn tại"));
 
-            // SỬA LỖI: Dùng metadata.getFilePath() thay vì getFileName()
-            // và dùng Paths.get().resolve() để nối chuỗi đường dẫn chuẩn xác nhất
-            java.nio.file.Path filePath = Paths.get(storageService.getUploadDir()).resolve(metadata.getFilePath());
+            // SỬ DỤNG BIẾN uploadDir ĐÃ CẤU HÌNH TỪ application.properties
+            java.nio.file.Path path = java.nio.file.Paths.get(uploadDir, metadata.getFilePath());
             
-            if (!Files.exists(filePath)) {
+            System.out.println("-> Kiểm tra đường dẫn: " + path.toAbsolutePath());
+
+            if (!java.nio.file.Files.exists(path)) {
+                System.out.println("-> LỖI: Không thấy file tại " + path.toAbsolutePath());
                 return Response.status(Response.Status.NOT_FOUND).entity("File vật lý không tồn tại").build();
             }
 
-            // Tạo luồng đọc file giống hệt hàm download thông thường
-            StreamingOutput fileStream = new StreamingOutput() {
-                @Override
-                public void write(OutputStream output) {
-                    try (InputStream input = Files.newInputStream(filePath)) {
-                        input.transferTo(output);
-                    } catch (Exception e) {
-                        throw new WebApplicationException("Lỗi đọc file", e);
-                    }
-                }
+            System.out.println("-> File OK! Đang chuẩn bị gửi dữ liệu...");
+
+            StreamingOutput fileStream = output -> {
+                java.nio.file.Files.copy(path, output);
+                output.flush();
             };
 
-            // Trả về file cho trình duyệt tự động tải xuống
+            // Mã hóa tên file để tránh lỗi "Unsafe" trên Chrome khi có dấu tiếng Việt
+            String safeFileName = java.net.URLEncoder.encode(metadata.getFileName(), "UTF-8").replace("+", "%20");
+
+            System.out.println("========== HOÀN TẤT TẢI FILE ==========\n");
+
             return Response.ok(fileStream)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + metadata.getFileName() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + safeFileName)
+                    .header("Content-Length", metadata.getFileSize())
                     .build();
 
         } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\": \"" + e.getMessage() + "\"}")
-                    .build();
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
     }
 
@@ -453,7 +457,7 @@ public class FileResource {
     }
 
     @GET
-    @Path("/shared/by-me")
+    @Path("/list/shared-by-me")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getFilesSharedByMe(@Context ContainerRequestContext requestContext) {
         try {
@@ -492,7 +496,7 @@ public class FileResource {
 
    // 2. API: Lấy danh sách các file NGƯỜI KHÁC chia sẻ cho mình
     @GET
-    @Path("/shared/with-me")
+    @Path("/list/shared-with-me")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getFilesSharedWithMe(@Context ContainerRequestContext requestContext) {
         try {
@@ -527,7 +531,7 @@ public class FileResource {
 
     // API THU HỒI QUYỀN CHIA SẺ
     @DELETE
-    @Path("/shared/{shareId}")
+    @Path("/revoke-share/{shareId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response revokeShare(@PathParam("shareId") Long shareId, @Context ContainerRequestContext requestContext) {
         try {

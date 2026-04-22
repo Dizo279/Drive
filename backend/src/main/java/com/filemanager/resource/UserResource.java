@@ -171,7 +171,7 @@ public class UserResource {
 
             // Tạo chuỗi JSON trả về cho Frontend
             String jsonResponse = String.format(
-                "{\"usedQuota\": %d, \"maxQuota\": %d, \"percentage\": %d}", 
+                "{\"usedQuota\": %d, \"maxQuota\": %d, \"percentage\": %d}",
                 used, max, percentage
             );
             

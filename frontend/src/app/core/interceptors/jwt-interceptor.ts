@@ -1,23 +1,27 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../features/auth/auth';
 
 @Injectable()
 export class JwtInterceptor implements HttpInterceptor {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    const token = this.authService.getToken();
-
-    if (token && request.url.startsWith('http://localhost:8080')) {
-      request = request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+    if (!isPlatformBrowser(this.platformId)) {
+      return next.handle(request); // Bỏ qua hoàn toàn trên server
     }
 
+    const token = this.authService.getToken();
+    if (token && request.url.startsWith('http://localhost:8080')) {
+      request = request.clone({
+        setHeaders: { Authorization: `Bearer ${token}` }
+      });
+    }
     return next.handle(request);
   }
 }

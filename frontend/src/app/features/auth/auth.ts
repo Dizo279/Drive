@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { isPlatformBrowser } from '@angular/common';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,10 @@ import { Observable } from 'rxjs';
 export class AuthService {
   private apiUrl = `${environment.apiUrl}/auth`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   login(credentials: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
@@ -28,11 +32,10 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    // Chỉ lấy token nếu đang chạy trên trình duyệt
-    if (typeof localStorage !== 'undefined') {
+    if (isPlatformBrowser(this.platformId)) {
       return localStorage.getItem('jwt_token');
     }
-    return null; // Trả về null nếu đang chạy trên Server
+    return null;
   }
 
   logout(): void {

@@ -15,7 +15,7 @@ export class SharedListComponent implements OnInit {
   sharedItems: any[] = [];
   loading: boolean = false;
   
-  private apiUrl = 'http://localhost:8080/api/files/shared';
+  private apiUrl = 'http://localhost:8080/api/files';
 
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
@@ -25,14 +25,6 @@ export class SharedListComponent implements OnInit {
     }
   }
 
-  private getHeaders() {
-    // Tự động tìm token dù bạn có lưu dưới tên 'token' hay 'jwt_token'
-    const token = localStorage.getItem('token') || localStorage.getItem('jwt_token') || '';
-    
-    return {
-      headers: new HttpHeaders().set('Authorization', `Bearer ${token}`)
-    };
-  }
 
   setTab(tab: 'by-me' | 'with-me') {
     this.activeTab = tab;
@@ -41,9 +33,10 @@ export class SharedListComponent implements OnInit {
 
   loadData() {
     this.loading = true;
-    const endpoint = this.activeTab === 'by-me' ? `${this.apiUrl}/by-me` : `${this.apiUrl}/with-me`;
+    const endpoint = this.activeTab === 'by-me' ? `${this.apiUrl}/list/shared-by-me` : `${this.apiUrl}/list/shared-with-me`;
     
-    this.http.get(endpoint, this.getHeaders()).subscribe({
+    // Đã gỡ bỏ this.getHeaders()
+    this.http.get(endpoint).subscribe({
       next: (data: any) => {
         this.sharedItems = data;
         this.loading = false;
@@ -55,15 +48,22 @@ export class SharedListComponent implements OnInit {
 
   revokeAccess(shareId: number) {
     if(confirm('Bạn có chắc chắn muốn thu hồi quyền truy cập này không?')) {
-      this.http.delete(`${this.apiUrl}/${shareId}`, this.getHeaders()).subscribe({
-        next: () => this.loadData(), // Tải lại danh sách sau khi xóa
+      // Đã gỡ bỏ this.getHeaders()
+      this.http.delete(`${this.apiUrl}/revoke-share/${shareId}`).subscribe({
+        next: () => this.loadData(),
         error: () => alert('Lỗi khi thu hồi quyền truy cập.')
       });
     }
   }
 
   downloadShared(token: string) {
-    window.open(`http://localhost:8080/api/files/shared/${token}`, '_blank');
+    // Tạo thẻ <a> ẩn để ép trình duyệt tải file mà không mở tab lỗi rác
+    const link = document.createElement('a');
+    link.href = `http://localhost:8080/api/files/shared/${token}`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   isExpired(expiresAt: string): boolean {

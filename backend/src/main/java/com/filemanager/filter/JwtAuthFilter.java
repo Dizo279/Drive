@@ -25,12 +25,15 @@ public class JwtAuthFilter implements ContainerRequestFilter {
             return;
         }
 
+        // Lấy đường dẫn thực tế mà hệ thống nhận được
         String path = requestContext.getUriInfo().getPath();
         
-        // 2. MỞ KHÓA TẠI ĐÂY: Bỏ qua xác thực cho các endpoint Auth và Share public
-        // Gộp chung vào 1 lệnh if và đặt TRƯỚC khi kiểm tra Token
-        if (path.contains("auth") || path.contains("shared")) {
-            return;
+        // In ra Terminal để debug (sẽ giúp bạn thấy rõ đường dẫn trông như thế nào)
+        System.out.println("-----> [JwtFilter] Đang kiểm tra đường dẫn: " + path);
+
+        // BẮT CHUẨN XÁC 100%: Dùng "shared/" (có dấu /) để phân biệt hoàn toàn với "shared-by-me"
+        if (path.contains("auth") || path.contains("shared/")) {
+            return; // Mở cổng cho phép tải file mà không cần Token
         }
 
         // 3. Kiểm tra Token cho các request còn lại (đã an toàn)
