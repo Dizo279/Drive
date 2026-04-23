@@ -1,0 +1,95 @@
+<div class="apple-admin-wrapper">
+  <nav class="global-nav">
+    <div class="nav-container">
+      <a routerLink="/files" class="back-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>Back to Files</span>
+      </a>
+      <div class="nav-title">Admin Center</div>
+      <div class="nav-spacer"></div>
+    </div>
+  </nav>
+
+  <main class="admin-main">
+    <header class="admin-header">
+      <div class="header-content">
+        <h1 class="main-title">User Management</h1>
+        <p class="main-subtitle">Monitor system activity, manage permissions, and subscription tiers.</p>
+      </div>
+
+      <div class="admin-controls">
+        <div class="search-box">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" placeholder="Search by name or email..." [(ngModel)]="searchTerm" (input)="onSearch()">
+        </div>
+        
+        <div class="sort-control">
+          <span class="control-label">Sort by:</span>
+          <select [(ngModel)]="sortBy" (change)="onSort()">
+            <option value="name">Name</option>
+            <option value="role">Role</option>
+            <option value="tier">Tier</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <div class="admin-card">
+      <div *ngIf="loading" class="state-view">
+        <div class="apple-spinner"></div>
+        <p>Refreshing directory...</p>
+      </div>
+
+      <table *ngIf="!loading && filteredUsers.length > 0" class="admin-table">
+        <thead>
+          <tr>
+            <th style="width: 40%">User</th>
+            <th style="width: 15%">Status</th>
+            <th style="width: 15%">Tier</th>
+            <th style="width: 30%; text-align: right;">Management</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of filteredUsers">
+            <td class="user-cell">
+              <div class="user-avatar">
+                {{ (user.fullName || user.username || '?').charAt(0) | uppercase }}
+              </div>
+              <div class="user-meta">
+                <span class="user-full-name">{{ user.fullName || user.username }}</span>
+                <span class="user-email-text">{{ user.email }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="apple-badge" [class.badge-admin]="user.role === 'ADMIN'">
+                {{ user.role }}
+              </span>
+            </td>
+            <td>
+              <span class="apple-badge badge-outline" [class.badge-pro]="user.tier === 'PRO'">
+                {{ user.tier || 'FREE' }}
+              </span>
+            </td>
+            <td class="action-cell">
+              <div class="button-group">
+                <button class="action-btn" (click)="toggleRole(user)" title="Toggle Permissions">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </button>
+                <button class="action-btn" (click)="toggleTier(user)" title="Change Tier">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </button>
+                <button class="action-btn delete" (click)="deleteUser(user)" title="Delete Account">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="!loading && filteredUsers.length === 0" class="state-view">
+        <p>No matches found for your search.</p>
+      </div>
+    </div>
+  </main>
+</div>

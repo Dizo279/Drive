@@ -5,6 +5,7 @@ import { FileUploadComponent } from './features/files/components/file-upload/fil
 import { FileListComponent } from './features/files/components/file-list/file-list';
 import { AccountSettingsComponent } from './features/files/components/account-settings/account-settings';
 import { SharedListComponent } from './features/files/components/shared-list/shared-list';
+import { AdminDashboardComponent } from './features/admin/components/admin-dashboard/admin-dashboard';
 
 
 
@@ -15,5 +16,7 @@ export const routes: Routes = [
   { path: 'files/upload', component: FileUploadComponent },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'settings', component: AccountSettingsComponent },
-  { path: 'shared', component: SharedListComponent }
+  { path: 'shared', component: SharedListComponent },
+  { path: 'admin', component: AdminDashboardComponent }
+
 ];

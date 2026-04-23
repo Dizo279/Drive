@@ -13,6 +13,9 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.util.List;
+import java.util.Map;
+
 @Component
 @Path("/users")
 public class UserResource {
@@ -183,4 +186,3 @@ public class UserResource {
         }
     }
 }
-

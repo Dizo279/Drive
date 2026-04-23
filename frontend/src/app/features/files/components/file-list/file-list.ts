@@ -1,17 +1,17 @@
 import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { HttpEventType, HttpClient, HttpHeaders } from '@angular/common/http';
-import { CommonModule } from '@angular/common';
+import { CommonModule} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FileService } from '../../file';
 import { AuthService } from '../../../auth/auth';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-file-list',
   templateUrl: './file-list.html',
   styleUrls: ['./file-list.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink]
+  imports: [CommonModule, FormsModule, RouterLink, RouterModule]
 })
 export class FileListComponent implements OnInit {
   allFiles: any[] = [];
@@ -47,6 +47,8 @@ export class FileListComponent implements OnInit {
   expireDays: number | null = null;
   isSharing: boolean = false;
 
+  isAdmin: boolean = false;
+
   constructor(
     private fileService: FileService,
     private authService: AuthService,
@@ -57,26 +59,33 @@ export class FileListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-    const token = localStorage.getItem('jwt_token');
-    if (token) {
-        // Gọi API để lấy dữ liệu Full từ Database
-        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-        this.http.get('http://localhost:8080/api/users/me', { headers }).subscribe({
-          next: (data: any) => {
-            this.currentUser = data; // Gán toàn bộ data (bao gồm fullName, avatarUrl)
-            this.cdr.detectChanges();
-          },
-          error: () => {
-            // Fallback nếu API lỗi (giải mã từ token như cũ)
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            this.currentUser = { username: payload.sub };
-          }
-        });
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      const token = localStorage.getItem('jwt_token');
+      if (token) {
+          // Gọi API để lấy dữ liệu Full từ Database
+          const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+          this.http.get('http://localhost:8080/api/users/me', { headers }).subscribe({
+            next: (data: any) => {
+              this.currentUser = data;
+              
+              // BỔ SUNG LỆNH NÀY: Kiểm tra role để hiện nút Admin
+              this.isAdmin = (data.role && data.role.toUpperCase() === 'ADMIN');
+              
+              this.cdr.detectChanges();
+            },
+            error: () => {
+              // Fallback nếu API lỗi
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              this.currentUser = { username: payload.sub };
+              
+              // Bổ sung kiểm tra role từ token (nếu token có chứa role)
+              this.isAdmin = (payload.role && payload.role.toUpperCase() === 'ADMIN');
+            }
+          });
+      }
+      this.loadData();
     }
-    this.loadData();
   }
-}
 
   loadData(): void {
     this.loading = true;

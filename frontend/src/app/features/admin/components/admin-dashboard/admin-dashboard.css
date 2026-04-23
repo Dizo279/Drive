@@ -1,0 +1,194 @@
+.apple-admin-wrapper {
+  background-color: #F5F5F7;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: #1D1D1F;
+}
+
+/* 1. Global Nav (Glassmorphism) */
+.global-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  height: 52px;
+}
+
+.nav-container {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 22px;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #0071E3;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 400;
+  transition: opacity 0.2s;
+}
+
+.back-link:hover { opacity: 0.7; }
+
+.nav-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* 2. Header & Controls */
+.admin-main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 48px 22px;
+}
+
+.main-title {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  margin: 0;
+}
+
+.main-subtitle {
+  font-size: 19px;
+  color: #86868B;
+  margin: 8px 0 32px;
+}
+
+.admin-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.search-box {
+  position: relative;
+  width: 320px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #86868B;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 10px 10px 38px;
+  background: rgba(0,0,0,0.05);
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  transition: background 0.2s;
+}
+
+.search-box input:focus { background: rgba(0,0,0,0.08); }
+
+.sort-control {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-control select {
+  background: none;
+  border: none;
+  color: #0071E3;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* 3. Main Table Card */
+.admin-card {
+  background: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th {
+  background: #FAFAFB;
+  text-align: left;
+  padding: 14px 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #86868B;
+  text-transform: uppercase;
+  border-bottom: 1px solid #F5F5F7;
+}
+
+.admin-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #F5F5F7;
+  font-size: 15px;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.user-avatar {
+  width: 38px;
+  height: 38px;
+  background: #E8E8ED;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #515154;
+}
+
+.user-full-name { display: block; font-weight: 600; }
+.user-email-text { display: block; font-size: 13px; color: #86868B; }
+
+/* Badges */
+.apple-badge {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #F5F5F7;
+}
+
+.badge-admin { background: #E3F1FD; color: #0071E3; }
+.badge-pro { background: #1D1D1F !important; color: #FFFFFF !important; }
+
+/* Actions */
+.action-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  color: #86868B;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover { background: #F5F5F7; color: #0071E3; }
+.action-btn.delete:hover { background: #FFF1F0; color: #FF3B30; }
+
+.button-group { display: flex; gap: 4px; justify-content: flex-end; }
