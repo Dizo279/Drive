@@ -129,6 +129,7 @@ public class FileResource {
             metadata.setFileName(originalName);
             metadata.setFilePath(savedFileName);
             metadata.setFileSize(exactSizeBytes);
+            metadata.setMimeType(Files.probeContentType(Paths.get(storageService.getUploadDir()).resolve(savedFileName)));
             metadata.setIsFolder(false); // Xác nhận đây là file, không phải thư mục
             metadata.setParentId(parentId);
             

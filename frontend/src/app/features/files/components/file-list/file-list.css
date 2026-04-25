@@ -68,6 +68,34 @@
 .quota-info .used { font-size: 1rem; font-weight: 600; }
 .quota-info .total { font-size: 0.75rem; color: var(--text-muted); }
 
+/* --- UPGRADE BUTTON (Apple Primary Blue CTA) --- */
+.upgrade-btn-sidebar {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px 15px;
+  background: #0071e3;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s ease, transform 0.1s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.upgrade-btn-sidebar:hover {
+  background: #0077ed;
+}
+
+.upgrade-btn-sidebar:active {
+  transform: scale(0.98);
+}
+
 /* --- USER FOOTER --- */
 .user-footer { height: 64px; padding: 0 16px; display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border-color); }
 .avatar { width: 32px; height: 32px; background: #e8e8ed; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--text-main); }

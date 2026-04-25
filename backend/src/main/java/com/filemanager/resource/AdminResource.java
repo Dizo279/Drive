@@ -1,7 +1,9 @@
 package com.filemanager.resource;
 
 import com.filemanager.entity.User;
+import com.filemanager.entity.UpgradeRequest;
 import com.filemanager.repository.UserRepository;
+import com.filemanager.repository.UpgradeRequestRepository;
 
 import org.springframework.stereotype.Component;
 
@@ -11,6 +13,9 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.sse.Sse;
+import jakarta.ws.rs.sse.SseEventSink;
+import com.filemanager.service.NotificationService;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +25,12 @@ public class AdminResource {
 
     @Inject
     private UserRepository userRepository;
+
+    @Inject
+    private UpgradeRequestRepository upgradeRequestRepository;
+
+    @Inject
+    private NotificationService notificationService;
 
     // Hàm dùng chung để kiểm tra quyền Admin cực kỳ bảo mật
     private boolean isAdmin(ContainerRequestContext requestContext) {
@@ -75,23 +86,66 @@ public class AdminResource {
         User targetUser = userRepository.findById(targetUserId).orElse(null);
         if (targetUser == null) return Response.status(Response.Status.NOT_FOUND).build();
         
-        targetUser.setTier(body.get("tier"));
+        String newTier = body.get("tier");
+        targetUser.setTier(newTier);
+        if ("PREMIUM".equalsIgnoreCase(newTier)) {
+            targetUser.setMaxQuota(107374182400L); // 100GB
+        } else {
+            targetUser.setMaxQuota(1073741824L); // 1GB
+        }
         userRepository.save(targetUser);
         
         return Response.ok("{\"message\": \"Cập nhật gói thành công\"}").build();
     }
 
     // 4. API Xóa người dùng
-    @DELETE
-    @Path("/users/{userId}")
+    // 5. API Lấy danh sách yêu cầu nâng cấp đang chờ
+    @GET
+    @Path("/upgrade-requests")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteUser(@PathParam("userId") Long targetUserId, @Context ContainerRequestContext requestContext) {
+    public Response getUpgradeRequests(@Context ContainerRequestContext requestContext) {
+        if (!isAdmin(requestContext)) return Response.status(Response.Status.FORBIDDEN).build();
+        return Response.ok(upgradeRequestRepository.findByStatus("PENDING")).build();
+    }
+
+    // 6. API Phê duyệt/Từ chối yêu cầu nâng cấp
+    @POST
+    @Path("/upgrade-requests/{id}/process")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response processUpgradeRequest(@PathParam("id") Long requestId, Map<String, String> body, @Context ContainerRequestContext requestContext) {
         if (!isAdmin(requestContext)) return Response.status(Response.Status.FORBIDDEN).build();
         
-        // Lưu ý: Tùy thuộc vào logic database của bạn, nếu User có chứa File, 
-        // bạn có thể cần xóa File trước khi xóa User để tránh lỗi Foreign Key.
-        userRepository.deleteById(targetUserId);
+        UpgradeRequest request = upgradeRequestRepository.findById(requestId).orElse(null);
+        if (request == null) return Response.status(Response.Status.NOT_FOUND).build();
         
-        return Response.ok("{\"message\": \"Xóa người dùng thành công\"}").build();
+        String action = body.get("action"); // "APPROVE" hoặc "REJECT"
+        if ("APPROVE".equalsIgnoreCase(action)) {
+            User user = userRepository.findById(request.getUserId()).orElse(null);
+            if (user != null) {
+                user.setTier("PREMIUM");
+                user.setMaxQuota(107374182400L); // 100GB
+                userRepository.save(user);
+            }
+            request.setStatus("APPROVED");
+        } else {
+            request.setStatus("REJECTED");
+        }
+        
+        upgradeRequestRepository.save(request);
+        return Response.ok("{\"message\": \"Đã xử lý yêu cầu nâng cấp\"}").build();
+    }
+
+    // 7. API SSE - Real-time notifications cho Admin
+    @GET
+    @Path("/sse/notifications")
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    public void subscribeToNotifications(@Context SseEventSink eventSink, @Context Sse sse, @Context ContainerRequestContext requestContext) {
+        if (!isAdmin(requestContext)) {
+            eventSink.close();
+            return;
+        }
+        notificationService.setSse(sse);
+        notificationService.registerAdmin(eventSink);
     }
 }

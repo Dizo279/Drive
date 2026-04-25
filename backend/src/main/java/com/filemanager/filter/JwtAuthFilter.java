@@ -37,15 +37,22 @@ public class JwtAuthFilter implements ContainerRequestFilter {
         }
 
         // 3. Kiểm tra Token cho các request còn lại (đã an toàn)
+        String token = null;
         String authHeader = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        } else {
+            // Hỗ trợ SSE: Token có thể được truyền qua query parameter
+            token = requestContext.getUriInfo().getQueryParameters().getFirst("token");
+        }
+
+        if (token == null) {
             requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED)
                     .entity("Thiếu hoặc sai định dạng Authorization header").build());
             return;
         }
 
-        String token = authHeader.substring(7);
         try {
             Claims claims = jwtUtil.validateTokenAndGetClaims(token);
             // Lưu userId vào context để các endpoint khác sử dụng

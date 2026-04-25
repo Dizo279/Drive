@@ -25,4 +25,12 @@ export class AdminService {
   deleteUser(userId: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/users/${userId}`);
   }
+
+  getUpgradeRequests(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/upgrade-requests`);
+  }
+
+  processUpgradeRequest(requestId: number, action: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/upgrade-requests/${requestId}/process`, { action });
+  }
 }

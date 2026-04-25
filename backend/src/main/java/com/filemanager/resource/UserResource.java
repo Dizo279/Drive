@@ -1,7 +1,9 @@
 package com.filemanager.resource;
 
 import com.filemanager.entity.User;
+import com.filemanager.entity.UpgradeRequest;
 import com.filemanager.repository.UserRepository;
+import com.filemanager.repository.UpgradeRequestRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -15,6 +17,8 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import com.filemanager.service.NotificationService;
 
 @Component
 @Path("/users")
@@ -22,6 +26,12 @@ public class UserResource {
 
     @Inject
     private UserRepository userRepository;
+
+    @Inject
+    private UpgradeRequestRepository upgradeRequestRepository;
+
+    @Inject
+    private NotificationService notificationService;
 
     @Inject
     private PasswordEncoder passwordEncoder;
@@ -125,11 +135,11 @@ public class UserResource {
         }
     }
 
-    // 3. API Nâng cấp gói cước lên PREMIUM (100GB)
+    // 3. API Gửi yêu cầu nâng cấp gói cước
     @POST
-    @Path("/upgrade")
+    @Path("/upgrade-request")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response upgradeToPremium(@Context ContainerRequestContext requestContext) {
+    public Response requestUpgrade(@Context ContainerRequestContext requestContext) {
         try {
             Object userIdObj = requestContext.getProperty("userId");
             if (userIdObj == null) {
@@ -140,13 +150,29 @@ public class UserResource {
             User user = userRepository.findById(userId).orElse(null);
             if (user == null) return Response.status(Response.Status.NOT_FOUND).build();
 
-            user.setTier("PREMIUM");
-            // Set maxQuota lên 100GB (100 * 1024 * 1024 * 1024)
-            user.setMaxQuota(107374182400L);
-            
-            userRepository.save(user);
+            if ("PREMIUM".equals(user.getTier())) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Bạn đã là PREMIUM rồi\"}").build();
+            }
 
-            return Response.ok("{\"message\": \"Tài khoản đã được nâng cấp lên PREMIUM với 100GB dung lượng!\"}").build();
+            // Kiểm tra xem đã có yêu cầu nào đang chờ xử lý chưa
+            Optional<UpgradeRequest> existing = upgradeRequestRepository.findByUserIdAndStatus(userId, "PENDING");
+            if (existing.isPresent()) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Bạn đã gửi một yêu cầu nâng cấp, vui lòng chờ Admin duyệt\"}").build();
+            }
+
+            UpgradeRequest request = new UpgradeRequest();
+            request.setUserId(userId);
+            request.setUsername(user.getUsername());
+            request.setCurrentTier(user.getTier());
+            request.setRequestedTier("PREMIUM");
+            request.setStatus("PENDING");
+            
+            upgradeRequestRepository.save(request);
+
+            // Gửi thông báo real-time đến Admin qua SSE
+            notificationService.notifyNewUpgradeRequest(request);
+
+            return Response.ok("{\"message\": \"Yêu cầu nâng cấp của bạn đã được gửi tới Admin!\"}").build();
         } catch (Exception e) {
             e.printStackTrace();
             return Response.serverError().build();

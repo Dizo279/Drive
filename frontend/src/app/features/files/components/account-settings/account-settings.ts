@@ -154,4 +154,21 @@ export class AccountSettingsComponent implements OnInit {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
+
+  requestUpgrade(): void {
+    if (confirm('Bạn có muốn gửi yêu cầu nâng cấp lên PREMIUM (100GB)?')) {
+      this.http.post(`${this.apiUrl}/upgrade-request`, {}, this.getHeaders()).subscribe({
+        next: (res: any) => {
+          this.successMsg = res.message || 'Yêu cầu nâng cấp đã được gửi!';
+          this.errorMsg = '';
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.errorMsg = err.error?.error || 'Không thể gửi yêu cầu nâng cấp.';
+          this.successMsg = '';
+          this.cdr.detectChanges();
+        }
+      });
+    }
+  }
 }

@@ -48,6 +48,8 @@ export class FileListComponent implements OnInit {
   isSharing: boolean = false;
 
   isAdmin: boolean = false;
+  isUpgradePending: boolean = false;
+
 
   constructor(
     private fileService: FileService,
@@ -87,11 +89,15 @@ export class FileListComponent implements OnInit {
     }
   }
 
-  loadData(): void {
+    loadData(): void {
     this.loading = true;
     this.cdr.detectChanges();
 
+    // Reset trạng thái pending khi load lại
+    this.isUpgradePending = false;
+
     this.fileService.getFiles(this.currentParentId).subscribe({
+
       next: (data) => {
         this.zone.run(() => {
           try {
@@ -435,7 +441,7 @@ export class FileListComponent implements OnInit {
     this.selectedFileForShare = null;
   }
 
-  displayToast(message: string) {
+  displayToast(message: string): void {
     this.toastMessage = message;
     this.showToast = true;
     
@@ -446,6 +452,24 @@ export class FileListComponent implements OnInit {
       this.showToast = false;
       this.cdr.detectChanges(); // Ép Angular cập nhật UI
     }, 3000);
+  }
+
+  requestUpgrade(): void {
+    if (confirm('Bạn có muốn gửi yêu cầu nâng cấp lên PREMIUM (100GB) không?')) {
+      const token = localStorage.getItem('jwt_token');
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    
+      this.http.post('http://localhost:8080/api/users/upgrade-request', {}, { headers }).subscribe({
+        next: (res: any) => {
+          this.displayToast(res.message);
+          this.isUpgradePending = true;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.displayToast(err.error?.error || 'Không thể gửi yêu cầu.');
+        }
+      });
+    }
   }
 
 }

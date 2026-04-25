@@ -1,7 +1,7 @@
 .apple-admin-wrapper {
   background-color: #F5F5F7;
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
   color: #1D1D1F;
 }
 
@@ -57,6 +57,7 @@
   font-size: 40px;
   font-weight: 600;
   letter-spacing: -0.022em;
+  line-height: 1.10;
   margin: 0;
 }
 
@@ -64,6 +65,8 @@
   font-size: 19px;
   color: #86868B;
   margin: 8px 0 32px;
+  font-weight: 400;
+  line-height: 1.47;
 }
 
 .admin-controls {
@@ -118,8 +121,8 @@
 .admin-card {
   background: #FFFFFF;
   border-radius: 18px;
-  border: 1px solid rgba(0,0,0,0.08);
   overflow: hidden;
+  box-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
 }
 
 .admin-table {
@@ -176,6 +179,9 @@
 
 .badge-admin { background: #E3F1FD; color: #0071E3; }
 .badge-pro { background: #1D1D1F !important; color: #FFFFFF !important; }
+.badge-premium { background: #1D1D1F; color: #FFFFFF; }
+.badge-free { background: #F5F5F7; color: #86868B; }
+.badge-pending { background: #FFF8E1; color: #F5A623; }
 
 /* Actions */
 .action-btn {
@@ -190,5 +196,96 @@
 
 .action-btn:hover { background: #F5F5F7; color: #0071E3; }
 .action-btn.delete:hover { background: #FFF1F0; color: #FF3B30; }
+.action-btn.success { color: #34C759; }
+.action-btn.success:hover { background: #E8F5E9; color: #248A3D; }
 
 .button-group { display: flex; gap: 4px; justify-content: flex-end; }
+
+/* 4. Tab Navigation */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 0 4px;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #86868B;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.tab-btn:hover {
+  background: rgba(0,0,0,0.04);
+  color: #1D1D1F;
+}
+
+.tab-btn.active {
+  background: #FFFFFF;
+  color: #1D1D1F;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.notification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: #FF3B30;
+  color: #FFFFFF;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 6px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* 5. Section Title */
+.section-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 24px 20px 16px;
+  color: #1D1D1F;
+}
+
+/* 6. State View (Loading & Empty) */
+.state-view {
+  text-align: center;
+  padding: 60px 20px;
+  color: #86868B;
+  font-size: 15px;
+}
+
+/* 7. Apple Spinner */
+.apple-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #F5F5F7;
+  border-top-color: #0071E3;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 8. Control Label */
+.control-label {
+  font-size: 14px;
+  color: #86868B;
+}

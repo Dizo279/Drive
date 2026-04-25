@@ -81,7 +81,7 @@
       </a>
     </nav>
 
-    <div class="quota-box">
+        <div class="quota-box">
       <div class="quota-header">
         <span>Storage</span>
         <span class="badge"
@@ -103,7 +103,18 @@
           <div class="total">used of {{ formatSize(currentUser?.maxQuota || 1073741824) }}</div>
         </div>
       </div>
+      
+      <!-- NÚT NÂNG CẤP MỚI -->
+      <button *ngIf="currentUser?.tier !== 'PREMIUM'" 
+              class="upgrade-btn-sidebar" 
+              (click)="requestUpgrade()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12l7 7 7-7"/>
+        </svg>
+        Upgrade to Premium
+      </button>
     </div>
+
 
     <div class="user-footer">
       <a routerLink="/settings" class="user-profile-link" title="Go to Account Settings">

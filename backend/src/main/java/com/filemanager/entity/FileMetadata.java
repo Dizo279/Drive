@@ -31,11 +31,15 @@ public class FileMetadata {
     @Column(name = "parent_id")
     private Long parentId;
 
+    @Column(name = "mime_type")
+    private String mimeType;
+
     // Getters
     public Long getId() { return id; }
     public Long getOwnerId() { return ownerId; }
     public String getFileName() { return fileName; }
     public String getFilePath() { return filePath; }
+    public String getMimeType() { return mimeType; }
     public Long getFileSize() { return fileSize; }
     public java.time.LocalDateTime getCreatedAt() { return createdAt; }
     public Boolean getIsFolder() { return isFolder; }
@@ -46,6 +50,7 @@ public class FileMetadata {
     public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
     public void setFileName(String fileName) { this.fileName = fileName; }
     public void setFilePath(String filePath) { this.filePath = filePath; }
+    public void setMimeType(String mimeType) { this.mimeType = mimeType; }
     public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
     public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setIsFolder(Boolean isFolder) { this.isFolder = isFolder; }

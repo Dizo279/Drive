@@ -216,6 +216,29 @@
 
 .apple-btn-primary:hover { background: var(--apple-link); }
 
+/* Apple Primary Blue CTA - Upgrade Button */
+.apple-btn-upgrade {
+  background: #0071e3;
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 17px;
+  font-weight: 400;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: background 0.2s ease, transform 0.1s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+.apple-btn-upgrade:hover {
+  background: #0077ed;
+}
+
+.apple-btn-upgrade:active {
+  transform: scale(0.98);
+}
+
 /* Storage Stat */
 .stat-main { font-size: 40px; font-weight: 600; color: var(--apple-black); }
 .stat-sub { font-size: 17px; color: var(--apple-text-secondary); margin-bottom: 20px; }

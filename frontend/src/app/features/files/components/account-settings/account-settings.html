@@ -99,6 +99,9 @@
           <div class="progress-fill" [style.width.%]="(user.usedQuota / user.maxQuota) * 100"></div>
         </div>
         <p class="storage-desc">Gói lưu trữ của bạn được bảo mật bằng mã hóa đầu cuối Ethereal.</p>
+        <button *ngIf="user.tier !== 'PREMIUM'" type="button" class="apple-btn-upgrade" (click)="requestUpgrade()">
+          Nâng cấp lên PREMIUM
+        </button>
       </section>
     </div>
   </main>
