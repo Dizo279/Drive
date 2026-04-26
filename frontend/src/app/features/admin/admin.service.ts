@@ -14,6 +14,10 @@ export class AdminService {
     return this.http.get<any[]>(`${this.apiUrl}/users`);
   }
 
+  getStats(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/stats`);
+  }
+
   updateRole(userId: number, role: string): Observable<any> {
     return this.http.put(`${this.apiUrl}/users/${userId}/role`, { role });
   }

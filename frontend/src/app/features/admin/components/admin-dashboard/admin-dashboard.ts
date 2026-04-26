@@ -26,6 +26,21 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   hasNewNotification: boolean = false;
   activeTab: 'users' | 'requests' = 'users';
 
+  // Edit Panel
+  selectedUserForEdit: any = null;
+  editRole: string = '';
+  editTier: string = '';
+
+  // Delete Panel
+  userToDelete: any = null;
+
+  // Stats
+  stats = {
+    totalUsers: 0,
+    totalAdmins: 0,
+    totalStorageUsed: 0
+  };
+
   constructor(
     private adminService: AdminService,
     private cdr: ChangeDetectorRef,
@@ -36,9 +51,28 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
       this.loadUsers();
+      this.loadStats();
       this.loadUpgradeRequests();
       this.connectToSSE();
     }
+  }
+
+  loadStats() {
+    this.adminService.getStats().subscribe({
+      next: (data) => {
+        this.stats = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Lỗi tải thống kê:', err)
+    });
+  }
+
+  formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
   loadUsers() {
@@ -82,24 +116,83 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.filteredUsers = result;
   }
 
-  toggleRole(user: any) {
-    const newRole = user.role === 'ADMIN' ? 'USER' : 'ADMIN';
-    if (confirm(`Change ${user.username}'s role to ${newRole}?`)) {
-      this.adminService.updateRole(user.id, newRole).subscribe(() => this.loadUsers());
+  // --- EDIT USER PANEL ---
+  openEditPanel(user: any) {
+    this.selectedUserForEdit = user;
+    this.editRole = user.role || 'USER';
+    this.editTier = user.tier || 'FREE';
+    this.cdr.detectChanges();
+  }
+
+  closeEditPanel() {
+    this.selectedUserForEdit = null;
+    this.editRole = '';
+    this.editTier = '';
+    this.cdr.detectChanges();
+  }
+
+  saveUserChanges() {
+    if (!this.selectedUserForEdit) return;
+    
+    const userId = this.selectedUserForEdit.id;
+    const roleChanged = this.editRole !== this.selectedUserForEdit.role;
+    const tierChanged = this.editTier !== this.selectedUserForEdit.tier;
+
+    // Update role if changed
+    const roleUpdate = roleChanged 
+      ? this.adminService.updateRole(userId, this.editRole)
+      : null;
+
+    // Update tier if changed
+    const tierUpdate = tierChanged
+      ? this.adminService.updateTier(userId, this.editTier)
+      : null;
+
+    // Execute updates
+    if (roleUpdate && tierUpdate) {
+      roleUpdate.subscribe(() => {
+        tierUpdate.subscribe(() => {
+          this.closeEditPanel();
+          this.loadUsers();
+        });
+      });
+    } else if (roleUpdate) {
+      roleUpdate.subscribe(() => {
+        this.closeEditPanel();
+        this.loadUsers();
+      });
+    } else if (tierUpdate) {
+      tierUpdate.subscribe(() => {
+        this.closeEditPanel();
+        this.loadUsers();
+      });
+    } else {
+      this.closeEditPanel();
     }
   }
 
-  toggleTier(user: any) {
-    const newTier = user.tier === 'PREMIUM' ? 'FREE' : 'PREMIUM';
-    if (confirm(`Change ${user.username}'s tier to ${newTier}?`)) {
-      this.adminService.updateTier(user.id, newTier).subscribe(() => this.loadUsers());
-    }
+  // --- DELETE USER PANEL ---
+  openDeletePanel(user: any) {
+    this.userToDelete = user;
+    this.cdr.detectChanges();
   }
 
-  deleteUser(user: any) {
-    if (confirm(`Permanently delete account: ${user.username}?`)) {
-      this.adminService.deleteUser(user.id).subscribe(() => this.loadUsers());
-    }
+  closeDeletePanel() {
+    this.userToDelete = null;
+    this.cdr.detectChanges();
+  }
+
+  confirmDelete() {
+    if (!this.userToDelete) return;
+    this.adminService.deleteUser(this.userToDelete.id).subscribe({
+      next: () => {
+        this.closeDeletePanel();
+        this.loadUsers();
+      },
+      error: () => {
+        alert('Failed to delete user.');
+      }
+    });
   }
 
   // --- UPGRADE REQUESTS MANAGEMENT ---

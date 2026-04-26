@@ -17,6 +17,37 @@
         <p class="main-subtitle">Monitor system activity, manage permissions, and subscription tiers.</p>
       </div>
 
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon users-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ stats.totalUsers }}</span>
+            <span class="stat-label">Total Users</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon admins-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ stats.totalAdmins }}</span>
+            <span class="stat-label">Admins</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon storage-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value">{{ formatBytes(stats.totalStorageUsed) }}</span>
+            <span class="stat-label">Storage Used</span>
+          </div>
+        </div>
+      </div>
+
       <div class="admin-controls">
         <div class="search-box">
           <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -56,10 +87,12 @@
       <table *ngIf="!loading && filteredUsers.length > 0" class="admin-table">
         <thead>
           <tr>
-            <th style="width: 40%">User</th>
-            <th style="width: 15%">Status</th>
-            <th style="width: 15%">Tier</th>
-            <th style="width: 30%; text-align: right;">Management</th>
+            <th style="width: 28%">User</th>
+            <th style="width: 12%">Role</th>
+            <th style="width: 12%">Tier</th>
+            <th style="width: 20%">Storage</th>
+            <th style="width: 13%">Created</th>
+            <th style="width: 15%; text-align: right;">Management</th>
           </tr>
         </thead>
         <tbody>
@@ -83,15 +116,23 @@
                 {{ user.tier || 'FREE' }}
               </span>
             </td>
+            <td>
+              <div class="storage-cell">
+                <span class="storage-text">{{ formatBytes(user.usedQuota || 0) }} / {{ formatBytes(user.maxQuota || 1073741824) }}</span>
+                <div class="storage-bar">
+                  <div class="storage-fill" [style.width.%]="((user.usedQuota || 0) / (user.maxQuota || 1073741824)) * 100"></div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="created-date">{{ user.createdAt | date:'dd/MM/yyyy' }}</span>
+            </td>
             <td class="action-cell">
               <div class="button-group">
-                <button class="action-btn" (click)="toggleRole(user)" title="Toggle Permissions">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <button class="action-btn" (click)="openEditPanel(user)" title="Edit User">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </button>
-                <button class="action-btn" (click)="toggleTier(user)" title="Change Tier">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                </button>
-                <button class="action-btn delete" (click)="deleteUser(user)" title="Delete Account">
+                <button class="action-btn delete" (click)="openDeletePanel(user)" title="Delete Account">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
               </div>
@@ -148,4 +189,109 @@
       </table>
     </div>
   </main>
+
+  <!-- Edit User Panel - Redesigned -->
+  <div class="panel-overlay" *ngIf="selectedUserForEdit" (click)="closeEditPanel()">
+    <div class="edit-panel-v2" (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="edit-header">
+        <div class="edit-user-info">
+          <div class="edit-avatar">
+            {{ (selectedUserForEdit?.fullName || selectedUserForEdit?.username || '?').charAt(0) | uppercase }}
+          </div>
+          <div class="edit-names">
+            <h3 class="edit-name">{{ selectedUserForEdit?.fullName || selectedUserForEdit?.username }}</h3>
+            <p class="edit-email">{{ selectedUserForEdit?.email }}</p>
+          </div>
+        </div>
+        <button class="edit-close-btn" (click)="closeEditPanel()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Role Segmented Control -->
+      <div class="edit-section">
+        <label class="edit-section-label">Role</label>
+        <div class="segmented-control">
+          <button 
+            class="segment-btn" 
+            [class.active]="editRole === 'USER'"
+            (click)="editRole = 'USER'">
+            USER
+          </button>
+          <button 
+            class="segment-btn" 
+            [class.active]="editRole === 'ADMIN'"
+            (click)="editRole = 'ADMIN'">
+            ADMIN
+          </button>
+        </div>
+      </div>
+
+      <!-- Quota Plan Cards -->
+      <div class="edit-section">
+        <label class="edit-section-label">Quota Plan</label>
+        <div class="plan-cards">
+          <div 
+            class="plan-card" 
+            [class.selected]="editTier === 'FREE'"
+            (click)="editTier = 'FREE'">
+            <div class="plan-name">FREE</div>
+            <div class="plan-size">1 GB</div>
+          </div>
+          <div 
+            class="plan-card" 
+            [class.selected]="editTier === 'PREMIUM'"
+            (click)="editTier = 'PREMIUM'">
+            <div class="plan-name">PREMIUM</div>
+            <div class="plan-size">100 GB</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Usage Info -->
+      <div class="edit-section">
+        <label class="edit-section-label">Usage</label>
+        <div class="usage-box">
+          <div class="usage-row">
+            <span class="usage-label">Storage Used</span>
+            <span class="usage-value">{{ formatBytes(selectedUserForEdit?.usedQuota || 0) }} / {{ formatBytes(selectedUserForEdit?.maxQuota || 1073741824) }}</span>
+          </div>
+          <div class="usage-row">
+            <span class="usage-label">Usage Rate</span>
+            <span class="usage-value">{{ ((selectedUserForEdit?.usedQuota || 0) / (selectedUserForEdit?.maxQuota || 1073741824) * 100).toFixed(1) }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="edit-footer">
+        <button class="edit-btn-secondary" (click)="closeEditPanel()">Cancel</button>
+        <button class="edit-btn-primary" (click)="saveUserChanges()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Panel -->
+  <div class="panel-overlay" *ngIf="userToDelete" (click)="closeDeletePanel()">
+    <div class="delete-panel apple-card" (click)="$event.stopPropagation()">
+      <div class="panel-header">
+        <h3>Delete Account</h3>
+        <button class="btn-close-circle" (click)="closeDeletePanel()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="panel-body">
+        <div class="delete-icon-wrapper">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="1.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <p class="delete-warning">Are you sure you want to permanently delete <strong>{{ userToDelete?.username }}</strong>'s account?</p>
+        <p class="delete-hint">This action cannot be undone. All files and data associated with this account will be permanently removed.</p>
+      </div>
+      <div class="panel-footer">
+        <button class="apple-btn-secondary" (click)="closeDeletePanel()">Cancel</button>
+        <button class="apple-btn-danger" (click)="confirmDelete()">Delete Account</button>
+      </div>
+    </div>
+  </div>
 </div>

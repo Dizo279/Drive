@@ -16,6 +16,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.sse.Sse;
 import jakarta.ws.rs.sse.SseEventSink;
 import com.filemanager.service.NotificationService;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,6 +57,26 @@ public class AdminResource {
         
         List<User> users = userRepository.findAll();
         return Response.ok(users).build();
+    }
+
+    // 1.5 API Lấy thống kê hệ thống
+    @GET
+    @Path("/stats")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getStats(@Context ContainerRequestContext requestContext) {
+        if (!isAdmin(requestContext)) return Response.status(Response.Status.FORBIDDEN).build();
+        
+        List<User> allUsers = userRepository.findAll();
+        long totalUsers = allUsers.size();
+        long totalAdmins = allUsers.stream().filter(u -> "ADMIN".equalsIgnoreCase(u.getRole())).count();
+        long totalStorageUsed = allUsers.stream().mapToLong(User::getUsedQuota).sum();
+        
+        HashMap<String, Object> stats = new HashMap<>();
+        stats.put("totalUsers", totalUsers);
+        stats.put("totalAdmins", totalAdmins);
+        stats.put("totalStorageUsed", totalStorageUsed);
+        
+        return Response.ok(stats).build();
     }
 
     // 2. API Đổi Role (Quyền)
@@ -99,6 +120,19 @@ public class AdminResource {
     }
 
     // 4. API Xóa người dùng
+    @DELETE
+    @Path("/users/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteUser(@PathParam("userId") Long targetUserId, @Context ContainerRequestContext requestContext) {
+        if (!isAdmin(requestContext)) return Response.status(Response.Status.FORBIDDEN).build();
+        
+        User targetUser = userRepository.findById(targetUserId).orElse(null);
+        if (targetUser == null) return Response.status(Response.Status.NOT_FOUND).build();
+        
+        userRepository.delete(targetUser);
+        return Response.ok("{\"message\": \"Đã xóa người dùng thành công\"}").build();
+    }
+
     // 5. API Lấy danh sách yêu cầu nâng cấp đang chờ
     @GET
     @Path("/upgrade-requests")
