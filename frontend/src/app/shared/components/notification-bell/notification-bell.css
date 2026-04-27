@@ -1,0 +1,160 @@
+.notif-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.icon-action-btn {
+  position: relative;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.icon-action-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.notif-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ff3b30;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notif-dropdown {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  width: 360px;
+  max-height: 480px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: dropdownIn 0.2s ease-out;
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.notif-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #1d1d1f;
+}
+
+.mark-all-btn {
+  background: none;
+  border: none;
+  color: #007aff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mark-all-btn:hover {
+  text-decoration: underline;
+}
+
+.notif-list {
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f5f5f7;
+  transition: background 0.15s;
+}
+
+.notif-item:hover {
+  background: #f5f5f7;
+}
+
+.notif-item.unread {
+  background: #f0f7ff;
+}
+
+.notif-item.unread:hover {
+  background: #e6f2ff;
+}
+
+.notif-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-message {
+  margin: 0;
+  font-size: 14px;
+  color: #1d1d1f;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.notif-time {
+  font-size: 12px;
+  color: #86868b;
+  margin-top: 4px;
+  display: block;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #86868b;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.delete-btn:hover {
+  color: #ff3b30;
+  background: rgba(255, 59, 48, 0.1);
+}
+
+.notif-empty {
+  padding: 24px;
+  text-align: center;
+  color: #86868b;
+  font-size: 14px;
+}

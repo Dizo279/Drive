@@ -5,13 +5,14 @@ import { FormsModule } from '@angular/forms';
 import { FileService } from '../../file';
 import { AuthService } from '../../../auth/auth';
 import { Router, RouterLink, RouterModule } from '@angular/router';
+import { NotificationBellComponent } from '../../../../shared/components/notification-bell/notification-bell';
 
 @Component({
   selector: 'app-file-list',
   templateUrl: './file-list.html',
   styleUrls: ['./file-list.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterModule]
+  imports: [CommonModule, FormsModule, RouterLink, RouterModule, NotificationBellComponent]
 })
 export class FileListComponent implements OnInit {
   allFiles: any[] = [];

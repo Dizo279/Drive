@@ -22,6 +22,7 @@ public class JerseyConfig extends ResourceConfig {
         register(MultiPartFeature.class);
         register(UserResource.class); // Đăng ký UserResource để quản lý người dùng (nếu có)
         register(AdminResource.class); // Đăng ký AdminResource để quản lý admin (nếu có)
+        register(com.filemanager.resource.NotificationResource.class); // Đăng ký NotificationResource
 
     }
 }

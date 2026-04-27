@@ -2,9 +2,11 @@ package com.filemanager.resource;
 
 import com.filemanager.entity.FileMetadata;
 import com.filemanager.entity.FileShare;
+import com.filemanager.entity.Notification;
 import com.filemanager.repository.FileRepository;
 import com.filemanager.repository.FileShareRepository;
 import com.filemanager.repository.UserRepository;
+import com.filemanager.service.NotificationService;
 import com.filemanager.service.QuotaService;
 import com.filemanager.service.StorageService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -36,7 +38,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.beans.factory.annotation.Value;
 
 import jakarta.ws.rs.core.Response;
-import com.filemanager.entity.FileMetadata;
 import com.filemanager.entity.User;
 
 @Component
@@ -91,6 +92,9 @@ public class FileResource {
 
     @Inject
     FileShareRepository fileShareRepository;
+
+    @Inject
+    private NotificationService notificationService;
 
    @POST
     @Path("/upload")
@@ -317,6 +321,7 @@ public class FileResource {
 
             // LUỒNG 2: CHIA SẺ ĐỊNH DANH QUA EMAIL
             int successCount = 0;
+            User currentUser = userRepository.findById(userId).orElse(null);
             for (String email : requestData.emails) {
                 // Tìm ID người nhận dựa trên Email
                 User targetUser = userRepository.findByEmail(email.trim()).orElse(null);
@@ -338,6 +343,14 @@ public class FileResource {
                         newShare.setExpiresAt(LocalDateTime.now().plusDays(requestData.expireDays));
                     }
                     fileShareRepository.save(newShare);
+
+                    // Tạo notification cho người nhận
+                    Notification notification = new Notification();
+                    notification.setUserId(targetUser.getId());
+                    notification.setType("FILE_SHARED");
+                    notification.setMessage("Người dùng " + (currentUser != null ? currentUser.getUsername() : "Ai đó") + " đã chia sẻ file \"" + file.getFileName() + "\" với bạn.");
+                    notification.setTargetUrl("/shared");
+                    notificationService.sendNotification(notification);
                 }
                 successCount++;
             }

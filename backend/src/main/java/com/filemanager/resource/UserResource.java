@@ -1,5 +1,6 @@
 package com.filemanager.resource;
 
+import com.filemanager.entity.Notification;
 import com.filemanager.entity.User;
 import com.filemanager.entity.UpgradeRequest;
 import com.filemanager.repository.UserRepository;
@@ -169,8 +170,19 @@ public class UserResource {
             
             upgradeRequestRepository.save(request);
 
-            // Gửi thông báo real-time đến Admin qua SSE
+            // Gửi thông báo real-time đến Admin qua SSE (legacy)
             notificationService.notifyNewUpgradeRequest(request);
+
+            // Tạo persisted notification cho tất cả admin
+            List<User> admins = userRepository.findByRole("ADMIN");
+            for (User admin : admins) {
+                Notification notification = new Notification();
+                notification.setUserId(admin.getId());
+                notification.setType("UPGRADE_REQUEST");
+                notification.setMessage("Người dùng " + user.getUsername() + " đã gửi yêu cầu nâng cấp lên PREMIUM.");
+                notification.setTargetUrl("/admin");
+                notificationService.sendNotification(notification);
+            }
 
             return Response.ok("{\"message\": \"Yêu cầu nâng cấp của bạn đã được gửi tới Admin!\"}").build();
         } catch (Exception e) {

@@ -1,0 +1,36 @@
+<div class="notif-wrapper">
+  <button class="icon-action-btn" title="Notifications" (click)="toggleDropdown()">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
+    </svg>
+    <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+  </button>
+
+  <div class="notif-dropdown" *ngIf="isOpen" (clickOutside)="closeDropdown()">
+    <div class="notif-header">
+      <span class="notif-title">Thông báo</span>
+      <button class="mark-all-btn" *ngIf="unreadCount > 0" (click)="markAllAsRead()">Đánh dấu đã đọc</button>
+    </div>
+    
+    <div class="notif-list">
+      <div 
+        *ngFor="let notif of notifications" 
+        class="notif-item" 
+        [class.unread]="!notif.read"
+        (click)="onNotificationClick(notif)"
+      >
+        <div class="notif-content">
+          <p class="notif-message">{{ notif.message }}</p>
+          <span class="notif-time">{{ notif.createdAt | date:'short' }}</span>
+        </div>
+        <button class="delete-btn" (click)="deleteNotification($event, notif)" title="Xóa">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      
+      <div *ngIf="notifications.length === 0" class="notif-empty">
+        Không có thông báo nào.
+      </div>
+  </div>
