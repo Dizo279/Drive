@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common'; // Cung cấp *ngIf
 import { Router, RouterLink } from '@angular/router'; // Cung cấp routerLink
-import { AuthService } from '../../auth';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { FileService } from '../../file';
+import { FileService } from '../../services/file.service';
 import { forkJoin } from 'rxjs';
 
 @Component({

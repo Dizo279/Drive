@@ -2,7 +2,7 @@ import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AuthService } from '../../features/auth/auth';
+import { AuthService } from '@features/auth/services/auth.service';
 
 @Injectable()
 export class JwtInterceptor implements HttpInterceptor {

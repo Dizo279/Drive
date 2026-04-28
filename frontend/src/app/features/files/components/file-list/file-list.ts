@@ -2,10 +2,10 @@ import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { HttpEventType, HttpClient, HttpHeaders } from '@angular/common/http';
 import { CommonModule} from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { FileService } from '../../file';
-import { AuthService } from '../../../auth/auth';
+import { FileService } from '../../services/file.service';
+import { AuthService } from '@features/auth/services/auth.service';
 import { Router, RouterLink, RouterModule } from '@angular/router';
-import { NotificationBellComponent } from '../../../../shared/components/notification-bell/notification-bell';
+import { NotificationBellComponent } from '@notification/components/notification-bell/notification-bell';
 
 @Component({
   selector: 'app-file-list',

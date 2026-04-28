@@ -2,8 +2,8 @@ import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID, OnDestroy, N
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NotificationBellComponent } from '../../../../shared/components/notification-bell/notification-bell';
-import { AdminService } from '../../admin.service';
+import { NotificationBellComponent } from '@notification/components/notification-bell/notification-bell';
+import { AdminService } from '../../services/admin.service';
 
 @Component({
   selector: 'app-admin-dashboard',
