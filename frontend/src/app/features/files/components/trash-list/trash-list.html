@@ -1,0 +1,56 @@
+<div class="trash-page">
+  <div class="top">
+    <div>
+      <h2>Trash</h2>
+      <p class="sub">Các mục trong Trash sẽ tự xóa sau 30 ngày.</p>
+    </div>
+    <div class="top-actions">
+      <button class="btn btn-danger" (click)="emptyTrash()" [disabled]="clearing || items.length === 0">
+        {{ clearing ? 'Đang dọn...' : 'Empty Trash' }}
+      </button>
+      <a class="btn btn-secondary" routerLink="/files">Quay về My Drive</a>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <span>Đang tải...</span>
+  </div>
+
+  <div *ngIf="!loading && items.length === 0" class="empty">
+    <div class="empty-state-icon">
+      <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path>
+        <path d="M10 11v6M14 11v6" stroke-linecap="round"></path>
+      </svg>
+    </div>
+    <h3>Trash trống</h3>
+    <p>Các mục đã xóa sẽ xuất hiện tại đây.</p>
+  </div>
+
+  <div *ngIf="!loading && items.length > 0" class="table">
+    <div class="head">
+      <div>Tên</div>
+      <div>Kích thước</div>
+      <div>Đã xóa</div>
+      <div>Còn lại</div>
+      <div class="right">Hành động</div>
+    </div>
+
+    <div class="row" *ngFor="let item of items">
+      <div class="name">
+        <span class="pill" [class.folder]="item.isFolder">{{ item.isFolder ? 'Folder' : 'File' }}</span>
+        <span>{{ item.name }}</span>
+      </div>
+      <div>{{ item.isFolder ? '--' : formatSize(item.sizeBytes) }}</div>
+      <div>{{ item.deletedAt | date:'dd MMM yyyy, HH:mm' }}</div>
+      <div>{{ daysLeft(item.deletedAt) }} ngày</div>
+      <div class="right">
+        <button class="restore" (click)="restore(item)">Restore</button>
+        <button class="danger" (click)="permanentlyDelete(item)">Delete forever</button>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -71,4 +71,3 @@ Dự án bắt buộc tuân thủ các công nghệ sau:
 ## 4. Quy trình làm việc của Agent
 1. **Đọc hiểu:** Luôn kiểm tra cấu trúc thư mục hiện tại trước khi tạo file mới.
 2. **Tuân thủ:** Không tự ý thay đổi version của các thư viện trong `pom.xml` hoặc `package.json` trừ khi được yêu cầu.
-3. **Thử nghiệm:** Luôn đảm bảo code không có lỗi syntax trước khi bàn giao.

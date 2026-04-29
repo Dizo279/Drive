@@ -11,7 +11,6 @@ import com.filemanager.service.QuotaService;
 import com.filemanager.service.StorageService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import jakarta.inject.Inject;
@@ -30,14 +29,9 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.beans.factory.annotation.Value;
-
-import jakarta.ws.rs.core.Response;
 import com.filemanager.entity.User;
 
 @Component
@@ -162,9 +156,9 @@ public class FileResource {
 
         // Nếu client truyền parentId, lấy các file trong thư mục đó. Nếu không, lấy ở thư mục gốc.
         if (parentId != null) {
-            files = fileRepository.findByOwnerIdAndParentId(userId, parentId);
+            files = fileRepository.findByOwnerIdAndParentIdAndIsDeletedFalse(userId, parentId);
         } else {
-            files = fileRepository.findByOwnerIdAndParentIdIsNull(userId);
+            files = fileRepository.findByOwnerIdAndParentIdIsNullAndIsDeletedFalse(userId);
         }
         
         return Response.ok(files).build();
@@ -174,6 +168,9 @@ public class FileResource {
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getFileDetail(@PathParam("id") Long id, @Context ContainerRequestContext requestContext) {
+        if (id == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Thiếu id").build();
+        }
         Object userIdObj = requestContext.getProperty("userId");
         if (userIdObj == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -183,7 +180,9 @@ public class FileResource {
         Optional<FileMetadata> fileOpt = fileRepository.findById(id);
         
         // Chỉ trả về file nếu file đó tồn tại VÀ thuộc về user đang request
-        if (fileOpt.isPresent() && fileOpt.get().getOwnerId().equals(userId)) {
+        if (fileOpt.isPresent()
+                && fileOpt.get().getOwnerId().equals(userId)
+                && !Boolean.TRUE.equals(fileOpt.get().getIsDeleted())) {
             return Response.ok(fileOpt.get()).build();
         }
         
@@ -194,6 +193,9 @@ public class FileResource {
     @Path("/{id}/download")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response downloadFile(@PathParam("id") Long id, @Context ContainerRequestContext requestContext) {
+        if (id == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Thiếu id").build();
+        }
         Object userIdObj = requestContext.getProperty("userId");
         if (userIdObj == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -203,7 +205,9 @@ public class FileResource {
         Optional<FileMetadata> fileOpt = fileRepository.findById(id);
         
         // Kiểm tra quyền sở hữu
-        if (fileOpt.isEmpty() || !fileOpt.get().getOwnerId().equals(userId)) {
+        if (fileOpt.isEmpty()
+                || !fileOpt.get().getOwnerId().equals(userId)
+                || Boolean.TRUE.equals(fileOpt.get().getIsDeleted())) {
             return Response.status(Response.Status.NOT_FOUND).entity("File không tồn tại hoặc bạn không có quyền tải").build();
         }
 
@@ -232,50 +236,226 @@ public class FileResource {
                 .build();
     }
 
-   @DELETE
+    // SOFT DELETE: chuyển vào Trash (khôi phục trong 30 ngày)
+    @DELETE
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteFile(@PathParam("id") Long id) {
+    public Response deleteFile(@PathParam("id") Long id, @Context ContainerRequestContext requestContext) {
         try {
+            if (id == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Thiếu id\"}").build();
+            }
+            Object userIdObj = requestContext.getProperty("userId");
+            if (userIdObj == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Cần đăng nhập\"}").build();
+            }
+            Long userId = ((Number) userIdObj).longValue();
+
             FileMetadata target = fileRepository.findById(id).orElse(null);
             if (target == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
 
-            // Gọi hàm đệ quy để xóa tận gốc
-            deleteFileAndChildrenRecursively(target);
+            // Chỉ chủ sở hữu mới được chuyển vào Trash
+            if (target.getOwnerId() == null || !target.getOwnerId().equals(userId)) {
+                return Response.status(Response.Status.FORBIDDEN).entity("{\"error\": \"Bạn không có quyền xóa mục này\"}").build();
+            }
 
-            return Response.ok().build();
+            // Nếu đã ở Trash thì không làm gì thêm
+            if (Boolean.TRUE.equals(target.getIsDeleted())) {
+                return Response.ok("{\"message\": \"Mục này đã nằm trong Trash\"}").build();
+            }
+
+            moveToTrashRecursively(target, java.time.LocalDateTime.now());
+
+            return Response.ok("{\"message\": \"Đã chuyển vào Trash\"}").build();
         } catch (Exception e) {
             e.printStackTrace();
             return Response.serverError().build();
         }
     }
 
-    // Thêm hàm đệ quy này vào ngay bên dưới trong cùng class
-    private void deleteFileAndChildrenRecursively(FileMetadata item) {
+    private void moveToTrashRecursively(FileMetadata item, java.time.LocalDateTime deletedAt) {
+        item.setIsDeleted(true);
+        item.setDeletedAt(deletedAt);
+        fileRepository.save(item);
+
         if (Boolean.TRUE.equals(item.getIsFolder())) {
             List<FileMetadata> children = fileRepository.findByParentId(item.getId());
             for (FileMetadata child : children) {
-                deleteFileAndChildrenRecursively(child);
+                if (!Boolean.TRUE.equals(child.getIsDeleted())) {
+                    moveToTrashRecursively(child, deletedAt);
+                }
+            }
+        }
+    }
+
+    // Ẩn list Trash của user hiện tại
+    @GET
+    @Path("/trash")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getTrash(@Context ContainerRequestContext requestContext) {
+        Object userIdObj = requestContext.getProperty("userId");
+        if (userIdObj == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Cần đăng nhập\"}").build();
+        }
+        Long userId = ((Number) userIdObj).longValue();
+        return Response.ok(fileRepository.findByOwnerIdAndIsDeletedTrueOrderByDeletedAtDesc(userId)).build();
+    }
+
+    // Khôi phục file/folder từ Trash
+    @POST
+    @Path("/{id}/restore")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response restoreFromTrash(@PathParam("id") Long id, @Context ContainerRequestContext requestContext) {
+        try {
+            if (id == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Thiếu id\"}").build();
+            }
+            Object userIdObj = requestContext.getProperty("userId");
+            if (userIdObj == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Cần đăng nhập\"}").build();
+            }
+            Long userId = ((Number) userIdObj).longValue();
+
+            FileMetadata target = fileRepository.findById(id).orElse(null);
+            if (target == null || !target.getOwnerId().equals(userId)) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            if (!Boolean.TRUE.equals(target.getIsDeleted())) {
+                return Response.ok("{\"message\": \"Mục này không nằm trong Trash\"}").build();
+            }
+
+            restoreRecursively(target);
+            return Response.ok("{\"message\": \"Đã khôi phục\"}").build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().build();
+        }
+    }
+
+    private void restoreRecursively(FileMetadata item) {
+        // Nếu parent đang ở Trash (hoặc đã bị xóa), đưa về root để tránh “mồ côi”
+        Long parentId = item.getParentId();
+        if (parentId != null) {
+            FileMetadata parent = fileRepository.findById(parentId).orElse(null);
+            if (parent == null || Boolean.TRUE.equals(parent.getIsDeleted())) {
+                item.setParentId(null);
+            }
+        }
+
+        item.setIsDeleted(false);
+        item.setDeletedAt(null);
+        fileRepository.save(item);
+
+        if (Boolean.TRUE.equals(item.getIsFolder())) {
+            List<FileMetadata> children = fileRepository.findByParentId(item.getId());
+            for (FileMetadata child : children) {
+                if (Boolean.TRUE.equals(child.getIsDeleted())) {
+                    restoreRecursively(child);
+                }
+            }
+        }
+    }
+
+    // Xóa vĩnh viễn 1 mục trong Trash
+    @DELETE
+    @Path("/{id}/permanent")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response permanentlyDelete(@PathParam("id") Long id, @Context ContainerRequestContext requestContext) {
+        try {
+            if (id == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Thiếu id\"}").build();
+            }
+            Object userIdObj = requestContext.getProperty("userId");
+            if (userIdObj == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Cần đăng nhập\"}").build();
+            }
+            Long userId = ((Number) userIdObj).longValue();
+
+            FileMetadata target = fileRepository.findById(id).orElse(null);
+            if (target == null || !userId.equals(target.getOwnerId())) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            if (!Boolean.TRUE.equals(target.getIsDeleted())) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Mục này chưa nằm trong Trash\"}").build();
+            }
+
+            hardDeleteRecursively(target);
+            return Response.ok("{\"message\": \"Đã xóa vĩnh viễn\"}").build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().build();
+        }
+    }
+
+    // Dọn sạch Trash của user hiện tại
+    @DELETE
+    @Path("/trash/empty")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response emptyTrash(@Context ContainerRequestContext requestContext) {
+        try {
+            Object userIdObj = requestContext.getProperty("userId");
+            if (userIdObj == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Cần đăng nhập\"}").build();
+            }
+            Long userId = ((Number) userIdObj).longValue();
+
+            List<FileMetadata> trashItems = fileRepository.findByOwnerIdAndIsDeletedTrueOrderByDeletedAtDesc(userId);
+            int deletedCount = 0;
+            for (FileMetadata item : trashItems) {
+                if (item != null && item.getId() != null) {
+                    hardDeleteRecursively(item);
+                    deletedCount++;
+                }
+            }
+            return Response.ok("{\"message\": \"Đã dọn Trash\", \"deletedCount\": " + deletedCount + "}").build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().build();
+        }
+    }
+
+    private void hardDeleteRecursively(FileMetadata item) {
+        if (item == null || item.getId() == null) {
+            return;
+        }
+
+        if (Boolean.TRUE.equals(item.getIsFolder())) {
+            List<FileMetadata> children = fileRepository.findByParentId(item.getId());
+            for (FileMetadata child : children) {
+                hardDeleteRecursively(child);
             }
         } else {
             try {
-                java.nio.file.Path physicalPath = java.nio.file.Paths.get(uploadDir, item.getFilePath());
-                java.nio.file.Files.deleteIfExists(physicalPath);
-                
-                // THÊM ĐOẠN NÀY ĐỂ TRỪ DUNG LƯỢNG KHI XÓA FILE:
-                User user = userRepository.findById(item.getOwnerId()).orElse(null);
+                if (item.getFilePath() != null && !item.getFilePath().isBlank()) {
+                    java.nio.file.Path physicalPath = java.nio.file.Paths.get(uploadDir, item.getFilePath());
+                    java.nio.file.Files.deleteIfExists(physicalPath);
+                }
+            } catch (Exception e) {
+                System.err.println("Không thể xóa file vật lý: " + item.getFilePath());
+            }
+
+            try {
+                Long ownerId = item.getOwnerId();
+                User user = ownerId != null ? userRepository.findById(ownerId).orElse(null) : null;
                 if (user != null && item.getFileSize() != null) {
-                    long newQuota = Math.max(0, user.getUsedQuota() - item.getFileSize());
-                    user.setUsedQuota(newQuota);
+                    long currentUsed = user.getUsedQuota() != null ? user.getUsedQuota() : 0L;
+                    user.setUsedQuota(Math.max(0, currentUsed - item.getFileSize()));
                     userRepository.save(user);
                 }
-                
             } catch (Exception e) {
-                System.err.println("Không thể xóa file vật lý trên ổ cứng: " + item.getFilePath());
+                System.err.println("Không thể cập nhật quota khi xóa vĩnh viễn, ownerId=" + item.getOwnerId());
             }
         }
+
+        if (item.getId() != null) {
+            List<FileShare> shares = fileShareRepository.findByFileId(item.getId());
+            if (!shares.isEmpty()) {
+                fileShareRepository.deleteAll(shares);
+            }
+        }
+
         fileRepository.delete(item);
     }
 
@@ -286,6 +466,9 @@ public class FileResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response createShareLink(@PathParam("id") Long fileId, ShareRequest requestData, @Context ContainerRequestContext requestContext) {
         try {
+            if (fileId == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Thiếu id\"}").build();
+            }
             Object userIdObj = requestContext.getProperty("userId");
             if (userIdObj == null) {
                 return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Cần đăng nhập\"}").build();
@@ -298,6 +481,10 @@ public class FileResource {
             if (file.getOwnerId() == null || !file.getOwnerId().equals(userId)) {
                 return Response.status(Response.Status.FORBIDDEN)
                         .entity("{\"error\": \"Bạn không có quyền chia sẻ file này\"}").build();
+            }
+            if (Boolean.TRUE.equals(file.getIsDeleted())) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"File đang nằm trong Trash, không thể chia sẻ\"}").build();
             }
 
             // LUỒNG 1: CHIA SẺ PUBLIC LINK (Nếu không nhập email nào)
@@ -377,8 +564,15 @@ public class FileResource {
                 return Response.status(Response.Status.GONE).entity("Liên kết đã hết hạn").build();
             }
 
-            FileMetadata metadata = fileRepository.findById(share.getFileId())
+            Long fileId = share.getFileId();
+            if (fileId == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("Tệp tin không tồn tại").build();
+            }
+            FileMetadata metadata = fileRepository.findById(fileId)
                     .orElseThrow(() -> new RuntimeException("Tệp tin không tồn tại"));
+            if (Boolean.TRUE.equals(metadata.getIsDeleted())) {
+                return Response.status(Response.Status.GONE).entity("Tệp tin đã bị xóa (đang nằm trong Trash)").build();
+            }
 
             // SỬ DỤNG BIẾN uploadDir ĐÃ CẤU HÌNH TỪ application.properties
             java.nio.file.Path path = java.nio.file.Paths.get(uploadDir, metadata.getFilePath());
@@ -461,7 +655,7 @@ public class FileResource {
             }
             Long userId = Long.valueOf(userIdObj.toString());
             
-            List<FileMetadata> allFiles = fileRepository.findByOwnerId(userId);
+            List<FileMetadata> allFiles = fileRepository.findByOwnerIdAndIsDeletedFalse(userId);
             return Response.ok(allFiles).build();
             
         } catch (Exception e) {
@@ -492,10 +686,18 @@ public class FileResource {
                 dto.setExpiresAt(s.getExpiresAt());
                 dto.setShareToken(s.getShareToken());
 
-                fileRepository.findById(s.getFileId()).ifPresent(f -> dto.setFileName(f.getFileName()));
+                Long fileId = s.getFileId();
+                if (fileId != null) {
+                    fileRepository.findById(fileId).ifPresent(f -> {
+                        if (!Boolean.TRUE.equals(f.getIsDeleted())) {
+                            dto.setFileName(f.getFileName());
+                        }
+                    });
+                }
 
-                if (s.getSharedWith() != null) {
-                    userRepository.findById(s.getSharedWith()).ifPresent(u -> dto.setTargetEmail(u.getEmail()));
+                Long sharedWith = s.getSharedWith();
+                if (sharedWith != null) {
+                    userRepository.findById(sharedWith).ifPresent(u -> dto.setTargetEmail(u.getEmail()));
                 } else {
                     dto.setTargetEmail("Public Link (Bất kỳ ai)");
                 }
@@ -531,9 +733,19 @@ public class FileResource {
                 dto.setExpiresAt(s.getExpiresAt());
                 dto.setShareToken(s.getShareToken());
 
-                fileRepository.findById(s.getFileId()).ifPresent(f -> dto.setFileName(f.getFileName()));
+                Long fileId = s.getFileId();
+                if (fileId != null) {
+                    fileRepository.findById(fileId).ifPresent(f -> {
+                        if (!Boolean.TRUE.equals(f.getIsDeleted())) {
+                            dto.setFileName(f.getFileName());
+                        }
+                    });
+                }
                 
-                userRepository.findById(s.getSharedBy()).ifPresent(u -> dto.setTargetEmail(u.getEmail()));
+                Long sharedBy = s.getSharedBy();
+                if (sharedBy != null) {
+                    userRepository.findById(sharedBy).ifPresent(u -> dto.setTargetEmail(u.getEmail()));
+                }
                 result.add(dto);
             }
             return Response.ok(result).build();
@@ -549,6 +761,9 @@ public class FileResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response revokeShare(@PathParam("shareId") Long shareId, @Context ContainerRequestContext requestContext) {
         try {
+            if (shareId == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Thiếu shareId\"}").build();
+            }
             Long userId = ((Number) requestContext.getProperty("userId")).longValue();
             FileShare share = fileShareRepository.findById(shareId).orElse(null);
             

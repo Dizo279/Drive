@@ -1,0 +1,284 @@
+/* --- APPLE DESIGN SYSTEM --- */
+.trash-page {
+  /* Colors */
+  --bg-main: #f5f5f7;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: rgba(0, 0, 0, 0.04);
+  --border-color: rgba(0, 0, 0, 0.08);
+
+  /* Typography Colors */
+  --text-main: #1d1d1f;
+  --text-muted: rgba(0, 0, 0, 0.48);
+  --text-emphasis: rgba(0, 0, 0, 0.8);
+
+  /* Apple Interactive Blue */
+  --accent-blue: #0071e3;
+  --accent-blue-hover: #0066cc;
+
+  /* Apple Destructive Red */
+  --apple-red: #ff3b30;
+
+  /* Shapes & Shadows */
+  --radius-pill: 980px;
+  --radius-card: 12px;
+  --radius-btn: 8px;
+  --shadow-apple: 0 4px 24px rgba(0, 0, 0, 0.06);
+
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--bg-main);
+  min-height: 100vh;
+  color: var(--text-main);
+  padding: 40px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* --- TOP BAR --- */
+.top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.top h2 {
+  margin: 0;
+  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.10;
+  color: var(--text-main);
+}
+
+.sub {
+  margin: 6px 0 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.47;
+  letter-spacing: -0.01em;
+}
+
+.top-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* --- APPLE BUTTONS --- */
+.btn {
+  text-decoration: none;
+  padding: 8px 15px;
+  border-radius: var(--radius-btn);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  font-family: inherit;
+  letter-spacing: -0.01em;
+}
+
+.btn-danger {
+  background: var(--apple-red);
+  color: #ffffff;
+  border: none;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #ff453a;
+  transform: scale(1.02);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-main);
+  border: none;
+}
+
+.btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* --- STATES --- */
+.loading,
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 80px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  color: var(--text-muted);
+  background: var(--bg-surface-hover);
+}
+
+.empty h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.empty p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* --- SPINNER --- */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--bg-surface-hover);
+  border-top-color: var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- TABLE (Apple Surface Style) --- */
+.table {
+  background: var(--bg-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-apple);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.head,
+.row {
+  display: grid;
+  grid-template-columns: 1.6fr 0.7fr 0.9fr 0.6fr 0.6fr;
+  gap: 16px;
+  padding: 14px 24px;
+  align-items: center;
+}
+
+.head {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.row {
+  font-size: 0.9rem;
+  color: var(--text-emphasis);
+  transition: background 0.2s ease;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover {
+  background: var(--bg-surface-hover);
+}
+
+.right {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.name > span:last-child {
+  font-weight: 500;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- PILL TAGS --- */
+.pill {
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  background: #f5f5f7;
+  flex: 0 0 auto;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pill.folder {
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--accent-blue);
+}
+
+/* --- ACTION BUTTONS --- */
+.restore {
+  padding: 6px 12px;
+  border-radius: var(--radius-btn);
+  border: none;
+  background: transparent;
+  color: var(--accent-blue);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.restore:hover {
+  background: rgba(0, 113, 227, 0.1);
+}
+
+.danger {
+  padding: 6px 12px;
+  border-radius: var(--radius-btn);
+  border: none;
+  background: transparent;
+  color: var(--apple-red);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.danger:hover {
+  background: rgba(255, 59, 48, 0.1);
+}
+

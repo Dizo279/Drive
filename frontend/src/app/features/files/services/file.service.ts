@@ -7,9 +7,9 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class FileService {
-  private apiUrl = `${environment.apiUrl}/files`;
+  private readonly apiUrl = `${environment.apiUrl}/files`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   uploadFile(file: File, parentId: number | null): Observable<HttpEvent<any>> {
     const formData = new FormData();
@@ -57,6 +57,22 @@ export class FileService {
 
   deleteFile(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  getTrash(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/trash`);
+  }
+
+  restoreFromTrash(id: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/restore`, {});
+  }
+
+  permanentlyDelete(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}/permanent`);
+  }
+
+  emptyTrash(): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/trash/empty`);
   }
 
   shareFile(id: number, payload: any = {}): Observable<any> {

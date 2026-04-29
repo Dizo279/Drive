@@ -6,6 +6,7 @@ import { FileListComponent } from '@features/files/components/file-list/file-lis
 import { AccountSettingsComponent } from '@features/files/components/account-settings/account-settings';
 import { SharedListComponent } from '@features/files/components/shared-list/shared-list';
 import { AdminDashboardComponent } from '@features/admin/components/admin-dashboard/admin-dashboard';
+import { TrashListComponent } from '@features/files/components/trash-list/trash-list';
 
 
 
@@ -17,6 +18,7 @@ export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'settings', component: AccountSettingsComponent },
   { path: 'shared', component: SharedListComponent },
+  { path: 'trash', component: TrashListComponent },
   { path: 'admin', component: AdminDashboardComponent }
 
 ];

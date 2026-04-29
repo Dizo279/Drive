@@ -34,6 +34,12 @@ public class FileMetadata {
     @Column(name = "mime_type")
     private String mimeType;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     // Getters
     public Long getId() { return id; }
     public Long getOwnerId() { return ownerId; }
@@ -44,6 +50,8 @@ public class FileMetadata {
     public java.time.LocalDateTime getCreatedAt() { return createdAt; }
     public Boolean getIsFolder() { return isFolder; }
     public Long getParentId() { return parentId; }
+    public Boolean getIsDeleted() { return isDeleted; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
 
     // Setters
     public void setId(Long id) { this.id = id; }
@@ -55,4 +63,6 @@ public class FileMetadata {
     public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setIsFolder(Boolean isFolder) { this.isFolder = isFolder; }
     public void setParentId(Long parentId) { this.parentId = parentId; }
+    public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }
