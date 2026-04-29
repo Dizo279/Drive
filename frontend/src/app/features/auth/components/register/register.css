@@ -55,6 +55,7 @@
 .input-group {
   margin-bottom: 16px;
   text-align: left;
+  position: relative;
 }
 
 .input-group input {
@@ -63,11 +64,37 @@
   border: 1px solid #d2d2d7;
   border-radius: 12px;
   padding: 0 16px;
+  padding-right: 50px;
   font-size: 1.05rem;
   color: #1d1d1f;
   outline: none;
   transition: all 0.2s ease;
   background: #ffffff;
+  box-sizing: border-box;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #0071e3;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.toggle-password:hover {
+  background: rgba(0, 113, 227, 0.1);
 }
 
 .input-group input::placeholder {
@@ -126,12 +153,24 @@
   text-decoration: underline;
 }
 
-/* Tùy chỉnh thông báo lỗi */
+.field-error {
+  color: #ff3b30;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  font-weight: 500;
+  min-height: 16px;
+}
+
+/* Tùy chỉnh thông báo lỗi server */
 .error-text {
   color: #ff3b30;
   font-size: 0.85rem;
-  margin-top: 24px;
+  margin: 24px 0;
   font-weight: 500;
+  padding: 12px;
+  background: rgba(255, 59, 48, 0.1);
+  border-radius: 8px;
+  border-left: 4px solid #ff3b30;
 }
 
 .auth-btn:disabled {

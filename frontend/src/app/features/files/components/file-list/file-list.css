@@ -50,6 +50,7 @@
 .nav-item {
   display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-radius: 8px;
   font-size: 0.9rem; font-weight: 500; color: var(--text-emphasis); cursor: pointer; transition: background 0.2s; margin-bottom: 4px;
+  text-decoration: none;
 }
 .nav-item:hover { background-color: var(--bg-surface-hover); }
 .nav-item.active { background-color: rgba(0, 113, 227, 0.1); color: var(--accent-blue); font-weight: 600; }

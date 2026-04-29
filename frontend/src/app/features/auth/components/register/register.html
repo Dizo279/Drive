@@ -13,20 +13,53 @@
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
       
       <div class="input-group">
-        <input type="text" placeholder="Username" formControlName="username">
+        <input type="text" placeholder="Họ và tên đầy đủ" formControlName="fullName">
+        <div class="field-error" *ngIf="registerForm.get('fullName')?.touched && registerForm.get('fullName')?.invalid">
+          Họ tên không được để trống
+        </div>
       </div>
-      
+
       <div class="input-group">
-        <input type="password" placeholder="Password" formControlName="password">
+        <input type="email" placeholder="Email" formControlName="email">
+        <div class="field-error" *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.invalid">
+          Email không hợp lệ
+        </div>
+      </div>
+
+      <div class="input-group">
+        <input type="text" placeholder="Tên đăng nhập" formControlName="username">
+        <div class="field-error" *ngIf="registerForm.get('username')?.touched && registerForm.get('username')?.invalid">
+          Tên đăng nhập không được để trống
+        </div>
+      </div>
+
+      <div class="input-group">
+        <input type="password" placeholder="Mật khẩu" formControlName="password" [type]="hidePassword ? 'password' : 'text'">
+        <div class="field-error" *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.invalid">
+          Mật khẩu ít nhất 8 ký tự
+        </div>
+        <button type="button" class="toggle-password" (click)="togglePassword()" *ngIf="registerForm.get('password')?.value">
+          {{ hidePassword ? '👁️' : '🙈' }}
+        </button>
+      </div>
+
+      <div class="input-group">
+        <input type="password" placeholder="Xác nhận mật khẩu" formControlName="confirmPassword" [type]="hideConfirmPassword ? 'password' : 'text'">
+        <div class="field-error" *ngIf="registerForm.get('confirmPassword')?.touched && registerForm.get('confirmPassword')?.invalid">
+          Mật khẩu xác nhận không khớp
+        </div>
+        <button type="button" class="toggle-password" (click)="toggleConfirmPassword()" *ngIf="registerForm.get('confirmPassword')?.value">
+          {{ hideConfirmPassword ? '👁️' : '🙈' }}
+        </button>
       </div>
 
       <div class="error-text" *ngIf="errorMsg">
         {{ errorMsg }}
       </div>
 
-      <button type="submit" class="auth-btn" [disabled]="loading">
-        <span *ngIf="!loading">Continue</span>
-        <span *ngIf="loading">Creating account...</span>
+      <button type="submit" class="auth-btn" [disabled]="loading || registerForm.invalid">
+        <span *ngIf="!loading">Tạo tài khoản</span>
+        <span *ngIf="loading">Đang tạo tài khoản...</span>
       </button>
     </form>
 

@@ -34,11 +34,37 @@ public class AuthResource {
     @POST
     @Path("/register")
     public Response register(User user) {
-        if (userRepository.existsByUsername(user.getUsername())) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Username đã tồn tại").build();
+        // Validate required fields
+        if (user.getFullName() == null || user.getFullName().trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Họ tên không được để trống").build();
         }
+        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Email không được để trống").build();
+        }
+        if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Tên đăng nhập không được để trống").build();
+        }
+        if (user.getPassword() == null || user.getPassword().trim().length() < 8) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Mật khẩu phải ít nhất 8 ký tự").build();
+        }
+
+        // Check duplicates
+        if (userRepository.existsByUsername(user.getUsername())) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Tên đăng nhập đã tồn tại").build();
+        }
+        if (userRepository.existsByEmail(user.getEmail())) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Email đã được sử dụng").build();
+        }
+
+        // Trim and normalize inputs
+        user.setFullName(user.getFullName().trim());
+        user.setEmail(user.getEmail().trim().toLowerCase());
+        user.setUsername(user.getUsername().trim().toLowerCase());
+
+        // Encode password and save
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
+        
         return Response.status(Response.Status.CREATED).entity("Đăng ký thành công").build();
     }
 
