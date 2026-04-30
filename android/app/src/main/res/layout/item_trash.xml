@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Item trong danh sách Thùng rác -->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_trash_item"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="4dp"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/apple_white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="12dp">
+
+        <!-- Icon (mờ hơn do đã xóa) -->
+        <FrameLayout
+            android:id="@+id/fl_trash_icon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_icon_circle"
+            android:alpha="0.5">
+
+            <TextView
+                android:id="@+id/tv_trash_emoji"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textSize="22sp"
+                android:text="📎" />
+        </FrameLayout>
+
+        <!-- Tên file + thông tin xóa -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginHorizontal="12dp">
+
+            <TextView
+                android:id="@+id/tv_trash_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="filename.txt"
+                android:textColor="@color/apple_gray"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tv_trash_deleted_at"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Đã xóa: hôm qua"
+                android:textColor="@color/apple_red"
+                android:textSize="12sp"
+                android:layout_marginTop="3dp" />
+
+            <TextView
+                android:id="@+id/tv_trash_size"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1.2 MB"
+                android:textColor="@color/apple_gray"
+                android:textSize="11sp"
+                android:layout_marginTop="1dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,134 @@
+[
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/xml_network_security_config.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/xml/network_security_config.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_activity_login.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/activity_login.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_item_shared.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/item_shared.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/drawable_bg_avatar_circle.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/drawable/bg_avatar_circle.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_activity_splash.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/activity_splash.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/drawable_ic_more_vert.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/drawable/ic_more_vert.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/drawable_ic_app_logo.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/drawable/ic_app_logo.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_activity_register.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/activity_register.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/drawable_ic_nav_profile.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/drawable/ic_nav_profile.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_bottom_sheet_file_options.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/bottom_sheet_file_options.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/menu_bottom_nav_menu.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/menu/bottom_nav_menu.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_item_file.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/item_file.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/drawable_ic_nav_notifications.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/drawable/ic_nav_notifications.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_dialog_create_folder.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/dialog_create_folder.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_fragment_trash.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/fragment_trash.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/drawable_bg_icon_circle.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/drawable/bg_icon_circle.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/drawable_ic_nav_trash.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/drawable/ic_nav_trash.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_bottom_sheet_share.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/bottom_sheet_share.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/drawable_ic_nav_files.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/drawable/ic_nav_files.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/drawable_bg_unread_dot.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/drawable/bg_unread_dot.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_fragment_files.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/fragment_files.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_activity_main.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_item_notification.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/item_notification.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_fragment_profile.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/fragment_profile.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_item_trash.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/item_trash.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_fragment_notifications.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/fragment_notifications.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/drawable_bg_gradient_blue.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/drawable/bg_gradient_blue.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/layout_fragment_shared.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/layout/fragment_shared.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/drawable_ic_nav_shared.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/drawable/ic_nav_shared.xml"
+    },
+    {
+        "merged": "com.filemanager.android.app-merged_res-34:/color_nav_item_color.xml.flat",
+        "source": "com.filemanager.android.app-main-36:/color/nav_item_color.xml"
+    }
+]

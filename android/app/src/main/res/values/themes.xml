@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme chính: Material3 không ActionBar (dùng BottomNavigation) -->
+    <style name="Theme.FileManager" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/apple_blue</item>
+        <item name="colorOnPrimary">@color/apple_white</item>
+        <item name="colorPrimaryContainer">@color/apple_blue_light</item>
+        <item name="colorOnPrimaryContainer">@color/apple_black</item>
+        <item name="colorSecondary">@color/apple_gray</item>
+        <item name="colorOnSecondary">@color/apple_white</item>
+        <item name="android:colorBackground">@color/apple_light_gray</item>
+        <item name="colorSurface">@color/apple_white</item>
+        <item name="colorOnSurface">@color/apple_black</item>
+        <item name="colorError">@color/apple_red</item>
+        <item name="android:windowBackground">@color/apple_light_gray</item>
+    </style>
+
+    <!-- Theme cho Splash Screen (màu nền xanh) -->
+    <style name="Theme.FileManager.Splash" parent="Theme.FileManager">
+        <item name="android:windowBackground">@color/apple_blue</item>
+        <item name="android:statusBarColor">@color/apple_blue</item>
+        <item name="android:navigationBarColor">@color/apple_blue</item>
+    </style>
+
+    <!-- Style cho nút chính (Primary Button) -->
+    <style name="Widget.FileManager.Button.Primary" parent="Widget.Material3.Button">
+        <item name="android:minHeight">52dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="backgroundTint">@color/apple_blue</item>
+        <item name="android:textColor">@color/apple_white</item>
+    </style>
+
+    <!-- Style cho nút phụ (Outlined) -->
+    <style name="Widget.FileManager.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="strokeColor">@color/apple_blue</item>
+        <item name="android:textColor">@color/apple_blue</item>
+    </style>
+
+    <!-- Style cho TextInputLayout (Outlined box) -->
+    <style name="Widget.FileManager.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">10dp</item>
+        <item name="boxCornerRadiusTopEnd">10dp</item>
+        <item name="boxCornerRadiusBottomStart">10dp</item>
+        <item name="boxCornerRadiusBottomEnd">10dp</item>
+        <item name="boxStrokeColor">@color/apple_blue</item>
+        <item name="hintTextColor">@color/apple_gray</item>
+    </style>
+
+    <!-- Style cho Card -->
+    <style name="Widget.FileManager.Card" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">4dp</item>
+        <item name="cardBackgroundColor">@color/apple_white</item>
+    </style>
+
+    <!-- Style cho BottomNavigation -->
+    <style name="Widget.FileManager.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
+        <item name="itemIconTint">@color/nav_item_color</item>
+        <item name="itemTextColor">@color/nav_item_color</item>
+        <item name="elevation">8dp</item>
+    </style>
+</resources>

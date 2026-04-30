@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Item trong danh sách Chia sẻ (dùng chung cho by-me và with-me) -->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="4dp"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/apple_white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="12dp">
+
+        <!-- Icon link -->
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="🔗"
+                android:textSize="26sp" />
+        </FrameLayout>
+
+        <!-- Tên file + email người nhận / người chia sẻ + hết hạn -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginHorizontal="10dp">
+
+            <TextView
+                android:id="@+id/tv_shared_file_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="filename.txt"
+                android:textColor="@color/apple_black"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tv_shared_target"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="user@email.com"
+                android:textColor="@color/apple_blue"
+                android:textSize="12sp"
+                android:layout_marginTop="3dp" />
+
+            <TextView
+                android:id="@+id/tv_shared_expires"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hết hạn: 30/04/2025"
+                android:textColor="@color/apple_gray"
+                android:textSize="11sp"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+
+        <!-- Nút Thu hồi (chỉ hiện trong tab "Tôi đã chia sẻ") -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_revoke"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:text="Thu hồi"
+            android:textSize="11sp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            app:strokeColor="@color/apple_red"
+            android:textColor="@color/apple_red"
+            app:cornerRadius="8dp"
+            android:visibility="gone" />
+
+        <!-- Nút Download (chỉ hiện trong tab "Chia sẻ với tôi") -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_download_shared"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:text="Tải"
+            android:textSize="11sp"
+            app:cornerRadius="8dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

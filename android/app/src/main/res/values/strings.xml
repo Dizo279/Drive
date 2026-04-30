@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">File Manager</string>
+    <string name="app_subtitle">Quản lý tệp tin thông minh</string>
+
+    <!-- Auth -->
+    <string name="login_title">Đăng nhập</string>
+    <string name="login_subtitle">Chào mừng trở lại!</string>
+    <string name="register_title">Tạo tài khoản</string>
+    <string name="register_subtitle">Tham gia cùng hàng nghìn người dùng</string>
+
+    <string name="hint_username">Tên đăng nhập</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_full_name">Họ và tên</string>
+    <string name="hint_password">Mật khẩu</string>
+    <string name="hint_confirm_password">Xác nhận mật khẩu</string>
+
+    <string name="btn_login">Đăng nhập</string>
+    <string name="btn_register">Đăng ký</string>
+    <string name="btn_logout">Đăng xuất</string>
+    <string name="btn_cancel">Hủy</string>
+    <string name="btn_confirm">Xác nhận</string>
+    <string name="btn_ok">OK</string>
+
+    <string name="nav_to_register">Chưa có tài khoản? <b>Đăng ký ngay</b></string>
+    <string name="nav_to_login">Đã có tài khoản? <b>Đăng nhập</b></string>
+
+    <!-- Validation Messages -->
+    <string name="err_full_name_required">Họ tên không được để trống</string>
+    <string name="err_full_name_min">Họ tên phải ít nhất 2 ký tự</string>
+    <string name="err_email_required">Email không được để trống</string>
+    <string name="err_email_invalid">Email không hợp lệ</string>
+    <string name="err_username_required">Tên đăng nhập không được để trống</string>
+    <string name="err_username_min">Tên đăng nhập phải ít nhất 3 ký tự</string>
+    <string name="err_password_required">Mật khẩu không được để trống</string>
+    <string name="err_password_min">Mật khẩu phải ít nhất 8 ký tự</string>
+    <string name="err_password_mismatch">Mật khẩu xác nhận không khớp</string>
+    <string name="err_network">Lỗi kết nối mạng. Vui lòng kiểm tra backend đã chạy chưa.</string>
+    <string name="err_unknown">Đã xảy ra lỗi không xác định</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_files">Tệp tin</string>
+    <string name="nav_shared">Chia sẻ</string>
+    <string name="nav_trash">Thùng rác</string>
+    <string name="nav_notifications">Thông báo</string>
+    <string name="nav_profile">Cá nhân</string>
+
+    <!-- Files Screen -->
+    <string name="title_my_files">Tệp của tôi</string>
+    <string name="empty_files">Chưa có tệp tin nào</string>
+    <string name="empty_trash">Thùng rác trống</string>
+    <string name="action_upload">Tải lên</string>
+    <string name="action_new_folder">Thư mục mới</string>
+    <string name="action_delete">Xóa</string>
+    <string name="action_restore">Khôi phục</string>
+    <string name="action_rename">Đổi tên</string>
+    <string name="action_share">Chia sẻ</string>
+    <string name="action_download">Tải xuống</string>
+
+    <!-- Confirm Dialogs -->
+    <string name="confirm_delete">Chuyển vào thùng rác?</string>
+    <string name="confirm_permanent_delete">Xóa vĩnh viễn?</string>
+    <string name="confirm_permanent_delete_msg">Hành động này không thể hoàn tác. Tệp sẽ bị xóa vĩnh viễn.</string>
+    <string name="confirm_empty_trash">Dọn sạch thùng rác?</string>
+    <string name="confirm_empty_trash_msg">Tất cả tệp trong thùng rác sẽ bị xóa vĩnh viễn.</string>
+
+    <!-- Loading / Progress -->
+    <string name="loading">Đang tải...</string>
+    <string name="uploading">Đang tải lên...</string>
+    <string name="downloading">Đang tải xuống...</string>
+</resources>
