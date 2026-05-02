@@ -3,6 +3,7 @@ package com.filemanager.resource;
 import com.filemanager.entity.Notification;
 import com.filemanager.entity.User;
 import com.filemanager.entity.UpgradeRequest;
+import com.filemanager.repository.FileRepository;
 import com.filemanager.repository.UserRepository;
 import com.filemanager.repository.UpgradeRequestRepository;
 
@@ -27,6 +28,9 @@ public class UserResource {
 
     @Inject
     private UserRepository userRepository;
+
+    @Inject
+    private FileRepository fileRepository;
 
     @Inject
     private UpgradeRequestRepository upgradeRequestRepository;
@@ -191,6 +195,11 @@ public class UserResource {
         }
     }
 
+    /**
+     * API lấy thông tin quota.
+     * Dung lượng đã dùng được tính TRỰC TIẾP từ bảng files bằng SUM query
+     * thay vì đọc từ user.usedQuota để tránh race condition và dữ liệu cũ.
+     */
     @GET
     @Path("/quota")
     @Produces(MediaType.APPLICATION_JSON)
@@ -201,23 +210,25 @@ public class UserResource {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
             Long userId = ((Number) userIdObj).longValue();
-            
+
             User user = userRepository.findById(userId).orElse(null);
             if (user == null) return Response.status(Response.Status.NOT_FOUND).build();
 
-            // Tính toán dung lượng
-            long used = user.getUsedQuota() != null ? user.getUsedQuota() : 0L;
-            long max = user.getMaxQuota() != null ? user.getMaxQuota() : 1073741824L; // 1GB mặc định
+            // Tính dung lượng THỰC TẾ từ bảng files (loại trừ folder và file đã xóa)
+            long used = fileRepository.sumUsedQuotaByOwner(userId);
+            long max  = user.getMaxQuota() != null ? user.getMaxQuota() : 1073741824L;
             long percentage = max > 0 ? (used * 100) / max : 0;
 
-            // Tạo chuỗi JSON trả về cho Frontend
+            // Đồng bộ lại user.usedQuota để các nơi khác (upload validation) vẫn chính xác
+            user.setUsedQuota(used);
+            userRepository.save(user);
+
             String jsonResponse = String.format(
                 "{\"usedQuota\": %d, \"maxQuota\": %d, \"percentage\": %d}",
                 used, max, percentage
             );
-            
             return Response.ok(jsonResponse).build();
-            
+
         } catch (Exception e) {
             e.printStackTrace();
             return Response.serverError().build();

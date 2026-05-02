@@ -6,6 +6,7 @@ import { FileService } from '../../services/file.service';
 import { AuthService } from '@features/auth/services/auth.service';
 import { Router, RouterLink, RouterModule } from '@angular/router';
 import { NotificationBellComponent } from '@notification/components/notification-bell/notification-bell';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-file-list',
@@ -58,7 +59,8 @@ export class FileListComponent implements OnInit {
     private router: Router,
     public cdr: ChangeDetectorRef,
     private zone: NgZone,
-    private http: HttpClient
+    private http: HttpClient,
+    private dialogService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -220,13 +222,20 @@ export class FileListComponent implements OnInit {
     this.loadData();
   }
 
-  createFolder(): void {
+  async createFolder(): Promise<void> {
     if (typeof window !== 'undefined') {
-      const folderName = prompt('Nhập tên thư mục mới:');
+      const folderName = await this.dialogService.prompt({
+        title: 'Thư mục mới',
+        message: 'Vui lòng nhập tên cho thư mục mới:',
+        promptPlaceholder: 'Nhập tên thư mục...',
+        confirmText: 'Tạo mới',
+        type: 'info'
+      });
+      
       if (folderName && folderName.trim() !== '') {
-        this.fileService.createFolder(folderName, this.currentParentId).subscribe({
+        this.fileService.createFolder(folderName.trim(), this.currentParentId).subscribe({
           next: () => this.loadData(),
-          error: (err) => alert('Tạo thư mục thất bại!')
+          error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Tạo thư mục thất bại!', type: 'danger' })
         });
       }
     }
@@ -244,31 +253,41 @@ export class FileListComponent implements OnInit {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: (err) => alert('Tải file thất bại!')
+      error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Tải file thất bại!', type: 'danger' })
     });
   }
 
-  delete(file: any): void {
-    if (confirm(`Bạn có chắc muốn xóa "${file.name}"?`)) {
-      this.fileService.deleteFile(file.id).subscribe({
-        next: () => {
-          this.zone.run(() => {
-            this.allFiles = this.allFiles.filter(f => f.id !== file.id);
-            this.applyFiltersAndSort();
-            this.calculateUsedQuota();
-            this.cdr.detectChanges();
-          });
-        },
-        error: (err) => alert('Xóa file thất bại.')
-      });
-    }
+  async delete(file: any): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Xóa file',
+      message: `Bạn có chắc muốn xóa "${file.name}"?`,
+      confirmText: 'Xóa',
+      type: 'danger'
+    });
+    if (!confirmed) return;
+    this.fileService.deleteFile(file.id).subscribe({
+      next: () => {
+        this.zone.run(() => {
+          this.allFiles = this.allFiles.filter(f => f.id !== file.id);
+          this.applyFiltersAndSort();
+          this.calculateUsedQuota();
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Xóa file thất bại.', type: 'danger' })
+    });
   }
 
-  logout(): void {
-    if (confirm('Bạn có muốn đăng xuất?')) {
-      this.authService.logout();
-      this.router.navigate(['/login']);
-    }
+  async logout(): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Đăng xuất',
+      message: 'Bạn có muốn đăng xuất khỏi hệ thống?',
+      confirmText: 'Đăng xuất',
+      type: 'warning'
+    });
+    if (!confirmed) return;
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 
   onFileSelected(event: any): void {
@@ -455,22 +474,26 @@ export class FileListComponent implements OnInit {
     }, 3000);
   }
 
-  requestUpgrade(): void {
-    if (confirm('Bạn có muốn gửi yêu cầu nâng cấp lên PREMIUM (100GB) không?')) {
-      const token = localStorage.getItem('jwt_token');
-      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    
-      this.http.post('http://localhost:8080/api/users/upgrade-request', {}, { headers }).subscribe({
-        next: (res: any) => {
-          this.displayToast(res.message);
-          this.isUpgradePending = true;
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.displayToast(err.error?.error || 'Không thể gửi yêu cầu.');
-        }
-      });
-    }
+  async requestUpgrade(): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Nâng cấp PREMIUM',
+      message: 'Bạn có muốn gửi yêu cầu nâng cấp lên PREMIUM (100GB) không?',
+      confirmText: 'Gửi yêu cầu',
+      type: 'info'
+    });
+    if (!confirmed) return;
+    const token = localStorage.getItem('jwt_token');
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    this.http.post('http://localhost:8080/api/users/upgrade-request', {}, { headers }).subscribe({
+      next: (res: any) => {
+        this.displayToast(res.message);
+        this.isUpgradePending = true;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.displayToast(err.error?.error || 'Không thể gửi yêu cầu.');
+      }
+    });
   }
 
 }

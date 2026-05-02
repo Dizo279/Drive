@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-register',
@@ -23,7 +24,8 @@ export class RegisterComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private dialogService: ConfirmDialogService
   ) {
     this.registerForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(2)]],
@@ -47,9 +49,13 @@ export class RegisterComponent {
       };
 
       this.authService.register(registerData).subscribe({
-        next: () => {
+        next: async () => {
           this.loading = false;
-          alert('Đăng ký thành công! Bạn có thể đăng nhập ngay.');
+          await this.dialogService.alert({
+            title: 'Đăng ký thành công!',
+            message: 'Tài khoản của bạn đã được tạo. Bạn có thể đăng nhập ngay.',
+            type: 'success'
+          });
           this.router.navigate(['/login']);
         },
         error: (err) => {

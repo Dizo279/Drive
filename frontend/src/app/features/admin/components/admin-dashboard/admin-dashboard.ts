@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NotificationBellComponent } from '@notification/components/notification-bell/notification-bell';
 import { AdminService } from '../../services/admin.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -46,7 +47,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     private adminService: AdminService,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object,
-    private zone: NgZone
+    private zone: NgZone,
+    private dialogService: ConfirmDialogService
   ) {}
 
   ngOnInit() {
@@ -191,7 +193,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         this.loadUsers();
       },
       error: () => {
-        alert('Failed to delete user.');
+        this.dialogService.alert({ title: 'Lỗi', message: 'Xóa người dùng thất bại.', type: 'danger' });
       }
     });
   }
@@ -241,32 +243,42 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  approveRequest(requestId: number): void {
-    if (confirm('Bạn có chắc muốn PHÊ DUYỆT yêu cầu này?')) {
-      this.adminService.processUpgradeRequest(requestId, 'APPROVE').subscribe({
-        next: () => {
-          this.zone.run(() => {
-            this.upgradeRequests = this.upgradeRequests.filter(r => r.id !== requestId);
-            this.cdr.detectChanges();
-          });
-        },
-        error: (err) => alert('Lỗi khi phê duyệt yêu cầu')
-      });
-    }
+  async approveRequest(requestId: number): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Phê duyệt yêu cầu',
+      message: 'Bạn có chắc muốn PHÊ DUYỆT yêu cầu nâng cấp này?',
+      confirmText: 'Phê duyệt',
+      type: 'success'
+    });
+    if (!confirmed) return;
+    this.adminService.processUpgradeRequest(requestId, 'APPROVE').subscribe({
+      next: () => {
+        this.zone.run(() => {
+          this.upgradeRequests = this.upgradeRequests.filter(r => r.id !== requestId);
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => this.dialogService.alert({ title: 'Lỗi', message: 'Lỗi khi phê duyệt yêu cầu.', type: 'danger' })
+    });
   }
 
-  rejectRequest(requestId: number): void {
-    if (confirm('Bạn có chắc muốn TỪ CHỐI yêu cầu này?')) {
-      this.adminService.processUpgradeRequest(requestId, 'REJECT').subscribe({
-        next: () => {
-          this.zone.run(() => {
-            this.upgradeRequests = this.upgradeRequests.filter(r => r.id !== requestId);
-            this.cdr.detectChanges();
-          });
-        },
-        error: (err) => alert('Lỗi khi từ chối yêu cầu')
-      });
-    }
+  async rejectRequest(requestId: number): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Từ chối yêu cầu',
+      message: 'Bạn có chắc muốn TỪ CHỐI yêu cầu nâng cấp này?',
+      confirmText: 'Từ chối',
+      type: 'danger'
+    });
+    if (!confirmed) return;
+    this.adminService.processUpgradeRequest(requestId, 'REJECT').subscribe({
+      next: () => {
+        this.zone.run(() => {
+          this.upgradeRequests = this.upgradeRequests.filter(r => r.id !== requestId);
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => this.dialogService.alert({ title: 'Lỗi', message: 'Lỗi khi từ chối yêu cầu.', type: 'danger' })
+    });
   }
 
   ngOnDestroy(): void {

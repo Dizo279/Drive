@@ -1,9 +1,7 @@
 package com.filemanager.service;
 
 import com.filemanager.entity.FileMetadata;
-import com.filemanager.entity.User;
 import com.filemanager.repository.FileRepository;
-import com.filemanager.repository.UserRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,12 +17,10 @@ public class TrashCleanupService {
     private static final int TRASH_RETENTION_DAYS = 30;
 
     private final FileRepository fileRepository;
-    private final UserRepository userRepository;
     private final StorageService storageService;
 
-    public TrashCleanupService(FileRepository fileRepository, UserRepository userRepository, StorageService storageService) {
+    public TrashCleanupService(FileRepository fileRepository, StorageService storageService) {
         this.fileRepository = fileRepository;
-        this.userRepository = userRepository;
         this.storageService = storageService;
     }
 
@@ -51,22 +47,11 @@ public class TrashCleanupService {
             } catch (Exception e) {
                 System.err.println("Không thể xóa file vật lý trong purge trash: " + item.getFilePath());
             }
-
-            // Trừ dung lượng quota khi xóa vĩnh viễn
-            try {
-                Long ownerId = item.getOwnerId();
-                User user = ownerId != null ? userRepository.findById(ownerId).orElse(null) : null;
-                if (user != null && item.getFileSize() != null) {
-                    long currentUsed = user.getUsedQuota() != null ? user.getUsedQuota() : 0L;
-                    user.setUsedQuota(Math.max(0, currentUsed - item.getFileSize()));
-                    userRepository.save(user);
-                }
-            } catch (Exception e) {
-                System.err.println("Không thể cập nhật quota khi purge trash: ownerId=" + item.getOwnerId());
-            }
+            // Không cần trừ quota ở đây — quota được tính trực tiếp từ DB qua SUM query.
         }
 
         fileRepository.delete(item);
     }
+
 }
 

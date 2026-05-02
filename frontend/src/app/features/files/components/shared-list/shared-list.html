@@ -59,8 +59,17 @@
                   </span>
                 </td>
                 <td class="actions-col">
-                  <button *ngIf="activeTab === 'by-me'" class="btn-revoke" (click)="revokeAccess(item.shareId)">Thu hồi</button>
-                  <button *ngIf="activeTab === 'with-me' && !isExpired(item.expiresAt)" class="btn-download" (click)="downloadShared(item.shareToken)">Tải xuống</button>
+                  <div style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;">
+                    <!-- Cho by-me: Thu hồi (nếu chưa hết hạn), Copy Link (nếu là Public Link và chưa hết hạn) -->
+                    <button *ngIf="activeTab === 'by-me' && item.targetEmail === 'Public Link (Bất kỳ ai)' && !isExpired(item.expiresAt)" class="btn-copy" (click)="copyLink(item.shareToken)">Copy Link</button>
+                    <button *ngIf="activeTab === 'by-me' && !isExpired(item.expiresAt)" class="btn-revoke" (click)="revokeAccess(item.shareId)">Thu hồi</button>
+                   
+                    <!-- Cho with-me: Tải xuống (nếu chưa hết hạn) -->
+                    <button *ngIf="activeTab === 'with-me' && !isExpired(item.expiresAt)" class="btn-download" (click)="downloadShared(item.shareToken)">Tải xuống</button>
+                    
+                    <!-- Cho cả hai: Xóa (nếu đã hết hạn) -->
+                    <button *ngIf="isExpired(item.expiresAt)" class="btn-revoke" (click)="deleteAccess(item.shareId)">Xóa</button>
+                  </div>
                 </td>
               </tr>
             </tbody>

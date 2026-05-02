@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-account-settings',
@@ -39,7 +40,8 @@ export class AccountSettingsComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dialogService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -155,20 +157,25 @@ export class AccountSettingsComponent implements OnInit {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
-  requestUpgrade(): void {
-    if (confirm('Bạn có muốn gửi yêu cầu nâng cấp lên PREMIUM (100GB)?')) {
-      this.http.post(`${this.apiUrl}/upgrade-request`, {}, this.getHeaders()).subscribe({
-        next: (res: any) => {
-          this.successMsg = res.message || 'Yêu cầu nâng cấp đã được gửi!';
-          this.errorMsg = '';
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.errorMsg = err.error?.error || 'Không thể gửi yêu cầu nâng cấp.';
-          this.successMsg = '';
-          this.cdr.detectChanges();
-        }
-      });
-    }
+  async requestUpgrade(): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Nâng cấp PREMIUM',
+      message: 'Bạn có muốn gửi yêu cầu nâng cấp lên PREMIUM (100GB)?',
+      confirmText: 'Gửi yêu cầu',
+      type: 'info'
+    });
+    if (!confirmed) return;
+    this.http.post(`${this.apiUrl}/upgrade-request`, {}, this.getHeaders()).subscribe({
+      next: (res: any) => {
+        this.successMsg = res.message || 'Yêu cầu nâng cấp đã được gửi!';
+        this.errorMsg = '';
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.errorMsg = err.error?.error || 'Không thể gửi yêu cầu nâng cấp.';
+        this.successMsg = '';
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

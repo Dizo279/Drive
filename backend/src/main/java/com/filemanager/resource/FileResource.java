@@ -3,6 +3,7 @@ package com.filemanager.resource;
 import com.filemanager.entity.FileMetadata;
 import com.filemanager.entity.FileShare;
 import com.filemanager.entity.Notification;
+import com.filemanager.entity.User;
 import com.filemanager.repository.FileRepository;
 import com.filemanager.repository.FileShareRepository;
 import com.filemanager.repository.UserRepository;
@@ -32,7 +33,6 @@ import java.util.UUID;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Value;
-import com.filemanager.entity.User;
 
 @Component
 @Path("/files")
@@ -290,7 +290,7 @@ public class FileResource {
         }
     }
 
-    // Ẩn list Trash của user hiện tại
+    // Ẩn list Trash của user hiện tại, giờ chỉ hiển thị root items
     @GET
     @Path("/trash")
     @Produces(MediaType.APPLICATION_JSON)
@@ -300,7 +300,7 @@ public class FileResource {
             return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Cần đăng nhập\"}").build();
         }
         Long userId = ((Number) userIdObj).longValue();
-        return Response.ok(fileRepository.findByOwnerIdAndIsDeletedTrueOrderByDeletedAtDesc(userId)).build();
+        return Response.ok(fileRepository.findRootTrashItemsByOwner(userId)).build();
     }
 
     // Khôi phục file/folder từ Trash
@@ -401,7 +401,8 @@ public class FileResource {
             }
             Long userId = ((Number) userIdObj).longValue();
 
-            List<FileMetadata> trashItems = fileRepository.findByOwnerIdAndIsDeletedTrueOrderByDeletedAtDesc(userId);
+            // Chỉ lấy các item gốc để xóa đệ quy, tránh xóa trùng lặp các item con
+            List<FileMetadata> trashItems = fileRepository.findRootTrashItemsByOwner(userId);
             int deletedCount = 0;
             for (FileMetadata item : trashItems) {
                 if (item != null && item.getId() != null) {
@@ -427,6 +428,7 @@ public class FileResource {
                 hardDeleteRecursively(child);
             }
         } else {
+            // Xóa file vật lý trên disk
             try {
                 if (item.getFilePath() != null && !item.getFilePath().isBlank()) {
                     java.nio.file.Path physicalPath = java.nio.file.Paths.get(uploadDir, item.getFilePath());
@@ -435,20 +437,12 @@ public class FileResource {
             } catch (Exception e) {
                 System.err.println("Không thể xóa file vật lý: " + item.getFilePath());
             }
-
-            try {
-                Long ownerId = item.getOwnerId();
-                User user = ownerId != null ? userRepository.findById(ownerId).orElse(null) : null;
-                if (user != null && item.getFileSize() != null) {
-                    long currentUsed = user.getUsedQuota() != null ? user.getUsedQuota() : 0L;
-                    user.setUsedQuota(Math.max(0, currentUsed - item.getFileSize()));
-                    userRepository.save(user);
-                }
-            } catch (Exception e) {
-                System.err.println("Không thể cập nhật quota khi xóa vĩnh viễn, ownerId=" + item.getOwnerId());
-            }
+            // Không cần cập nhật user.usedQuota ở đây nữa.
+            // Quota được tính chính xác theo thời gian thực thông qua API /quota
+            // sử dụng SUM query trực tiếp trên bảng files, tránh race condition.
         }
 
+        // Xóa tất cả share liên quan
         if (item.getId() != null) {
             List<FileShare> shares = fileShareRepository.findByFileId(item.getId());
             if (!shares.isEmpty()) {
@@ -458,6 +452,7 @@ public class FileResource {
 
         fileRepository.delete(item);
     }
+
 
    // 1. API TẠO LINK CHIA SẺ
     @POST
@@ -755,7 +750,6 @@ public class FileResource {
         }
     }
 
-    // API THU HỒI QUYỀN CHIA SẺ
     @DELETE
     @Path("/revoke-share/{shareId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -767,12 +761,12 @@ public class FileResource {
             Long userId = ((Number) requestContext.getProperty("userId")).longValue();
             FileShare share = fileShareRepository.findById(shareId).orElse(null);
             
-            // Chỉ chủ sở hữu (người tạo ra lượt share) mới được thu hồi
-            if (share != null && share.getSharedBy().equals(userId)) {
+            // Cả chủ sở hữu và người được chia sẻ đều có thể xóa/thu hồi
+            if (share != null && (share.getSharedBy().equals(userId) || userId.equals(share.getSharedWith()))) {
                 fileShareRepository.delete(share);
-                return Response.ok("{\"message\": \"Đã thu hồi quyền truy cập\"}").build();
+                return Response.ok("{\"message\": \"Đã thu hồi/xóa quyền truy cập\"}").build();
             }
-            return Response.status(Response.Status.FORBIDDEN).entity("{\"error\": \"Không có quyền thu hồi\"}").build();
+            return Response.status(Response.Status.FORBIDDEN).entity("{\"error\": \"Không có quyền thực hiện\"}").build();
         } catch (Exception e) { return Response.serverError().build(); }
     }
    

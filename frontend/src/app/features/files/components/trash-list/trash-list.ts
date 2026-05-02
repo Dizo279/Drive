@@ -2,6 +2,7 @@ import { Component, ChangeDetectorRef, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FileService } from '../../services/file.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-trash-list',
@@ -18,7 +19,8 @@ export class TrashListComponent implements OnInit {
   constructor(
     private readonly fileService: FileService,
     private readonly cdr: ChangeDetectorRef,
-    private readonly zone: NgZone
+    private readonly zone: NgZone,
+    private readonly dialogService: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -50,8 +52,14 @@ export class TrashListComponent implements OnInit {
     });
   }
 
-  restore(item: any): void {
-    if (!confirm(`Khôi phục "${item.name}"?`)) return;
+  async restore(item: any): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Khôi phục',
+      message: `Khôi phục "${item.name}" về Drive?`,
+      confirmText: 'Khôi phục',
+      type: 'success'
+    });
+    if (!confirmed) return;
     this.fileService.restoreFromTrash(item.id).subscribe({
       next: () => {
         this.zone.run(() => {
@@ -59,12 +67,18 @@ export class TrashListComponent implements OnInit {
           this.cdr.detectChanges();
         });
       },
-      error: () => alert('Khôi phục thất bại.')
+      error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Khôi phục thất bại.', type: 'danger' })
     });
   }
 
-  permanentlyDelete(item: any): void {
-    if (!confirm(`Xóa vĩnh viễn "${item.name}"? Hành động này không thể hoàn tác.`)) return;
+  async permanentlyDelete(item: any): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Xóa vĩnh viễn',
+      message: `Xóa vĩnh viễn "${item.name}"? Hành động này không thể hoàn tác.`,
+      confirmText: 'Xóa',
+      type: 'danger'
+    });
+    if (!confirmed) return;
     this.fileService.permanentlyDelete(item.id).subscribe({
       next: () => {
         this.zone.run(() => {
@@ -72,13 +86,19 @@ export class TrashListComponent implements OnInit {
           this.cdr.detectChanges();
         });
       },
-      error: () => alert('Xóa vĩnh viễn thất bại.')
+      error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Xóa vĩnh viễn thất bại.', type: 'danger' })
     });
   }
 
-  emptyTrash(): void {
+  async emptyTrash(): Promise<void> {
     if (!this.items.length) return;
-    if (!confirm('Xóa vĩnh viễn toàn bộ Trash? Hành động này không thể hoàn tác.')) return;
+    const confirmed = await this.dialogService.confirm({
+      title: 'Dọn sạch Trash',
+      message: 'Xóa vĩnh viễn toàn bộ Trash? Hành động này không thể hoàn tác.',
+      confirmText: 'Dọn sạch',
+      type: 'danger'
+    });
+    if (!confirmed) return;
     this.clearing = true;
     this.fileService.emptyTrash().subscribe({
       next: () => {
@@ -93,7 +113,7 @@ export class TrashListComponent implements OnInit {
           this.clearing = false;
           this.cdr.detectChanges();
         });
-        alert('Dọn Trash thất bại.');
+        this.dialogService.alert({ title: 'Thất bại', message: 'Dọn Trash thất bại.', type: 'danger' });
       }
     });
   }

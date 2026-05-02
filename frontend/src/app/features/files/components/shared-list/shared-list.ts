@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-shared-list',
@@ -17,7 +18,7 @@ export class SharedListComponent implements OnInit {
   
   private apiUrl = 'http://localhost:8080/api/files';
 
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef, private dialogService: ConfirmDialogService) {}
 
   ngOnInit(): void {
     if (typeof window !== 'undefined') {
@@ -46,13 +47,54 @@ export class SharedListComponent implements OnInit {
     });
   }
 
-  revokeAccess(shareId: number) {
-    if(confirm('Bạn có chắc chắn muốn thu hồi quyền truy cập này không?')) {
-      // Đã gỡ bỏ this.getHeaders()
-      this.http.delete(`${this.apiUrl}/revoke-share/${shareId}`).subscribe({
-        next: () => this.loadData(),
-        error: () => alert('Lỗi khi thu hồi quyền truy cập.')
-      });
+  async revokeAccess(shareId: number): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Thu hồi quyền truy cập',
+      message: 'Bạn có chắc chắn muốn thu hồi quyền truy cập này không?',
+      confirmText: 'Thu hồi',
+      type: 'warning'
+    });
+    if (!confirmed) return;
+    this.http.delete(`${this.apiUrl}/revoke-share/${shareId}`).subscribe({
+      next: () => this.loadData(),
+      error: () => this.dialogService.alert({ title: 'Lỗi', message: 'Lỗi khi thu hồi quyền truy cập.', type: 'danger' })
+    });
+  }
+
+  async deleteAccess(shareId: number): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Xóa chia sẻ',
+      message: 'Bạn có chắc chắn muốn xóa mục chia sẻ đã hết hạn này không?',
+      confirmText: 'Xóa',
+      type: 'danger'
+    });
+    if (!confirmed) return;
+    this.http.delete(`${this.apiUrl}/revoke-share/${shareId}`).subscribe({
+      next: () => this.loadData(),
+      error: () => this.dialogService.alert({ title: 'Lỗi', message: 'Lỗi khi xóa mục chia sẻ.', type: 'danger' })
+    });
+  }
+
+  copyLink(token: string) {
+    const link = `http://localhost:8080/api/files/shared/${token}`;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(link).then(() => {
+            this.dialogService.alert({ title: 'Thành công', message: 'Đã sao chép liên kết vào clipboard', type: 'success' });
+        });
+    } else {
+        // Fallback for older browsers or non-secure contexts if needed
+        const textArea = document.createElement("textarea");
+        textArea.value = link;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            this.dialogService.alert({ title: 'Thành công', message: 'Đã sao chép liên kết vào clipboard', type: 'success' });
+        } catch (err) {
+            this.dialogService.alert({ title: 'Lỗi', message: 'Không thể sao chép liên kết.', type: 'danger' });
+        }
+        document.body.removeChild(textArea);
     }
   }
 

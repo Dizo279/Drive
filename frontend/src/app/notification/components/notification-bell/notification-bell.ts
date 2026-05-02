@@ -24,8 +24,8 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.notificationService.loadNotifications();
     if (isPlatformBrowser(this.platformId)) {
+      this.notificationService.loadNotifications();
       this.notificationService.connectSSE();
     }
 
