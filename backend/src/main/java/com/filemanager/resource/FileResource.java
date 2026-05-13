@@ -37,6 +37,7 @@ import org.springframework.beans.factory.annotation.Value;
 @Component
 @Path("/files")
 public class FileResource {
+
     public static class ShareRequest {
         public java.util.List<String> emails;
         public Integer expireDays; // Số ngày hết hạn
@@ -89,7 +90,7 @@ public class FileResource {
 
     @Inject
     private NotificationService notificationService;
-
+    // API UPLOAD FILE MỚI: Lưu file xuống disk, kiểm tra quota, sau đó lưu metadata vào Database
    @POST
     @Path("/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -639,7 +640,7 @@ public class FileResource {
     }
 
     @GET
-    @Path("/list/all") // Đổi từ "/all" thành "/list/all"
+    @Path("/list/all") // "/list/all"
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllFilesOfUser(@Context ContainerRequestContext requestContext) {
         try {
@@ -746,7 +747,7 @@ public class FileResource {
             return Response.ok(result).build();
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.serverError().entity("{\"error\": \"" + e.getMessage() + "\"}").build(); 
+            return Response.serverError().entity("{\"error\": \"" + e.getMessage() + "\"}").build();
         }
     }
 

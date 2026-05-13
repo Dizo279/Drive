@@ -10,10 +10,10 @@ export class JwtInterceptor implements HttpInterceptor {
     private authService: AuthService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
-
+  
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     if (!isPlatformBrowser(this.platformId)) {
-      return next.handle(request); // Bỏ qua hoàn toàn trên server
+      return next.handle(request);
     }
 
     const token = this.authService.getToken();

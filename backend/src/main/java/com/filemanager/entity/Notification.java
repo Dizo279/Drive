@@ -15,7 +15,7 @@ public class Notification {
     private Long userId;
 
     @Column(nullable = false, length = 50)
-    private String type; // UPGRADE_REQUEST, FILE_SHARED
+    private String type;
 
     @Column(nullable = false, length = 500)
     private String message;

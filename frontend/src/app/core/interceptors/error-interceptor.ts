@@ -5,7 +5,6 @@ import { catchError } from 'rxjs/operators';
 
 @Injectable()
 export class ErrorInterceptor implements HttpInterceptor {
-  
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
@@ -14,8 +13,7 @@ export class ErrorInterceptor implements HttpInterceptor {
           console.error('HTTP Error Intercepted:', error);
         }
         
-        // QUAN TRỌNG: Trả lại nguyên bản object error (chứa status 400 và JSON từ Backend)
-        // về cho Component để Account Settings có thể tự bóc tách thông báo tiếng Việt
+        //Trả lại nguyên bản object error (chứa status 400 và JSON từ Backend)
         return throwError(() => error);
       })
     );
