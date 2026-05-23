@@ -2,7 +2,7 @@
 
 Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Android (`d:\Ki2Nam3\Drive\android`) và đối chiếu với danh sách tính năng trên Web, dưới đây là chi tiết trạng thái từng tính năng.
 
-> **Cập nhật lần cuối:** 2026-05-22 — Đã rà soát lại toàn bộ code Java.
+> **Cập nhật lần cuối:** 2026-05-23 — Đã rà soát lại toàn bộ code Java, trạng thái không thay đổi.
 
 ---
 
