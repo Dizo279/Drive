@@ -38,6 +38,39 @@
             app:fabSize="mini" />
     </LinearLayout>
 
+    <!-- Thêm Search/Sort -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:gravity="center_vertical"
+        android:background="@color/apple_white">
+
+        <EditText
+            android:id="@+id/et_search"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:hint="Tìm kiếm file..."
+            android:paddingHorizontal="12dp"
+            android:textSize="14sp"
+            android:textColor="@color/apple_black"
+            android:maxLines="1"
+            android:inputType="text" />
+
+        <ImageButton
+            android:id="@+id/btn_sort"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_sort_by_size"
+            android:contentDescription="Sắp xếp"
+            app:tint="@color/apple_gray" />
+    </LinearLayout>
+
     <!-- Breadcrumb navigation bar -->
     <HorizontalScrollView
         android:layout_width="match_parent"
@@ -68,6 +101,37 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@color/apple_divider" />
+
+    <!-- Upload Progress -->
+    <LinearLayout
+        android:id="@+id/layout_upload_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:background="@color/apple_white"
+        android:visibility="gone"
+        android:elevation="2dp">
+
+        <TextView
+            android:id="@+id/tv_upload_progress_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Đang tải lên..."
+            android:textSize="13sp"
+            android:textColor="@color/apple_blue"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:id="@+id/pb_upload"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:max="100"
+            android:progress="0" />
+    </LinearLayout>
 
     <!-- File list với SwipeRefreshLayout -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
