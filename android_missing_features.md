@@ -69,7 +69,6 @@ Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Andr
 | **Hiển thị danh sách thông báo** | ✅ Đã có | `GET /api/notifications`. Icon/màu khác nhau theo type (FILE_SHARED, UPGRADE_REQUEST, FILE_DELETED, SYSTEM, DOWNLOAD). Bold + dot xanh cho thông báo chưa đọc. |
 | **Pull-to-refresh** | ✅ Đã có | `SwipeRefreshLayout`. |
 | **Nút "Đọc hết"** | ✅ Đã có | Quét toàn bộ thông báo chưa đọc và gọi `PUT /api/notifications/{id}/read` để cập nhật về server. |
-| **Real-time Notifications (SSE)** | ❌ Thiếu | Android chỉ dùng Pull-to-refresh. Không có kết nối EventSource (SSE) để nhận thông báo real-time như Web. |
 | **Đánh dấu đã đọc (Từng thông báo)** | ✅ Đã có | Click vào thông báo sẽ gọi `PUT /api/notifications/{id}/read` và cập nhật UI. |
 | **Xóa thông báo** | ✅ Đã có | Vuốt ngang (Swipe to delete) gọi API `DELETE /api/notifications/{id}`. |
 | **Điều hướng từ thông báo** | ✅ Đã có | Dựa vào `targetUrl`, tự động điều hướng sang Tab Chia Sẻ (`/shared`) hoặc Tab Thùng Rác (`/trash`). |
@@ -99,7 +98,7 @@ Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Andr
 | **Đăng ký** | ✅ Đã có | `POST /api/auth/register`. 5 fields: fullName, email, username, password, confirmPassword. Validate đầy đủ (email format, username ≥3, password ≥8, confirm match). Hiện lỗi từ server. Chuyển về Login sau khi thành công (delay 1.5s). |
 | **Splash Screen** | ✅ Đã có | Hiển thị 1.5s → kiểm tra `SessionManager.isLoggedIn()` → điều hướng Login/Main. |
 | **Auto redirect khi token hết hạn** | ✅ Đã có | `AuthInterceptor` tự gắn Bearer token. Nếu nhận 401 → `clearSession()`. `ProfileFragment` kiểm tra 401 → gọi `redirectToLogin()`. |
-| **Quên mật khẩu** | ❌ Thiếu (Giống Web) | Cả Web và Android đều chưa có tính năng quên mật khẩu / reset password. |
+
 
 ---
 
