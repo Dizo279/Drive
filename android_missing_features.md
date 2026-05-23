@@ -37,11 +37,11 @@ Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Andr
 | **Storage Quota** | ✅ Đã có | `LinearProgressIndicator` hiển thị % đã dùng. Đổi màu khi ≥80% (cam) hoặc ≥90% (đỏ). Hiển thị "X MB đã dùng / Y GB". |
 | **Yêu cầu nâng cấp Premium** | ✅ Đã có | Confirm dialog → `POST /api/users/upgrade-request`. Xử lý 409 (đã gửi trước đó). Ẩn nút nếu đã là Premium/Admin. |
 | **Đăng xuất** | ✅ Đã có | Confirm dialog → `SessionManager.clearSession()` + `ApiClient.reset()` → redirect về `LoginActivity`. |
-| **Cập nhật Avatar** | ❌ Thiếu | Không có tính năng chọn ảnh, crop và upload avatar. Chỉ hiển thị chữ cái đầu tên. |
-| **Đổi Tên hiển thị (FullName)** | ❌ Thiếu | Không có form / API call để chỉnh sửa tên hiển thị. |
-| **Đổi Username & Email** | ❌ Thiếu | Chỉ hiển thị thông tin, không có form chỉnh sửa. |
-| **Đổi Mật khẩu** | ❌ Thiếu | Nút "Đổi mật khẩu" hiện Toast: `"Tính năng đổi mật khẩu sẽ được bổ sung sớm"`. |
-| **API `PUT /api/users/profile`** | ❌ Thiếu | `ApiService.java` chưa khai báo endpoint update profile. |
+| **Cập nhật Avatar** | ✅ Đã có | Sử dụng ImagePicker, resize ảnh và upload dưới dạng chuỗi Base64 qua PUT. Hiển thị ảnh thay thế cho chữ cái đầu. |
+| **Đổi Tên hiển thị (FullName)** | ✅ Đã có | Form dialog chỉnh sửa, gọi API lưu thông tin mới. |
+| **Đổi Username & Email** | ✅ Đã có | Form dialog chỉnh sửa, có yêu cầu nhập mật khẩu hiện tại để xác nhận bảo mật. |
+| **Đổi Mật khẩu** | ✅ Đã có | Form dialog đổi mật khẩu yêu cầu nhập mật khẩu cũ, mật khẩu mới và xác nhận. |
+| **API `PUT /api/users/profile`** | ✅ Đã có | Đã tích hợp `ProfileUpdateRequest` vào `ApiService.java` và backend. |
 
 ---
 
@@ -135,13 +135,12 @@ Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Andr
 - Tạo thư mục, Download, Xóa file
 - Chia sẻ file (email + public link + thu hồi + download shared)
 - Thùng rác (khôi phục, xóa vĩnh viễn, dọn sạch, swipe gestures)
-- Profile hiển thị + Quota + Upgrade Premium + Đăng xuất
+- Profile (hiển thị, Quota, Upgrade, Đổi Avatar/Tên/Username/Email/Mật khẩu, Đăng xuất)
 - Auth (Login + Register + Splash + Auto-redirect)
 - Bottom Navigation + Session management
 
 ### 🔧 Cần sửa / hoàn thiện:
-1. **Ưu tiên 1 — Profile Edit:** Bổ sung form Edit Profile (Avatar, FullName, Username, Email, Mật khẩu) và khai báo API `PUT /api/users/profile` trong `ApiService.java`.
-2. **Ưu tiên 2 — Notifications nâng cao:** Thêm API đánh dấu đã đọc (`PUT /notifications/{id}/read`), xóa thông báo (`DELETE /notifications/{id}`). Fix `markAllRead()` (hiện tại vòng for rỗng, không thay đổi state). Implement điều hướng từ thông báo đến targetUrl.
+1. **Ưu tiên 1 — Notifications nâng cao:** Thêm API đánh dấu đã đọc (`PUT /notifications/{id}/read`), xóa thông báo (`DELETE /notifications/{id}`). Fix `markAllRead()` (hiện tại vòng for rỗng, không thay đổi state). Implement điều hướng từ thông báo đến targetUrl.
 3. **Ưu tiên 3 — Rename file:** Implement tính năng đổi tên file/folder (cần API backend hỗ trợ `PUT /api/files/{id}/rename`).
 4. **Ưu tiên 4 — Trash countdown:** Hiển thị "Còn X ngày" trước khi file bị xóa vĩnh viễn tự động.
 5. **Ưu tiên 5 — Real-time (SSE):** Tích hợp `okhttp-sse` để nhận thông báo real-time thay vì chỉ pull-to-refresh.

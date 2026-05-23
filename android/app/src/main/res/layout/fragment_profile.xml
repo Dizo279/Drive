@@ -2,6 +2,7 @@
 <!--
     Profile Screen — Màn hình Hồ sơ cá nhân
     Gồm: Avatar + tên, Storage quota, Thông tin tài khoản, Hành động
+    Bổ sung: Chọn avatar, chỉnh sửa profile, đổi mật khẩu
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -29,13 +30,18 @@
                 android:orientation="vertical"
                 android:gravity="center">
 
-                <!-- Avatar (chữ cái đầu tên) -->
+                <!-- Avatar container (hỗ trợ cả chữ cái và ảnh) -->
                 <FrameLayout
+                    android:id="@+id/layout_avatar"
                     android:layout_width="84dp"
                     android:layout_height="84dp"
                     android:background="@drawable/bg_avatar_circle"
-                    android:alpha="0.9">
+                    android:alpha="0.9"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
 
+                    <!-- Chữ cái đầu (hiện khi chưa có avatar) -->
                     <TextView
                         android:id="@+id/tv_avatar_letter"
                         android:layout_width="wrap_content"
@@ -45,6 +51,24 @@
                         android:textColor="#FFFFFF"
                         android:textSize="36sp"
                         android:textStyle="bold" />
+
+                    <!-- Ảnh avatar (hiện khi đã có avatar URL) -->
+                    <ImageView
+                        android:id="@+id/iv_avatar"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:visibility="gone" />
+
+                    <!-- Icon camera overlay -->
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="bottom|end"
+                        android:src="@android:drawable/ic_menu_camera"
+                        android:background="@drawable/bg_avatar_circle"
+                        android:padding="4dp"
+                        android:alpha="0.85" />
                 </FrameLayout>
 
                 <!-- Họ tên -->
@@ -304,7 +328,33 @@
                 android:orientation="vertical"
                 android:paddingVertical="8dp">
 
-                <!-- Đổi mật khẩu (TODO Phase sau) -->
+                <!-- Chỉnh sửa thông tin cá nhân -->
+                <LinearLayout
+                    android:id="@+id/action_edit_profile"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="20dp"
+                    android:background="?attr/selectableItemBackground">
+                    <TextView android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✏️" android:textSize="20sp" />
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Chỉnh sửa thông tin"
+                        android:textColor="@color/apple_black" android:textSize="15sp"
+                        android:layout_marginStart="12dp" />
+                    <TextView android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›" android:textColor="@color/apple_gray" android:textSize="20sp" />
+                </LinearLayout>
+
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:background="@color/apple_divider"
+                    android:layout_marginHorizontal="20dp"/>
+
+                <!-- Đổi mật khẩu -->
                 <LinearLayout
                     android:id="@+id/action_change_password"
                     android:layout_width="match_parent"

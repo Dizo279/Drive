@@ -47,9 +47,24 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     /** Đánh dấu tất cả đã đọc (cập nhật UI, không gọi API — để Fragment xử lý) */
     public void markAllRead() {
         for (NotificationDto item : items) {
-            // Không có setter trong DTO → tạo local flag
+            item.setRead(true);
         }
         notifyDataSetChanged();
+    }
+
+    public void removeItem(int position) {
+        if (position >= 0 && position < items.size()) {
+            items.remove(position);
+            notifyItemRemoved(position);
+        }
+    }
+
+    public NotificationDto getItem(int position) {
+        return items.get(position);
+    }
+    
+    public List<NotificationDto> getItems() {
+        return items;
     }
 
     /** Đếm số thông báo chưa đọc */

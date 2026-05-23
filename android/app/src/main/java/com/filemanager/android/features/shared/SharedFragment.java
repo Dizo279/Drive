@@ -388,7 +388,7 @@ public class SharedFragment extends Fragment implements SharedItemAdapter.OnShar
                         try {
                             String token = response.body().string();
                             // Hiển thị link
-                            String shareLink = "http://10.0.2.2:8080/api/files/shared/" + token;
+                            String shareLink = ApiClient.BASE_URL + "files/shared/" + token;
                             tvResultLink.setText(shareLink);
                             layoutResult.setVisibility(View.VISIBLE);
 

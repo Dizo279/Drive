@@ -104,9 +104,10 @@ public class TrashAdapter extends RecyclerView.Adapter<TrashAdapter.TrashViewHol
             circle.setColor(colorWithAlpha(iconColor, 40));
             flIcon.setBackground(circle);
 
-            // Thời gian xóa
+            // Thời gian xóa & Đếm ngược
             String deletedTime = DateUtils.formatRelative(file.getDeletedAt());
-            tvDeletedAt.setText("Đã xóa: " + deletedTime);
+            int daysLeft = DateUtils.getDaysUntilDeletion(file.getDeletedAt());
+            tvDeletedAt.setText("Đã xóa: " + deletedTime + " • Còn " + daysLeft + " ngày");
 
             // Kích thước
             tvSize.setText(file.isFolder() ? "Thư mục" : file.getFormattedSize());

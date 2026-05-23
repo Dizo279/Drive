@@ -4,6 +4,7 @@ import com.filemanager.android.network.dto.FileMetadataDto;
 import com.filemanager.android.network.dto.LoginRequest;
 import com.filemanager.android.network.dto.LoginResponse;
 import com.filemanager.android.network.dto.NotificationDto;
+import com.filemanager.android.network.dto.ProfileUpdateRequest;
 import com.filemanager.android.network.dto.SharedItemDto;
 import com.filemanager.android.network.dto.RegisterRequest;
 import com.filemanager.android.network.dto.UserDto;
@@ -20,6 +21,7 @@ import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
 import retrofit2.http.Part;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
@@ -83,6 +85,10 @@ public interface ApiService {
     @POST("files/folder")
     Call<FileMetadataDto> createFolder(@Body Map<String, Object> body);
 
+    /** Đổi tên file/thư mục */
+    @PUT("files/{id}/rename")
+    Call<FileMetadataDto> renameFile(@Path("id") Long id, @Body Map<String, String> body);
+
     /** Lấy danh sách Trash */
     @GET("files/trash")
     Call<List<FileMetadataDto>> getTrash();
@@ -128,6 +134,10 @@ public interface ApiService {
     @POST("users/upgrade-request")
     Call<ResponseBody> requestUpgrade();
 
+    /** Cập nhật profile (fullName, avatar, username, email, password) */
+    @PUT("users/profile")
+    Call<UserDto> updateProfile(@Body ProfileUpdateRequest request);
+
 
     // =====================
     // NOTIFICATIONS — /api/notifications
@@ -136,4 +146,12 @@ public interface ApiService {
     /** Lấy danh sách thông báo */
     @GET("notifications")
     Call<List<NotificationDto>> getNotifications();
+
+    /** Đánh dấu thông báo đã đọc */
+    @PUT("notifications/{id}/read")
+    Call<ResponseBody> markNotificationRead(@Path("id") Long id);
+
+    /** Xóa thông báo */
+    @DELETE("notifications/{id}")
+    Call<ResponseBody> deleteNotification(@Path("id") Long id);
 }

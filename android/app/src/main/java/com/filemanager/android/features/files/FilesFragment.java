@@ -548,10 +548,10 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
                     requireContext(), file.getId(), file.getFileName(), apiService);
         });
 
-        // Rename (TODO Phase 2 nâng cao)
+        // Rename
         sheetView.findViewById(R.id.action_rename).setOnClickListener(v -> {
             dialog.dismiss();
-            showToast("Tính năng đổi tên sẽ được bổ sung sớm");
+            showRenameDialog(file);
         });
 
         // Delete
@@ -561,6 +561,60 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         });
 
         dialog.show();
+    }
+
+    // ==================================================================
+    // Rename File/Folder
+    // ==================================================================
+
+    private void showRenameDialog(FileMetadataDto file) {
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_create_folder, null);
+
+        TextInputLayout til = dialogView.findViewById(R.id.til_folder_name);
+        TextInputEditText et = dialogView.findViewById(R.id.et_folder_name);
+        
+        til.setHint("Tên mới");
+        et.setText(file.getFileName());
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Đổi tên")
+                .setView(dialogView)
+                .setPositiveButton("Lưu", (dialog, which) -> {
+                    String newName = et.getText() != null
+                            ? et.getText().toString().trim() : "";
+                    if (TextUtils.isEmpty(newName)) {
+                        til.setError("Tên không được để trống");
+                        return;
+                    }
+                    if (newName.equals(file.getFileName())) return;
+                    
+                    renameFile(file, newName);
+                })
+                .setNegativeButton(getString(R.string.btn_cancel), null)
+                .show();
+    }
+
+    private void renameFile(FileMetadataDto file, String newName) {
+        Map<String, String> body = new HashMap<>();
+        body.put("name", newName);
+
+        apiService.renameFile(file.getId(), body).enqueue(new Callback<FileMetadataDto>() {
+            @Override
+            public void onResponse(Call<FileMetadataDto> call, Response<FileMetadataDto> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    showToast("✅ Đã đổi tên thành: " + newName);
+                    loadFiles(); // Reload to keep proper sorting
+                } else {
+                    showToast("❌ Không thể đổi tên");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<FileMetadataDto> call, Throwable t) {
+                showToast(getString(R.string.err_network));
+            }
+        });
     }
 
     // ==================================================================

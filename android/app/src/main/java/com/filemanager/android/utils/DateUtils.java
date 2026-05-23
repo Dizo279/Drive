@@ -94,4 +94,29 @@ public class DateUtils {
             return dateStr;
         }
     }
+
+    /**
+     * Tính số ngày còn lại (countdown) trước khi file bị xóa vĩnh viễn
+     * (Mặc định giữ trong thùng rác 30 ngày)
+     */
+    public static int getDaysUntilDeletion(String isoDeletedAt) {
+        if (isoDeletedAt == null || isoDeletedAt.isEmpty()) return 30;
+
+        String dateStr = isoDeletedAt.length() > 19
+                ? isoDeletedAt.substring(0, 19) : isoDeletedAt;
+
+        try {
+            SimpleDateFormat parser = new SimpleDateFormat(ISO_FORMAT, Locale.getDefault());
+            Date date = parser.parse(dateStr);
+            if (date == null) return 30;
+
+            long diffMs = System.currentTimeMillis() - date.getTime();
+            long diffDay  = diffMs / (24 * 60 * 60 * 1000);
+            
+            int remaining = 30 - (int) diffDay;
+            return Math.max(0, remaining);
+        } catch (ParseException e) {
+            return 30;
+        }
+    }
 }

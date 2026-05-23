@@ -62,6 +62,7 @@ public class NotificationsFragment extends Fragment
         apiService = ApiClient.getApiService(requireContext());
 
         setupRecyclerView();
+        setupSwipeToDelete();
         setupSwipeRefresh();
         setupMarkAllRead();
         loadNotifications();
@@ -87,11 +88,56 @@ public class NotificationsFragment extends Fragment
 
     private void setupMarkAllRead() {
         btnMarkAllRead.setOnClickListener(v -> {
-            // TODO: Gọi API mark-all-read khi backend có endpoint
-            // apiService.markAllNotificationsRead().enqueue(...)
+            for (NotificationDto notif : notificationAdapter.getItems()) {
+                if (!notif.isRead()) {
+                    apiService.markNotificationRead(notif.getId()).enqueue(new Callback<okhttp3.ResponseBody>() {
+                        @Override
+                        public void onResponse(Call<okhttp3.ResponseBody> call, Response<okhttp3.ResponseBody> response) {}
+                        @Override
+                        public void onFailure(Call<okhttp3.ResponseBody> call, Throwable t) {}
+                    });
+                }
+            }
             notificationAdapter.markAllRead();
+            btnMarkAllRead.setVisibility(View.GONE);
             showToast("✅ Đã đánh dấu tất cả là đã đọc");
         });
+    }
+
+    private void setupSwipeToDelete() {
+        androidx.recyclerview.widget.ItemTouchHelper.SimpleCallback swipeCallback =
+                new androidx.recyclerview.widget.ItemTouchHelper.SimpleCallback(0, androidx.recyclerview.widget.ItemTouchHelper.LEFT | androidx.recyclerview.widget.ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                NotificationDto notif = notificationAdapter.getItem(position);
+                
+                apiService.deleteNotification(notif.getId()).enqueue(new Callback<okhttp3.ResponseBody>() {
+                    @Override
+                    public void onResponse(Call<okhttp3.ResponseBody> call, Response<okhttp3.ResponseBody> response) {
+                        if (response.isSuccessful()) {
+                            notificationAdapter.removeItem(position);
+                            toggleEmptyState(notificationAdapter.getItemCount() == 0);
+                        } else {
+                            notificationAdapter.notifyItemChanged(position); // Hoàn tác swipe
+                            showToast("❌ Không thể xóa thông báo");
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<okhttp3.ResponseBody> call, Throwable t) {
+                        notificationAdapter.notifyItemChanged(position);
+                        showToast(getString(R.string.err_network));
+                    }
+                });
+            }
+        };
+        new androidx.recyclerview.widget.ItemTouchHelper(swipeCallback).attachToRecyclerView(recyclerNotifications);
     }
 
     // ==================================================================
@@ -140,11 +186,56 @@ public class NotificationsFragment extends Fragment
 
     @Override
     public void onClick(NotificationDto notification) {
-        // Hiển thị nội dung đầy đủ của thông báo
-        showToast(notification.getMessage());
+        if (!notification.isRead()) {
+            apiService.markNotificationRead(notification.getId()).enqueue(new Callback<okhttp3.ResponseBody>() {
+                @Override
+                public void onResponse(Call<okhttp3.ResponseBody> call, Response<okhttp3.ResponseBody> response) {
+                    if (response.isSuccessful()) {
+                        notification.setRead(true);
+                        // Tìm và cập nhật lại adapter
+                        int position = notificationAdapter.getItems().indexOf(notification);
+                        if (position != -1) {
+                            notificationAdapter.notifyItemChanged(position);
+                        }
+                        
+                        // Cập nhật lại badge nút
+                        int unread = notificationAdapter.getUnreadCount();
+                        if (unread > 0) {
+                            btnMarkAllRead.setVisibility(View.VISIBLE);
+                            btnMarkAllRead.setText("Đọc hết (" + unread + ")");
+                        } else {
+                            btnMarkAllRead.setVisibility(View.GONE);
+                        }
+                    }
+                }
+                @Override
+                public void onFailure(Call<okhttp3.ResponseBody> call, Throwable t) {}
+            });
+        }
 
-        // TODO: Điều hướng đến targetUrl nếu có
-        // if (notification.getTargetUrl() != null) { ... navigate ... }
+        // Điều hướng đến targetUrl nếu có
+        if (notification.getTargetUrl() != null && !notification.getTargetUrl().isEmpty()) {
+            if (notification.getTargetUrl().contains("/shared")) {
+                com.google.android.material.bottomnavigation.BottomNavigationView bottomNav = 
+                    requireActivity().findViewById(R.id.bottom_navigation);
+                if (bottomNav != null) {
+                    bottomNav.setSelectedItemId(R.id.nav_shared);
+                }
+            } else if (notification.getTargetUrl().contains("/trash")) {
+                com.google.android.material.bottomnavigation.BottomNavigationView bottomNav = 
+                    requireActivity().findViewById(R.id.bottom_navigation);
+                if (bottomNav != null) {
+                    bottomNav.setSelectedItemId(R.id.nav_trash);
+                }
+            }
+        } else {
+            // Hiển thị nội dung nếu không có URL điều hướng
+            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle("Thông báo")
+                    .setMessage(notification.getMessage())
+                    .setPositiveButton("Đóng", null)
+                    .show();
+        }
     }
 
     // ==================================================================
