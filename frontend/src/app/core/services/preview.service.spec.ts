@@ -1,22 +1,25 @@
-// src/app/core/services/preview.service.spec.ts
 import { TestBed } from '@angular/core/testing';
+import { FileService } from '@features/files/services/file.service';
+import { Observable, of, throwError } from 'rxjs';
 import { PreviewService } from './preview.service';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 describe('PreviewService', () => {
   let service: PreviewService;
-  let httpMock: HttpTestingController;
+  let fileService: { downloadFile: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule]
-    });
-    service = TestBed.inject(PreviewService);
-    httpMock = TestBed.inject(HttpTestingController);
-  });
+    fileService = {
+      downloadFile: vi.fn(() => of(new Blob(['test'], { type: 'image/jpeg' })))
+    };
 
-  afterEach(() => {
-    httpMock.verify();
+    TestBed.configureTestingModule({
+      providers: [
+        PreviewService,
+        { provide: FileService, useValue: fileService }
+      ]
+    });
+
+    service = TestBed.inject(PreviewService);
   });
 
   it('should be created', () => {
@@ -25,6 +28,7 @@ describe('PreviewService', () => {
 
   it('should have initial state with isOpen false', () => {
     const state = service.state();
+
     expect(state.isOpen).toBe(false);
     expect(state.fileId).toBeNull();
     expect(state.fileName).toBe('');
@@ -34,55 +38,53 @@ describe('PreviewService', () => {
     expect(state.error).toBeNull();
   });
 
-  it('should set loading true when open() is called', () => {
+  it('should fetch file blob and update state on success', () => {
+    const mockBlob = new Blob(['image'], { type: 'image/jpeg' });
+    fileService.downloadFile.mockReturnValue(of(mockBlob));
+
     service.open({ id: 1, name: 'test.jpg', mimeType: 'image/jpeg' });
 
-    const state = service.state();
-    expect(state.isOpen).toBe(true);
-    expect(state.loading).toBe(true);
-    expect(state.fileId).toBe(1);
-    expect(state.fileName).toBe('test.jpg');
-    expect(state.mimeType).toBe('image/jpeg');
+    expect(fileService.downloadFile).toHaveBeenCalledWith(1);
+    expect(service.state()).toEqual({
+      isOpen: true,
+      fileId: 1,
+      fileName: 'test.jpg',
+      mimeType: 'image/jpeg',
+      fileBlob: mockBlob,
+      loading: false,
+      error: null
+    });
   });
 
-  it('should fetch file blob and update state on success', (done) => {
-    const mockBlob = new Blob(['test'], { type: 'image/jpeg' });
+  it('should set loading true while the file is being fetched', () => {
+    fileService.downloadFile.mockReturnValue(new Observable<Blob>());
 
-    service.open({ id: 1, name: 'test.jpg', mimeType: 'image/jpeg' });
+    service.open({ id: 2, name: 'video.mp4', mimeType: 'video/mp4' });
 
-    const req = httpMock.expectOne('http://localhost:8080/api/files/1/download');
-    expect(req.request.method).toBe('GET');
-    req.flush(mockBlob);
-
-    setTimeout(() => {
-      const state = service.state();
-      expect(state.loading).toBe(false);
-      expect(state.fileBlob).toBeTruthy();
-      expect(state.error).toBeNull();
-      done();
-    }, 100);
+    expect(service.state()).toMatchObject({
+      isOpen: true,
+      fileId: 2,
+      fileName: 'video.mp4',
+      mimeType: 'video/mp4',
+      fileBlob: null,
+      loading: true,
+      error: null
+    });
   });
 
-  it('should set error on fetch failure', (done) => {
-    service.open({ id: 1, name: 'test.jpg', mimeType: 'image/jpeg' });
+  it('should set a friendly error on fetch failure', () => {
+    fileService.downloadFile.mockReturnValue(throwError(() => ({ status: 404 })));
 
-    const req = httpMock.expectOne('http://localhost:8080/api/files/1/download');
-    req.flush('Not found', { status: 404, statusText: 'Not Found' });
+    service.open({ id: 1, name: 'missing.jpg', mimeType: 'image/jpeg' });
 
-    setTimeout(() => {
-      const state = service.state();
-      expect(state.loading).toBe(false);
-      expect(state.error).toBe('File không tồn tại hoặc đã bị xóa.');
-      done();
-    }, 100);
+    expect(service.state().loading).toBe(false);
+    expect(service.state().error).toBe('File không tồn tại hoặc đã bị xóa.');
   });
 
-  it('should reset state when close() is called', () => {
-    // First open a preview
+  it('should reset state and cancel pending work when close() is called', () => {
+    fileService.downloadFile.mockReturnValue(new Observable<Blob>());
     service.open({ id: 1, name: 'test.jpg', mimeType: 'image/jpeg' });
-    expect(service.state().isOpen).toBe(true);
 
-    // Then close it
     service.close();
 
     const state = service.state();
@@ -90,5 +92,7 @@ describe('PreviewService', () => {
     expect(state.fileId).toBeNull();
     expect(state.fileName).toBe('');
     expect(state.fileBlob).toBeNull();
+    expect(state.loading).toBe(false);
+    expect(state.error).toBeNull();
   });
 });

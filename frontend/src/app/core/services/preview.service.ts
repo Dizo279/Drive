@@ -1,6 +1,6 @@
-// src/app/core/services/preview.service.ts
-import { Injectable, signal, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal } from '@angular/core';
+import { FileService } from '@features/files/services/file.service';
+import { Subscription } from 'rxjs';
 
 export interface PreviewState {
   isOpen: boolean;
@@ -26,27 +26,31 @@ const initialState: PreviewState = {
   providedIn: 'root'
 })
 export class PreviewService {
-  private _state = signal<PreviewState>(initialState);
-  private http = inject(HttpClient);
+  private readonly _state = signal<PreviewState>(initialState);
+  private readonly fileService = inject(FileService);
+  private downloadSubscription: Subscription | null = null;
+  private requestVersion = 0;
 
   readonly state = this._state.asReadonly();
 
   open(file: { id: number; name: string; mimeType: string }): void {
-    this._state.update(state => ({
-      ...state,
+    const requestVersion = ++this.requestVersion;
+    this.downloadSubscription?.unsubscribe();
+
+    this._state.set({
       isOpen: true,
       loading: true,
       fileId: file.id,
       fileName: file.name,
       mimeType: file.mimeType,
-      error: null,
-      fileBlob: null
-    }));
+      fileBlob: null,
+      error: null
+    });
 
-    this.http.get(`http://localhost:8080/api/files/${file.id}/download`, {
-      responseType: 'blob'
-    }).subscribe({
+    this.downloadSubscription = this.fileService.downloadFile(file.id).subscribe({
       next: (blob: Blob) => {
+        if (requestVersion !== this.requestVersion) return;
+
         this._state.update(state => ({
           ...state,
           fileBlob: blob,
@@ -54,26 +58,51 @@ export class PreviewService {
         }));
       },
       error: (err) => {
-        let errorMessage = 'Không thể hiển thị file. Vui lòng thử lại.';
-
-        if (err.status === 404) {
-          errorMessage = 'File không tồn tại hoặc đã bị xóa.';
-        } else if (err.status === 403) {
-          errorMessage = 'Bạn không có quyền xem file này.';
-        } else if (err.status === 0) {
-          errorMessage = 'Không thể tải file. Vui lòng kiểm tra kết nối.';
-        }
+        if (requestVersion !== this.requestVersion) return;
 
         this._state.update(state => ({
           ...state,
           loading: false,
-          error: errorMessage
+          error: this.getErrorMessage(err?.status)
         }));
       }
     });
   }
 
   close(): void {
+    this.requestVersion++;
+    this.downloadSubscription?.unsubscribe();
+    this.downloadSubscription = null;
     this._state.set(initialState);
+  }
+
+  download(): void {
+    const state = this._state();
+    if (!state.fileBlob || typeof document === 'undefined') return;
+
+    const url = globalThis.URL.createObjectURL(state.fileBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = state.fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    globalThis.URL.revokeObjectURL(url);
+  }
+
+  private getErrorMessage(status?: number): string {
+    switch (status) {
+      case 404:
+        return 'File không tồn tại hoặc đã bị xóa.';
+      case 403:
+        return 'Bạn không có quyền xem file này.';
+      case 0:
+        return 'Không thể tải file. Vui lòng kiểm tra kết nối.';
+      case 413:
+      case 504:
+        return 'File quá lớn để preview. Vui lòng tải xuống.';
+      default:
+        return 'Không thể hiển thị file. Vui lòng thử lại.';
+    }
   }
 }

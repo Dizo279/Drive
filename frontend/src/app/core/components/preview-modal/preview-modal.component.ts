@@ -1,6 +1,5 @@
-// src/app/core/components/preview-modal/preview-modal.component.ts
-import { Component, computed, inject, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, OnDestroy, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
 import { PreviewService } from '../../services/preview.service';
 
 @Component({
@@ -11,15 +10,27 @@ import { PreviewService } from '../../services/preview.service';
   styleUrls: ['./preview-modal.component.css']
 })
 export class PreviewModalComponent implements OnDestroy {
-  private previewService = inject(PreviewService);
-
-  state = computed(() => this.previewService.state());
-  objectUrl = computed(() => {
-    const blob = this.state().fileBlob;
-    return blob ? URL.createObjectURL(blob) : null;
-  });
-
+  private readonly previewService = inject(PreviewService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
   private currentObjectUrl: string | null = null;
+
+  readonly state = computed(() => this.previewService.state());
+  readonly objectUrl = signal<string | null>(null);
+
+  constructor() {
+    effect(() => {
+      const blob = this.state().fileBlob;
+      this.revokeObjectUrl();
+
+      if (blob && this.isBrowser) {
+        this.currentObjectUrl = URL.createObjectURL(blob);
+        this.objectUrl.set(this.currentObjectUrl);
+      } else {
+        this.objectUrl.set(null);
+      }
+    });
+  }
 
   ngOnDestroy(): void {
     this.revokeObjectUrl();
@@ -34,28 +45,18 @@ export class PreviewModalComponent implements OnDestroy {
   }
 
   onClose(): void {
-    this.revokeObjectUrl();
     this.previewService.close();
   }
 
   onDownload(): void {
-    const state = this.state();
-    const url = this.objectUrl();
-
-    if (!url || !state.fileBlob) return;
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = state.fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    this.previewService.download();
   }
 
   private revokeObjectUrl(): void {
-    if (this.currentObjectUrl) {
+    if (this.currentObjectUrl && this.isBrowser) {
       URL.revokeObjectURL(this.currentObjectUrl);
       this.currentObjectUrl = null;
     }
+    this.objectUrl.set(null);
   }
 }
