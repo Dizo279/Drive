@@ -5,11 +5,14 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 public class StorageService {
@@ -77,6 +80,56 @@ public class StorageService {
             Files.deleteIfExists(file);
         } catch (Exception e) {
             throw new RuntimeException("Không thể xóa file vật lý: " + e.getMessage(), e);
+        }
+    }
+
+    // Hàm tạo ZIP của file vật lý
+    public void zipFiles(java.util.List<String> filePathList, OutputStream outputStream) {
+        try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+            for (String filePath : filePathList) {
+                Path file = rootLocation.resolve(filePath);
+                if (Files.exists(file) && Files.isRegularFile(file)) {
+                    String entryName = file.getFileName().toString();
+                    ZipEntry entry = new ZipEntry(entryName);
+                    zipOut.putNextEntry(entry);
+                    
+                    try (InputStream fileInput = Files.newInputStream(file)) {
+                        fileInput.transferTo(zipOut);
+                    }
+                    
+                    zipOut.closeEntry();
+                }
+            }
+            zipOut.finish();
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi tạo ZIP: " + e.getMessage(), e);
+        }
+    }
+
+    // Hàm tạo ZIP với cấu trúc folder (recursive)
+    public void zipFolderStructure(java.util.List<com.filemanager.entity.FileMetadata> files, 
+                                  String baseFolderName, OutputStream outputStream) {
+        try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+            for (com.filemanager.entity.FileMetadata file : files) {
+                if (!Boolean.TRUE.equals(file.getIsFolder()) && !Boolean.TRUE.equals(file.getIsDeleted())) {
+                    Path filePath = rootLocation.resolve(file.getFilePath());
+                    if (Files.exists(filePath)) {
+                        // Tạo entry path dưới thư mục cơ sở
+                        String entryName = baseFolderName + "/" + file.getFileName();
+                        ZipEntry entry = new ZipEntry(entryName);
+                        zipOut.putNextEntry(entry);
+                        
+                        try (InputStream fileInput = Files.newInputStream(filePath)) {
+                            fileInput.transferTo(zipOut);
+                        }
+                        
+                        zipOut.closeEntry();
+                    }
+                }
+            }
+            zipOut.finish();
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi tạo ZIP folder: " + e.getMessage(), e);
         }
     }
 }

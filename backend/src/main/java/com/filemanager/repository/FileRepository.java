@@ -30,4 +30,15 @@ public interface FileRepository extends JpaRepository<FileMetadata, Long> {
     @Query("SELECT COALESCE(SUM(f.fileSize), 0) FROM FileMetadata f " +
            "WHERE f.ownerId = :ownerId AND f.isDeleted = false AND f.isFolder = false")
     long sumUsedQuotaByOwner(@Param("ownerId") Long ownerId);
+
+    // Lấy tất cả file/folder bên trong một folder (đệ quy)
+    @Query(value = "WITH RECURSIVE folder_tree AS (" +
+           "  SELECT id FROM files WHERE id = :folderId AND is_deleted = false" +
+           "  UNION ALL" +
+           "  SELECT f.id FROM files f" +
+           "  INNER JOIN folder_tree ft ON f.parent_id = ft.id" +
+           "  WHERE f.is_deleted = false" +
+           ") SELECT f.* FROM files f" +
+           "  INNER JOIN folder_tree ft ON f.id = ft.id", nativeQuery = true)
+    List<FileMetadata> findAllRecursiveInFolder(@Param("folderId") Long folderId);
 }
