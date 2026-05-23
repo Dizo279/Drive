@@ -229,7 +229,7 @@
           </div>
           <div class="table-body">
             
-            <div class="file-row" *ngFor="let item of items" (dblclick)="openFolder(item)" style="cursor: pointer;">
+            <div class="file-row" *ngFor="let item of items" (dblclick)="onItemDoubleClick(item)" style="cursor: pointer;">
               <div class="td-checkbox" (click)="$event.stopPropagation()">
                 <input type="checkbox" [checked]="selectedItemIds.has(item.id)" (click)="toggleSelection(item, $event)">
               </div>

@@ -8,6 +8,7 @@ import { AuthService } from '@features/auth/services/auth.service';
 import { Router, RouterLink, RouterModule } from '@angular/router';
 import { NotificationBellComponent } from '@notification/components/notification-bell/notification-bell';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { PreviewService } from '@core/services/preview.service';
 
 @Component({
   selector: 'app-file-list',
@@ -67,7 +68,8 @@ export class FileListComponent implements OnInit {
     public cdr: ChangeDetectorRef,
     private zone: NgZone,
     private http: HttpClient,
-    private dialogService: ConfirmDialogService
+    private dialogService: ConfirmDialogService,
+    private previewService: PreviewService
   ) {}
 
   ngOnInit(): void {
@@ -209,13 +211,22 @@ export class FileListComponent implements OnInit {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
-  openFolder(folder: any): void {
-    if (folder.isFolder) {
-      // Ghi nhận trực tiếp ID và Tên của thư mục vừa click vào lịch sử
-      this.folderHistory.push({ id: folder.id, name: folder.name });
-      this.currentParentId = folder.id;
+  onItemDoubleClick(item: any): void {
+    if (item.isFolder) {
+      // Navigate into folder (existing behavior)
+      this.folderHistory.push({ id: item.id, name: item.name });
+      this.currentParentId = item.id;
       this.loadData();
+    } else if (item.mimeType?.startsWith('image/') ||
+               item.mimeType?.startsWith('video/')) {
+      // Open preview for images and videos
+      this.previewService.open({
+        id: item.id,
+        name: item.name,
+        mimeType: item.mimeType
+      });
     }
+    // Other files: no action (could add download logic here if needed)
   }
 
   toggleSelection(item: any, event: Event): void {
