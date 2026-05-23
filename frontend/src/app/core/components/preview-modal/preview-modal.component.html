@@ -1,0 +1,48 @@
+@if (state().isOpen) {
+  <div class="preview-backdrop">
+    <div class="preview-panel" role="dialog" aria-modal="true" aria-label="File preview">
+      <button class="preview-close" type="button" (click)="onClose()" title="Close" aria-label="Close preview">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      @if (state().loading) {
+        <div class="preview-status">
+          <div class="preview-spinner"></div>
+          <p>Đang tải...</p>
+        </div>
+      }
+
+      @if (state().error) {
+        <div class="preview-status preview-status--error">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <p>{{ state().error }}</p>
+        </div>
+      }
+
+      @if (!state().loading && !state().error && objectUrl()) {
+        <div class="preview-media">
+          @if (isImage()) {
+            <img [src]="objectUrl()" alt="Preview">
+          }
+          @if (isVideo()) {
+            <video [src]="objectUrl()" autoplay controls></video>
+          }
+        </div>
+
+        <button class="preview-download" type="button" (click)="onDownload()" title="Download">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+          </svg>
+          Download
+        </button>
+      }
+    </div>
+  </div>
+}

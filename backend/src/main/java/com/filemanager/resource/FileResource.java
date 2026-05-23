@@ -27,7 +27,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.time.LocalDateTime;
@@ -143,6 +146,172 @@ public class FileResource {
         }
     }
 
+    /**
+     * API UPLOAD CẢ FOLDER: Nhận nhiều file kèm đường dẫn tương đối (relative path),
+     * tự động tạo cấu trúc thư mục đệ quy trên DB rồi lưu file vật lý.
+     *
+     * Form fields:
+     *   - files[]: danh sách InputStream của từng file
+     *   - fileDetails[]: FormDataContentDisposition tương ứng (chứa tên file)
+     *   - relativePaths[]: đường dẫn tương đối của từng file trong folder gốc
+     *                      ví dụ: "MyFolder/sub/image.png"
+     *   - parentId (optional): ID thư mục cha nơi đặt folder tải lên
+     */
+    @POST
+    @Path("/upload-folder")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response uploadFolder(
+            @FormDataParam("files") List<org.glassfish.jersey.media.multipart.FormDataBodyPart> fileParts,
+            @FormDataParam("relativePaths") List<org.glassfish.jersey.media.multipart.FormDataBodyPart> pathParts,
+            @FormDataParam("parentId") Long parentId,
+            @Context ContainerRequestContext requestContext) {
+
+        try {
+            Object userIdObj = requestContext.getProperty("userId");
+            if (userIdObj == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Cần đăng nhập\"}").build();
+            }
+            Long userId = ((Number) userIdObj).longValue();
+
+            if (fileParts == null || fileParts.isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Không có file nào được gửi lên\"}").build();
+            }
+
+            // Map: đường dẫn thư mục -> ID thư mục đã tạo (cache để tránh tạo trùng)
+            Map<String, Long> folderCache = new HashMap<>();
+
+            int successCount = 0;
+            long totalBytes = 0;
+            List<String> errors = new ArrayList<>();
+
+            for (int i = 0; i < fileParts.size(); i++) {
+                org.glassfish.jersey.media.multipart.FormDataBodyPart filePart = fileParts.get(i);
+
+                // Lấy đường dẫn tương đối tương ứng
+                String relativePath = "";
+                if (pathParts != null && i < pathParts.size()) {
+                    relativePath = pathParts.get(i).getValue();
+                }
+
+                try {
+                    InputStream fileInputStream = filePart.getValueAs(InputStream.class);
+                    FormDataContentDisposition fileDetail = filePart.getFormDataContentDisposition();
+                    String originalName = fileDetail.getFileName();
+                    if (originalName == null || originalName.isBlank()) {
+                        originalName = "unknown_file";
+                    }
+
+                    // 1. Lưu file vật lý xuống disk
+                    String savedFileName = storageService.storeFile(fileInputStream, originalName);
+                    long exactSizeBytes = storageService.getFileSize(savedFileName);
+
+                    // 2. Kiểm tra quota
+                    try {
+                        quotaService.validateAndAddQuota(userId, exactSizeBytes);
+                    } catch (WebApplicationException e) {
+                        Files.deleteIfExists(Paths.get(storageService.getUploadDir()).resolve(savedFileName));
+                        errors.add("Vượt quota khi tải: " + relativePath);
+                        continue;
+                    }
+
+                    // 3. Tạo cấu trúc thư mục đệ quy theo relativePath
+                    // relativePath ví dụ: "MyProject/src/main/App.java"
+                    // -> tạo folder MyProject (cha: parentId), src (cha: MyProject), main (cha: src)
+                    // -> lưu file App.java vào folder main
+                    Long fileParentId = resolveOrCreateFolderPath(relativePath, userId, parentId, folderCache);
+
+                    // 4. Lưu metadata file vào DB
+                    FileMetadata metadata = new FileMetadata();
+                    metadata.setOwnerId(userId);
+                    metadata.setFileName(originalName);
+                    metadata.setFilePath(savedFileName);
+                    metadata.setFileSize(exactSizeBytes);
+                    metadata.setMimeType(Files.probeContentType(
+                            Paths.get(storageService.getUploadDir()).resolve(savedFileName)));
+                    metadata.setIsFolder(false);
+                    metadata.setParentId(fileParentId);
+
+                    fileRepository.save(metadata);
+                    successCount++;
+                    totalBytes += exactSizeBytes;
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    errors.add("Lỗi file: " + relativePath + " - " + ex.getMessage());
+                }
+            }
+
+            String msg = String.format(
+                    "{\"message\": \"Tải lên hoàn tất\", \"successCount\": %d, \"totalBytes\": %d, \"errors\": %d}",
+                    successCount, totalBytes, errors.size());
+            return Response.ok(msg).build();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity("{\"error\": \"" + e.getMessage() + "\"}").build();
+        }
+    }
+
+    /**
+     * Phân tích đường dẫn tương đối, tạo (hoặc lấy từ cache) từng thư mục cha theo cấu trúc.
+     * Trả về ID của thư mục chứa file (thư mục lá cuối cùng trước tên file).
+     *
+     * Ví dụ: relativePath = "MyProject/src/App.java", parentId = null
+     *  -> tạo "MyProject" (root), "src" (cha = MyProject)
+     *  -> trả về ID của "src"
+     */
+    private Long resolveOrCreateFolderPath(String relativePath, Long userId, Long rootParentId,
+                                            Map<String, Long> folderCache) {
+        if (relativePath == null || relativePath.isBlank()) {
+            return rootParentId;
+        }
+
+        // Chuẩn hóa dấu phân cách (Windows dùng \, nhưng browser gửi /)
+        String normalized = relativePath.replace("\\", "/");
+
+        // Tách thành các phần: phần cuối là tên file, các phần trước là thư mục
+        String[] parts = normalized.split("/");
+
+        // Chỉ có tên file, không có thư mục cha
+        if (parts.length <= 1) {
+            return rootParentId;
+        }
+
+        // Duyệt từng cấp thư mục (bỏ phần tử cuối cùng là tên file)
+        Long currentParentId = rootParentId;
+        StringBuilder pathKey = new StringBuilder();
+
+        for (int i = 0; i < parts.length - 1; i++) {
+            String folderName = parts[i];
+            if (folderName.isBlank()) continue;
+
+            if (pathKey.length() > 0) pathKey.append("/");
+            pathKey.append(folderName);
+
+            String cacheKey = userId + ":" + (rootParentId != null ? rootParentId : "null") + ":" + pathKey;
+
+            if (folderCache.containsKey(cacheKey)) {
+                currentParentId = folderCache.get(cacheKey);
+            } else {
+                // Tạo thư mục mới trong DB
+                FileMetadata folder = new FileMetadata();
+                folder.setOwnerId(userId);
+                folder.setFileName(folderName);
+                folder.setIsFolder(true);
+                folder.setParentId(currentParentId);
+                folder.setFileSize(0L);
+                folder.setFilePath("");
+                fileRepository.save(folder);
+
+                currentParentId = folder.getId();
+                folderCache.put(cacheKey, currentParentId);
+            }
+        }
+
+        return currentParentId;
+    }
+
     // CẬP NHẬT API LẤY DANH SÁCH FILE THEO THƯ MỤC
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -234,6 +403,55 @@ public class FileResource {
         // Báo cho trình duyệt biết đây là file đính kèm và tên file là gì
         return Response.ok(fileStream)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + metadata.getFileName() + "\"")
+                .build();
+    }
+
+    // API DOWNLOAD FOLDER (nén toàn bộ folder thành ZIP)
+    @GET
+    @Path("/{id}/download-folder")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response downloadFolder(@PathParam("id") Long id, @Context ContainerRequestContext requestContext) {
+        if (id == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Thiếu id").build();
+        }
+        Object userIdObj = requestContext.getProperty("userId");
+        if (userIdObj == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        
+        Long userId = ((Number) userIdObj).longValue();
+        Optional<FileMetadata> fileOpt = fileRepository.findById(id);
+        
+        // Kiểm tra quyền sở hữu và phải là folder
+        if (fileOpt.isEmpty()
+                || !fileOpt.get().getOwnerId().equals(userId)
+                || Boolean.TRUE.equals(fileOpt.get().getIsDeleted())
+                || !Boolean.TRUE.equals(fileOpt.get().getIsFolder())) {
+            return Response.status(Response.Status.NOT_FOUND).entity("Thư mục không tồn tại hoặc bạn không có quyền tải").build();
+        }
+
+        FileMetadata folderMetadata = fileOpt.get();
+        
+        // Lấy tất cả file/folder bên trong folder này (đệ quy)
+        List<FileMetadata> allFilesInFolder = fileRepository.findAllRecursiveInFolder(id);
+        
+        // Tạo luồng ZIP trực tiếp
+        StreamingOutput fileStream = new StreamingOutput() {
+            @Override
+            public void write(OutputStream output) {
+                try {
+                    storageService.zipFolderStructure(allFilesInFolder, folderMetadata.getFileName(), output);
+                } catch (Exception e) {
+                    throw new WebApplicationException("Lỗi tạo ZIP file", e);
+                }
+            }
+        };
+
+        // Tên file ZIP sẽ là tên folder + .zip
+        String zipFileName = folderMetadata.getFileName() + ".zip";
+        
+        return Response.ok(fileStream)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipFileName + "\"")
                 .build();
     }
 

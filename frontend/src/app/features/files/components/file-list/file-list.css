@@ -151,12 +151,32 @@
 
 /* --- FILES TABLE (Phong cách khối Surface) --- */
 .file-table { background: var(--bg-surface); border-radius: var(--radius-card); box-shadow: var(--shadow-apple); overflow: hidden; border: 1px solid var(--border-color); }
-.table-head { display: grid; grid-template-columns: 1fr 140px 160px 100px; gap: 16px; padding: 12px 24px; border-bottom: 1px solid var(--border-color); font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+.table-head { display: grid; grid-template-columns: 40px 1fr 140px 160px 100px; gap: 16px; padding: 12px 24px; border-bottom: 1px solid var(--border-color); font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+.th-checkbox { display: flex; align-items: center; justify-content: center; }
 .txt-right { text-align: right; }
 
-.file-row { display: grid; grid-template-columns: 1fr 140px 160px 100px; gap: 16px; padding: 14px 24px; align-items: center; border-bottom: 1px solid var(--border-color); transition: background 0.2s; }
+.file-row { display: grid; grid-template-columns: 40px 1fr 140px 160px 100px; gap: 16px; padding: 14px 24px; align-items: center; border-bottom: 1px solid var(--border-color); transition: background 0.2s; }
 .file-row:last-child { border-bottom: none; }
 .file-row:hover { background: var(--bg-surface-hover); }
+.td-checkbox { display: flex; align-items: center; justify-content: center; }
+.td-checkbox input { width: 18px; height: 18px; cursor: pointer; }
+
+.bulk-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px;
+  background: rgba(0,0,0,0.02);
+  border-radius: 16px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.toolbar-left { font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
+.toolbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.toolbar-progress { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 8px; }
+.progress-track-small { background: rgba(0,0,0,0.08); border-radius: 999px; width: 100%; height: 6px; overflow: hidden; }
+.progress-fill-small { background: var(--accent-blue); height: 100%; width: 0; transition: width 0.2s ease; }
 
 .r-name { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .r-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }

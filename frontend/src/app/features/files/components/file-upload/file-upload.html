@@ -9,45 +9,120 @@
       <span>Quay lại</span>
     </button>
 
+    <!-- ── MODE SWITCHER ───────────────────────────────────── -->
+    <div class="mode-switcher">
+      <button class="mode-btn" [class.active]="mode === 'files'" (click)="setMode('files')">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        Upload File
+      </button>
+      <button class="mode-btn" [class.active]="mode === 'folder'" (click)="setMode('folder')">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+        </svg>
+        Upload Folder
+      </button>
+    </div>
+
     <div class="upload-content-split">
       
+      <!-- ── LEFT: DROPZONE ─────────────────────────────────── -->
       <div class="upload-left"
            [class.is-dragging]="isDragging"
            (dragover)="onDragOver($event)"
+           (dragenter)="onDragEnter($event)"
            (dragleave)="onDragLeave($event)"
            (drop)="onDrop($event)">
         
-        <div class="cloud-icon-wrapper">
-          <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5">
+        <div class="cloud-icon-wrapper" [class.bounce]="isDragging">
+          <!-- Icon file thường -->
+          <svg *ngIf="mode === 'files'" viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
             <path d="M12 15V9"/>
             <path d="m9 12 3-3 3 3"/>
           </svg>
+          <!-- Icon folder -->
+          <svg *ngIf="mode === 'folder'" viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            <path d="M12 15V9"/>
+            <path d="m9 12 3-3 3 3"/>
+          </svg>
         </div>
-        <h2 class="dz-heading">Kéo thả file vào khu vực này</h2>
-        <p class="dz-subtext">Hỗ trợ mọi định dạng: Hình ảnh, Tài liệu, Video...</p>
+
+        <h2 class="dz-heading">
+          {{ isDragging ? 'Thả ra để tải lên!' : (mode === 'files' ? 'Kéo thả file vào đây' : 'Kéo thả folder vào đây') }}
+        </h2>
+        <p class="dz-subtext">
+          {{ isDragging
+              ? 'Tự động nhận diện file hoặc folder'
+              : (mode === 'files'
+                ? 'Hỗ trợ mọi định dạng: Hình ảnh, Tài liệu, Video...'
+                : 'Toàn bộ cấu trúc thư mục sẽ được giữ nguyên') }}
+        </p>
         
-        <label class="btn-select-file">
+        <!-- Upload File thường -->
+        <label *ngIf="mode === 'files'" class="btn-select-file">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
           Duyệt file trên máy tính
-          <input type="file" multiple hidden (change)="onFileSelect($event)">
+          <input id="fileInput" type="file" multiple hidden (change)="onFileSelect($event)">
         </label>
+
+        <!-- Upload Folder -->
+        <label *ngIf="mode === 'folder'" class="btn-select-file btn-folder">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          Chọn Folder
+          <input id="folderInput" type="file" webkitdirectory mozdirectory hidden (change)="onFolderSelect($event)">
+        </label>
+
+        <!-- Folder badge hint -->
+        <div *ngIf="mode === 'folder'" class="folder-hint">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          Cấu trúc thư mục con sẽ được tái tạo tự động
+        </div>
+
+        <!-- Auto-detect hint -->
+        <div class="auto-detect-hint">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+          Tự động nhận diện: Kéo thả file hoặc folder đều được
+        </div>
       </div>
 
+      <!-- ── RIGHT: FILE/FOLDER LIST ───────────────────────── -->
       <div class="upload-right">
+
+        <!-- Header -->
         <div class="right-header">
-          <h3>File đã chọn</h3>
-          <span class="file-badge">{{ selectedFiles.length }} file</span>
+          <h3>{{ mode === 'files' ? 'File đã chọn' : 'Nội dung Folder' }}</h3>
+          <span class="file-badge" *ngIf="mode === 'files'">{{ selectedFiles.length }} file</span>
+          <span class="file-badge folder-badge" *ngIf="mode === 'folder' && folderFiles.length > 0">
+            {{ folderFiles.length }} file · {{ formatSize(totalFolderSize) }}
+          </span>
         </div>
 
-        <div class="empty-file-list" *ngIf="selectedFiles.length === 0">
-          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#cbd5e1" stroke-width="1.5">
-            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-            <polyline points="13 2 13 9 20 9"/>
+        <!-- Empty state -->
+        <div class="empty-file-list" *ngIf="!hasItems">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#cbd5e1" stroke-width="1.2">
+            <path *ngIf="mode === 'files'" d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+            <polyline *ngIf="mode === 'files'" points="13 2 13 9 20 9"/>
+            <path *ngIf="mode === 'folder'" d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
           </svg>
-          <p>Chưa có file nào được chọn.</p>
+          <p>{{ mode === 'files' ? 'Chưa có file nào được chọn.' : 'Chưa có folder nào được chọn.' }}</p>
         </div>
 
-        <div class="pro-file-list" *ngIf="selectedFiles.length > 0">
+        <!-- ── File list (mode = files) ───────────────── -->
+        <div class="pro-file-list" *ngIf="mode === 'files' && selectedFiles.length > 0">
           <div class="pro-file-item" *ngFor="let file of selectedFiles; let i = index">
             <div class="pfi-icon">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
@@ -56,7 +131,7 @@
               </svg>
             </div>
             <div class="pfi-info">
-              <div class="pfi-name">{{ file.name }}</div>
+              <div class="pfi-name" [title]="file.name">{{ file.name }}</div>
               <div class="pfi-size">{{ formatSize(file.size) }}</div>
             </div>
             <button class="pfi-remove" (click)="removeFile(i)" [disabled]="uploading">
@@ -67,26 +142,81 @@
           </div>
         </div>
 
-        <div class="right-footer">
-          <div class="error-banner" *ngIf="errorMsg">
-            {{ errorMsg }}
+        <!-- ── Folder tree (mode = folder) ─────────────── -->
+        <div class="folder-tree-scroll" *ngIf="mode === 'folder' && folderFiles.length > 0">
+          <!-- Root folder name -->
+          <div class="tree-root-label">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#534AB7" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>{{ folderName }}</span>
           </div>
-          
-          <button class="btn-pro-submit" 
-                  [disabled]="selectedFiles.length === 0 || uploading" 
+          <!-- Tree nodes -->
+          <ng-container *ngFor="let node of folderTree">
+            <ng-container *ngTemplateOutlet="treeNodeTpl; context: { node: node, depth: 0 }"></ng-container>
+          </ng-container>
+        </div>
+
+        <!-- Footer -->
+        <div class="right-footer">
+          <div class="error-banner" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+          <!-- Progress bar (folder upload) -->
+          <div class="progress-wrap" *ngIf="uploading && mode === 'folder'">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+            </div>
+            <span class="progress-label">{{ uploadProgress }}%</span>
+          </div>
+
+          <button class="btn-pro-submit"
+                  [disabled]="!hasItems || uploading"
                   (click)="upload()">
             <ng-container *ngIf="uploading">
               <div class="loader-ring"></div>
               Đang tải lên...
             </ng-container>
             <ng-container *ngIf="!uploading">
-              Bắt đầu Upload
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              {{ mode === 'files' ? 'Bắt đầu Upload' : 'Upload Folder' }}
             </ng-container>
           </button>
         </div>
 
-      </div>
-
+      </div><!-- /upload-right -->
+    </div><!-- /upload-content-split -->
+  </div><!-- /upload-pro-card -->
+  <!-- ── RECURSIVE TREE NODE TEMPLATE (đặt trong wrapper để Angular nhận đúng context) -->
+  <ng-template #treeNodeTpl let-node="node" let-depth="depth">
+    <div class="tree-node" [style.padding-left.px]="16 + depth * 18">
+      <!-- Folder node -->
+      <ng-container *ngIf="node.isFolder">
+        <div class="tree-row tree-folder">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#f59e0b" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span class="tree-name">{{ node.name }}</span>
+        </div>
+        <ng-container *ngFor="let child of node.children">
+          <ng-container *ngTemplateOutlet="treeNodeTpl; context: { node: child, depth: depth + 1 }"></ng-container>
+        </ng-container>
+      </ng-container>
+      <!-- File node -->
+      <ng-container *ngIf="!node.isFolder">
+        <div class="tree-row tree-file">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span class="tree-name file-name" [title]="node.file?.name">{{ node.name }}</span>
+          <span class="tree-size">{{ formatSize(node.file?.size || 0) }}</span>
+        </div>
+      </ng-container>
     </div>
-  </div>
-</div>
+  </ng-template>
+
+</div><!-- /upload-page-wrapper -->

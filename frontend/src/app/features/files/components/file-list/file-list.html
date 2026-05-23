@@ -1,12 +1,12 @@
-<div class="app-layout" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+<div class="app-layout" (dragover)="onDragOver($event)" (dragenter)="onDragEnter($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
   
   <div class="drag-overlay" [class.show]="isDragging">
     <div class="drag-box">
       <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
       </svg>
-      <h2>Drop files here</h2>
-      <p>Your files will be uploaded instantly.</p>
+      <h2>Drop files or folders here</h2>
+      <p>Your files will be uploaded instantly. Folders will preserve their structure.</p>
     </div>
   </div>
 
@@ -203,13 +203,36 @@
             </select>
         </div>
 
+        <div class="bulk-toolbar" *ngIf="selectedItemIds.size > 0">
+          <div class="toolbar-left">
+            <strong>{{ selectedItemIds.size }}</strong> mục đã chọn
+          </div>
+          <div class="toolbar-actions">
+            <button class="btn-secondary" (click)="downloadSelected()" [disabled]="bulkProcessing">Download Selected</button>
+            <button class="btn-secondary" (click)="deleteSelected()" [disabled]="bulkProcessing">Delete Selected</button>
+            <button class="btn-secondary" (click)="clearSelection()" [disabled]="bulkProcessing">Clear Selection</button>
+          </div>
+          <div class="toolbar-progress" *ngIf="bulkProcessing">
+            <span>{{ bulkProcessMessage }}</span>
+            <div class="progress-track-small">
+              <div class="progress-fill-small" [style.width.%]="bulkProgress"></div>
+            </div>
+          </div>
+        </div>
+
         <div class="file-table">
           <div class="table-head">
+            <div class="th-checkbox">
+              <input type="checkbox" [checked]="isAllSelected" [indeterminate]="isIndeterminate" (change)="selectAllVisible($event)">
+            </div>
             <div>Name</div><div>Size</div><div>Date Created</div><div class="txt-right">Actions</div>
           </div>
           <div class="table-body">
             
-            <div class="file-row" *ngFor="let item of items" (dblclick)="openFolder(item)" style="cursor: pointer;">
+            <div class="file-row" *ngFor="let item of items" (dblclick)="onItemDoubleClick(item)" style="cursor: pointer;">
+              <div class="td-checkbox" (click)="$event.stopPropagation()">
+                <input type="checkbox" [checked]="selectedItemIds.has(item.id)" (click)="toggleSelection(item, $event)">
+              </div>
               <div class="r-name">
                 <div class="r-icon" [ngClass]="item.isFolder ? 'cat-folder' : 'cat-' + item.category">
                   <svg *ngIf="item.isFolder" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
@@ -232,7 +255,7 @@
                     <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                   </svg>
                 </button>
-                <button *ngIf="!item.isFolder" (click)="download(item)" title="Download"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
+                <button (click)="download(item)" title="Download"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
                 <button class="del-btn" (click)="delete(item)" title="Delete"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
               </div>
             </div>

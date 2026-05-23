@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { HttpEventType, HttpClient, HttpHeaders } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { CommonModule} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FileService } from '../../services/file.service';
@@ -7,6 +8,7 @@ import { AuthService } from '@features/auth/services/auth.service';
 import { Router, RouterLink, RouterModule } from '@angular/router';
 import { NotificationBellComponent } from '@notification/components/notification-bell/notification-bell';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { PreviewService } from '@core/services/preview.service';
 
 @Component({
   selector: 'app-file-list',
@@ -30,6 +32,7 @@ export class FileListComponent implements OnInit {
   totalUploadSize: number = 0;
   totalLoadedSize: number = 0;
   uploadingCount: number = 0;
+  private dragCounter: number = 0;
 
   searchQuery: string = '';
   sortBy: string = 'date';
@@ -52,6 +55,11 @@ export class FileListComponent implements OnInit {
   isAdmin: boolean = false;
   isUpgradePending: boolean = false;
 
+  selectedItemIds: Set<number> = new Set<number>();
+  bulkProcessing: boolean = false;
+  bulkProcessMessage: string = '';
+  bulkProgress: number = 0;
+  bulkProcessType: 'download' | 'delete' | null = null;
 
   constructor(
     private fileService: FileService,
@@ -60,7 +68,8 @@ export class FileListComponent implements OnInit {
     public cdr: ChangeDetectorRef,
     private zone: NgZone,
     private http: HttpClient,
-    private dialogService: ConfirmDialogService
+    private dialogService: ConfirmDialogService,
+    private previewService: PreviewService
   ) {}
 
   ngOnInit(): void {
@@ -94,6 +103,10 @@ export class FileListComponent implements OnInit {
 
     loadData(): void {
     this.loading = true;
+    this.selectedItemIds.clear();
+    this.bulkProcessing = false;
+    this.bulkProcessMessage = '';
+    this.bulkProgress = 0;
     this.cdr.detectChanges();
 
     // Reset trạng thái pending khi load lại
@@ -198,13 +211,165 @@ export class FileListComponent implements OnInit {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
-  openFolder(folder: any): void {
-    if (folder.isFolder) {
-      // Ghi nhận trực tiếp ID và Tên của thư mục vừa click vào lịch sử
-      this.folderHistory.push({ id: folder.id, name: folder.name });
-      this.currentParentId = folder.id;
+  onItemDoubleClick(item: any): void {
+    if (item.isFolder) {
+      // Navigate into folder (existing behavior)
+      this.folderHistory.push({ id: item.id, name: item.name });
+      this.currentParentId = item.id;
       this.loadData();
+    } else if (item.mimeType?.startsWith('image/') ||
+               item.mimeType?.startsWith('video/')) {
+      // Open preview for images and videos
+      this.previewService.open({
+        id: item.id,
+        name: item.name,
+        mimeType: item.mimeType
+      });
     }
+    // Other files: no action (could add download logic here if needed)
+  }
+
+  toggleSelection(item: any, event: Event): void {
+    event.stopPropagation();
+    if (this.selectedItemIds.has(item.id)) {
+      this.selectedItemIds.delete(item.id);
+    } else {
+      this.selectedItemIds.add(item.id);
+    }
+  }
+
+  selectAllVisible(event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    if (checkbox.checked) {
+      this.items.forEach(item => this.selectedItemIds.add(item.id));
+    } else {
+      this.items.forEach(item => this.selectedItemIds.delete(item.id));
+    }
+  }
+
+  get isAllSelected(): boolean {
+    return this.items.length > 0 && this.items.every(item => this.selectedItemIds.has(item.id));
+  }
+
+  get isIndeterminate(): boolean {
+    return this.selectedItemIds.size > 0 && !this.isAllSelected;
+  }
+
+  getSelectedItemsOrdered(): any[] {
+    const selected = this.allFiles.filter(item => this.selectedItemIds.has(item.id));
+    return selected.sort((a, b) => {
+      const indexA = this.items.findIndex(item => item.id === a.id);
+      const indexB = this.items.findIndex(item => item.id === b.id);
+      const orderA = indexA === -1 ? Number.MAX_SAFE_INTEGER : indexA;
+      const orderB = indexB === -1 ? Number.MAX_SAFE_INTEGER : indexB;
+      return orderA - orderB;
+    });
+  }
+
+  clearSelection(): void {
+    this.selectedItemIds.clear();
+  }
+
+  async downloadSelected(): Promise<void> {
+    if (this.selectedItemIds.size === 0 || this.bulkProcessing) {
+      return;
+    }
+    const selectedItems = this.getSelectedItemsOrdered();
+    if (selectedItems.length === 0) {
+      return;
+    }
+
+    this.bulkProcessing = true;
+    this.bulkProcessType = 'download';
+    this.bulkProgress = 0;
+
+    for (let i = 0; i < selectedItems.length; i++) {
+      const item = selectedItems[i];
+      this.bulkProcessMessage = `Đang tải xuống ${item.name} (${i + 1}/${selectedItems.length})`;
+      try {
+        await this.downloadItem(item);
+      } catch (error) {
+        console.error('Lỗi tải xuống mục:', item, error);
+      }
+      this.bulkProgress = Math.round(((i + 1) / selectedItems.length) * 100);
+      this.cdr.detectChanges();
+    }
+
+    this.bulkProcessMessage = 'Hoàn tất tải xuống đã chọn';
+    setTimeout(() => {
+      this.bulkProcessing = false;
+      this.bulkProcessMessage = '';
+      this.bulkProgress = 0;
+      this.bulkProcessType = null;
+      this.cdr.detectChanges();
+    }, 1200);
+  }
+
+  async deleteSelected(): Promise<void> {
+    if (this.selectedItemIds.size === 0 || this.bulkProcessing) {
+      return;
+    }
+
+    const confirmed = await this.dialogService.confirm({
+      title: 'Xóa mục đã chọn',
+      message: `Bạn có chắc muốn xóa ${this.selectedItemIds.size} mục đã chọn?`,
+      confirmText: 'Xóa',
+      type: 'danger'
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    const selectedItems = this.getSelectedItemsOrdered();
+    if (selectedItems.length === 0) {
+      return;
+    }
+
+    this.bulkProcessing = true;
+    this.bulkProcessType = 'delete';
+    this.bulkProgress = 0;
+
+    for (let i = 0; i < selectedItems.length; i++) {
+      const item = selectedItems[i];
+      this.bulkProcessMessage = `Đang xóa ${item.name} (${i + 1}/${selectedItems.length})`;
+      try {
+        await firstValueFrom(this.fileService.deleteFile(item.id));
+        this.allFiles = this.allFiles.filter(file => file.id !== item.id);
+        this.selectedItemIds.delete(item.id);
+        this.applyFiltersAndSort();
+      } catch (error) {
+        console.error('Lỗi xóa mục:', item, error);
+      }
+      this.bulkProgress = Math.round(((i + 1) / selectedItems.length) * 100);
+      this.cdr.detectChanges();
+    }
+
+    this.bulkProcessing = false;
+    this.bulkProcessMessage = 'Hoàn tất xóa đã chọn';
+    this.bulkProgress = 100;
+    this.calculateUsedQuota();
+    setTimeout(() => {
+      this.bulkProcessMessage = '';
+      this.bulkProgress = 0;
+      this.bulkProcessType = null;
+      this.cdr.detectChanges();
+    }, 1200);
+  }
+
+  private async downloadItem(item: any): Promise<void> {
+    const blob = await firstValueFrom(item.isFolder ? this.fileService.downloadFolder(item.id) : this.fileService.downloadFile(item.id));
+    this.saveBlob(blob, item);
+  }
+
+  private saveBlob(blob: Blob, item: any): void {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = item.isFolder ? `${item.name}.zip` : item.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   }
 
   navigateToBreadcrumb(index: number | null): void {
@@ -242,19 +407,38 @@ export class FileListComponent implements OnInit {
   }
 
   download(file: any): void {
-    this.fileService.downloadFile(file.id).subscribe({
-      next: (blob: Blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = file.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      },
-      error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Tải file thất bại!', type: 'danger' })
-    });
+    // Kiểm tra xem có phải folder không
+    if (file.isFolder) {
+      // Download folder as ZIP
+      this.fileService.downloadFolder(file.id).subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = file.name + '.zip';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        },
+        error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Tải folder thất bại!', type: 'danger' })
+      });
+    } else {
+      // Download file
+      this.fileService.downloadFile(file.id).subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = file.name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        },
+        error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Tải file thất bại!', type: 'danger' })
+      });
+    }
   }
 
   async delete(file: any): Promise<void> {
@@ -296,12 +480,107 @@ export class FileListComponent implements OnInit {
     event.target.value = null;
   }
 
-  onDrop(event: DragEvent) {
+  async onDrop(event: DragEvent) {
     event.preventDefault();
     event.stopPropagation();
     this.isDragging = false;
+    this.dragCounter = 0;
+
+    const items = event.dataTransfer?.items;
+    if (items && items.length > 0) {
+      // Kiểm tra xem có folder không qua FileSystemEntry API
+      const entries: any[] = [];
+      let hasDirectory = false;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].kind === 'file') {
+          const entry = items[i].webkitGetAsEntry?.() || (items[i] as any).getAsEntry?.();
+          if (entry) {
+            entries.push(entry);
+            if (entry.isDirectory) hasDirectory = true;
+          }
+        }
+      }
+
+      if (hasDirectory && entries.length > 0) {
+        // Có folder -> đọc đệ quy rồi upload folder
+        await this.processDroppedEntries(entries);
+        return;
+      }
+    }
+
+    // Fallback: upload file thường
     const files = event.dataTransfer?.files;
     if (files && files.length > 0) this.processMultipleUploads(files);
+  }
+
+  /** Đọc đệ quy các FileSystemEntry (folder) rồi upload */
+  private async processDroppedEntries(entries: any[]): Promise<void> {
+    const collectedFiles: File[] = [];
+    const relativePaths: string[] = [];
+
+    const readEntry = (entry: any, basePath: string): Promise<void> => {
+      if (entry.isFile) {
+        return new Promise((resolve) => {
+          entry.file((file: File) => {
+            const relPath = basePath ? `${basePath}/${entry.name}` : entry.name;
+            collectedFiles.push(file);
+            relativePaths.push(relPath);
+            resolve();
+          }, () => resolve());
+        });
+      } else if (entry.isDirectory) {
+        return new Promise((resolve) => {
+          const dirPath = basePath ? `${basePath}/${entry.name}` : entry.name;
+          const reader = entry.createReader();
+          const allEntries: any[] = [];
+          const readBatch = () => {
+            reader.readEntries(async (batch: any[]) => {
+              if (batch.length === 0) {
+                await Promise.all(allEntries.map((e: any) => readEntry(e, dirPath)));
+                resolve();
+              } else {
+                allEntries.push(...batch);
+                readBatch();
+              }
+            }, () => resolve());
+          };
+          readBatch();
+        });
+      }
+      return Promise.resolve();
+    };
+
+    await Promise.all(entries.map(e => readEntry(e, '')));
+
+    if (collectedFiles.length === 0) return;
+
+    // Upload folder qua API
+    this.isUploading = true;
+    this.uploadingCount = collectedFiles.length;
+    this.uploadProgress = 0;
+    this.totalUploadSize = collectedFiles.reduce((s, f) => s + f.size, 0);
+    this.totalLoadedSize = 0;
+    this.cdr.detectChanges();
+
+    this.fileService.uploadFolder(collectedFiles, relativePaths, this.currentParentId).subscribe({
+      next: (event: any) => {
+        if (event.type === HttpEventType.UploadProgress && event.total) {
+          this.totalLoadedSize = event.loaded;
+          this.uploadProgress = Math.round(100 * event.loaded / event.total);
+          this.cdr.detectChanges();
+        } else if (event.type === HttpEventType.Response) {
+          setTimeout(() => {
+            this.isUploading = false;
+            this.loadData();
+            this.calculateUsedQuota();
+          }, 500);
+        }
+      },
+      error: () => {
+        this.isUploading = false;
+        this.loadData();
+      }
+    });
   }
 
   processMultipleUploads(files: FileList) {
@@ -348,8 +627,9 @@ export class FileListComponent implements OnInit {
     });
   }
 
-  onDragOver(event: DragEvent) { event.preventDefault(); event.stopPropagation(); this.isDragging = true; }
-  onDragLeave(event: DragEvent) { event.preventDefault(); event.stopPropagation(); this.isDragging = false; }
+  onDragOver(event: DragEvent) { event.preventDefault(); event.stopPropagation(); }
+  onDragEnter(event: DragEvent) { event.preventDefault(); event.stopPropagation(); this.dragCounter++; this.isDragging = true; }
+  onDragLeave(event: DragEvent) { event.preventDefault(); event.stopPropagation(); this.dragCounter--; if (this.dragCounter <= 0) { this.dragCounter = 0; this.isDragging = false; } }
 
   getCategory(mimeType: string): string {
     if (!mimeType) return 'other';

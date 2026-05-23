@@ -26,9 +26,38 @@ export class FileService {
     });
   }
 
+  /**
+   * Tải lên toàn bộ folder, giữ nguyên cấu trúc thư mục.
+   * @param files     Danh sách File objects
+   * @param relativePaths Đường dẫn tương đối của từng file trong folder gốc
+   *                  (ví dụ: "MyProject/src/App.java")
+   * @param parentId  ID thư mục cha trên cloud (nếu có)
+   */
+  uploadFolder(files: File[], relativePaths: string[], parentId: number | null): Observable<HttpEvent<any>> {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file, file.name);
+    });
+    relativePaths.forEach((path) => {
+      formData.append('relativePaths', path);
+    });
+    if (parentId !== null && parentId !== undefined) {
+      formData.append('parentId', parentId.toString());
+    }
+    return this.http.post<any>(`${this.apiUrl}/upload-folder`, formData, {
+      reportProgress: true,
+      observe: 'events'
+    });
+  }
+
   downloadFile(id: number): Observable<Blob> {
     // Gọi API kèm theo responseType: 'blob' để Angular hiểu đây là luồng nhị phân, không phải JSON
     return this.http.get(`${this.apiUrl}/${id}/download`, { responseType: 'blob' });
+  }
+
+  downloadFolder(id: number): Observable<Blob> {
+    // Gọi API download-folder kèm theo responseType: 'blob'
+    return this.http.get(`${this.apiUrl}/${id}/download-folder`, { responseType: 'blob' });
   }
 
   getFiles(parentId?: number | null): Observable<any[]> {

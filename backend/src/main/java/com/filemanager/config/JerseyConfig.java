@@ -1,6 +1,7 @@
 package com.filemanager.config;
 
 import com.filemanager.filter.JwtAuthFilter;
+import com.filemanager.filter.CorsFilter;
 import com.filemanager.resource.AuthResource;
 import com.filemanager.resource.FileResource;
 import com.filemanager.resource.UserResource;
@@ -18,6 +19,7 @@ public class JerseyConfig extends ResourceConfig {
         register(AuthResource.class);
         register(FileResource.class);
         register(JwtAuthFilter.class);
+        register(CorsFilter.class);
         
         // Kích hoạt tính năng Upload File (Multipart)
         register(MultiPartFeature.class);
