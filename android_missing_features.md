@@ -21,7 +21,7 @@ Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Andr
 | **Xóa file (Soft Delete → Trash)** | ✅ Đã có | Confirm dialog + `DELETE /api/files/{id}`. |
 | **Chia sẻ file (từ context menu)** | ✅ Đã có | Bottom Sheet gọi `SharedFragment.showShareSheet()` — hỗ trợ share qua email + tạo public link. |
 | **Hiển thị dung lượng file / ngày tạo** | ✅ Đã có | `FileAdapter.bind()` hiển thị `getFormattedSize()` (KB/MB/GB) + `DateUtils.formatRelative(createdAt)`. Icon emoji theo MIME type + màu nền theo loại file. |
-| **Đổi tên (Rename)** | ❌ Thiếu (Giống Web) | Nút "Đổi tên" trong Bottom Sheet chỉ hiện Toast: `"Tính năng đổi tên sẽ được bổ sung sớm"`. Cả Web và Android đều chưa implement. |
+| **Đổi tên (Rename)** | ✅ Đã có | Nút "Đổi tên" trong Bottom Sheet mở dialog, gọi `PUT /api/files/{id}/rename` để cập nhật tên file/folder. |
 | **FAB menu** | ✅ Đã có | `FloatingActionButton` → `AlertDialog` với 2 lựa chọn: Upload File / Tạo thư mục mới. |
 | **Pull-to-refresh** | ✅ Đã có | `SwipeRefreshLayout` gọi `loadFiles()`. |
 | **Empty state** | ✅ Đã có | `layout_empty` ẩn/hiện tùy danh sách rỗng hay không. |
@@ -57,7 +57,7 @@ Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Andr
 | **Chia sẻ qua email** | ✅ Đã có | Bottom Sheet `bottom_sheet_share`: nhập email (hỗ trợ nhiều email cách nhau bởi dấu phẩy), chọn thời hạn (7/30/Không giới hạn), gọi `POST /api/files/{id}/share`. |
 | **Tạo Public Link** | ✅ Đã có | Gửi request với `emails: []` → backend tạo public token. Hiển thị link + nút "Copy" (ClipboardManager). |
 | **Pull-to-refresh** | ✅ Đã có | `SwipeRefreshLayout` tải lại tab đang hiển thị. |
-| **Hardcode URL trong public link** | ⚠️ Cần sửa | `shareLink = "http://10.0.2.2:8080/api/files/shared/" + token` — URL hardcode cho emulator, không hoạt động trên thiết bị thật. Cần lấy BASE_URL từ `ApiClient` hoặc config. |
+| **Hardcode URL trong public link** | ✅ Đã có | `shareLink = ApiClient.BASE_URL + "files/shared/" + token` — URL tự động tạo theo config `BASE_URL`. |
 
 ---
 
@@ -68,11 +68,11 @@ Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Andr
 |---|---|---|
 | **Hiển thị danh sách thông báo** | ✅ Đã có | `GET /api/notifications`. Icon/màu khác nhau theo type (FILE_SHARED, UPGRADE_REQUEST, FILE_DELETED, SYSTEM, DOWNLOAD). Bold + dot xanh cho thông báo chưa đọc. |
 | **Pull-to-refresh** | ✅ Đã có | `SwipeRefreshLayout`. |
-| **Nút "Đọc hết"** | ⚠️ UI có, API chưa nối | `btnMarkAllRead` hiển thị khi có unread. `notificationAdapter.markAllRead()` chỉ gọi `notifyDataSetChanged()` nhưng **không thay đổi trạng thái isRead** của item (vòng for rỗng do DTO không có setter). Toast hiện "Đã đánh dấu" nhưng thực tế không hoạt động. |
+| **Nút "Đọc hết"** | ✅ Đã có | Quét toàn bộ thông báo chưa đọc và gọi `PUT /api/notifications/{id}/read` để cập nhật về server. |
 | **Real-time Notifications (SSE)** | ❌ Thiếu | Android chỉ dùng Pull-to-refresh. Không có kết nối EventSource (SSE) để nhận thông báo real-time như Web. |
-| **Đánh dấu đã đọc (Từng thông báo)** | ❌ Thiếu API | `ApiService.java` chưa khai báo `PUT /api/notifications/{id}/read`. |
-| **Xóa thông báo** | ❌ Thiếu API | `ApiService.java` chưa khai báo `DELETE /api/notifications/{id}`. |
-| **Điều hướng từ thông báo** | ❌ Thiếu | Click vào thông báo chỉ hiện Toast message. Comment TODO: `"Điều hướng đến targetUrl nếu có"` nhưng chưa implement. |
+| **Đánh dấu đã đọc (Từng thông báo)** | ✅ Đã có | Click vào thông báo sẽ gọi `PUT /api/notifications/{id}/read` và cập nhật UI. |
+| **Xóa thông báo** | ✅ Đã có | Vuốt ngang (Swipe to delete) gọi API `DELETE /api/notifications/{id}`. |
+| **Điều hướng từ thông báo** | ✅ Đã có | Dựa vào `targetUrl`, tự động điều hướng sang Tab Chia Sẻ (`/shared`) hoặc Tab Thùng Rác (`/trash`). |
 
 ---
 
@@ -86,7 +86,7 @@ Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Andr
 | **Xóa vĩnh viễn** | ✅ Đã có | Vuốt trái (nền đỏ "Xóa vĩnh viễn ✕") → Confirm dialog → `DELETE /api/files/{id}/permanent`. |
 | **Dọn sạch thùng rác** | ✅ Đã có | Nút `btnEmptyTrash` → Confirm dialog (hiện số file) → `DELETE /api/files/trash/empty`. Disable nút khi danh sách rỗng. |
 | **Pull-to-refresh** | ✅ Đã có | `SwipeRefreshLayout`. |
-| **Bộ đếm "Còn X ngày" trước khi xóa tự động** | ❌ Thiếu | Chỉ hiển thị "Đã xóa: 2 ngày trước". Không tính toán và hiển thị "Còn X ngày" trước khi file bị xóa vĩnh viễn tự động (30 ngày) như Web. |
+| **Bộ đếm "Còn X ngày" trước khi xóa tự động** | ✅ Đã có | Sử dụng thuật toán `getDaysUntilDeletion()` trong `DateUtils` để tính toán và hiển thị "Còn X ngày". |
 
 ---
 
@@ -122,7 +122,7 @@ Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Andr
 | **Session management** | ✅ Đầy đủ | `SessionManager` dùng `SharedPreferences`. Lưu token, username. Hỗ trợ `isLoggedIn()`, `clearSession()`. |
 | **Bottom Navigation** | ✅ Đầy đủ | 5 tab: Files, Shared, Trash, Notifications, Profile. Fragment replace trong `fragment_container`. |
 | **Back navigation** | ✅ Đầy đủ | `MainActivity.onBackPressed()` kiểm tra `FilesFragment` → nếu đang ở thư mục con thì back về cha. |
-| **BASE_URL hardcode** | ⚠️ Cần cải thiện | `ApiClient.BASE_URL = "http://10.0.2.2:8080/api/"` chỉ hoạt động trên Emulator. Cần config linh hoạt cho thiết bị thật. |
+| **BASE_URL config** | ✅ Đầy đủ | Đã chuyển `BASE_URL` sang biến `public static final` dễ dàng thay đổi khi test. |
 
 ---
 
@@ -132,17 +132,14 @@ Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Andr
 - Tìm kiếm file (Search) + Sắp xếp (Sort)
 - Upload nhiều file + Progress bar
 - Breadcrumb navigation + Back button
-- Tạo thư mục, Download, Xóa file
-- Chia sẻ file (email + public link + thu hồi + download shared)
-- Thùng rác (khôi phục, xóa vĩnh viễn, dọn sạch, swipe gestures)
+- Tạo thư mục, Download, Xóa file, Đổi tên File/Folder
+- Chia sẻ file (email + public link linh hoạt + thu hồi + download shared)
+- Thùng rác (khôi phục, xóa vĩnh viễn, dọn sạch, đếm ngược ngày xóa, swipe gestures)
 - Profile (hiển thị, Quota, Upgrade, Đổi Avatar/Tên/Username/Email/Mật khẩu, Đăng xuất)
 - Auth (Login + Register + Splash + Auto-redirect)
+- Thông báo (Hiển thị, Đọc, Xóa, Đọc tất cả, Điều hướng)
 - Bottom Navigation + Session management
 
 ### 🔧 Cần sửa / hoàn thiện:
-1. **Ưu tiên 1 — Notifications nâng cao:** Thêm API đánh dấu đã đọc (`PUT /notifications/{id}/read`), xóa thông báo (`DELETE /notifications/{id}`). Fix `markAllRead()` (hiện tại vòng for rỗng, không thay đổi state). Implement điều hướng từ thông báo đến targetUrl.
-3. **Ưu tiên 3 — Rename file:** Implement tính năng đổi tên file/folder (cần API backend hỗ trợ `PUT /api/files/{id}/rename`).
-4. **Ưu tiên 4 — Trash countdown:** Hiển thị "Còn X ngày" trước khi file bị xóa vĩnh viễn tự động.
-5. **Ưu tiên 5 — Real-time (SSE):** Tích hợp `okhttp-sse` để nhận thông báo real-time thay vì chỉ pull-to-refresh.
-6. **Ưu tiên 6 — Admin Dashboard:** Xây dựng luồng Admin (Thống kê, Quản lý Users, Duyệt Upgrade Requests) nếu có yêu cầu.
-7. **Fix nhỏ:** Thay URL hardcode `10.0.2.2` trong `SharedFragment.showShareSheet()` bằng BASE_URL config linh hoạt.
+1. **Ưu tiên 1 — Real-time (SSE):** Tích hợp `okhttp-sse` để nhận thông báo real-time thay vì chỉ pull-to-refresh.
+2. **Ưu tiên 2 — Admin Dashboard:** Xây dựng luồng Admin (Thống kê, Quản lý Users, Duyệt/Từ chối Upgrade Requests) nếu có yêu cầu.
