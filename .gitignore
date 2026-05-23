@@ -1,0 +1,18 @@
+# Maven
+backend/target/
+target/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Frontend / Node
+node_modules/
+dist/
+
+# Android
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/

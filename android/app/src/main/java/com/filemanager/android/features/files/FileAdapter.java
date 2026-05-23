@@ -38,22 +38,26 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.FileViewHolder
 
     private final Context context;
     private List<FileMetadataDto> files;
+    private List<FileMetadataDto> originalFiles;
     private OnFileActionListener listener;
 
     public FileAdapter(Context context, OnFileActionListener listener) {
         this.context = context;
         this.listener = listener;
         this.files = new ArrayList<>();
+        this.originalFiles = new ArrayList<>();
     }
 
     /** Cập nhật toàn bộ danh sách và refresh UI */
     public void setData(List<FileMetadataDto> newFiles) {
-        this.files = newFiles != null ? newFiles : new ArrayList<>();
+        this.originalFiles = newFiles != null ? new ArrayList<>(newFiles) : new ArrayList<>();
+        this.files = new ArrayList<>(this.originalFiles);
         notifyDataSetChanged();
     }
 
     /** Xóa 1 item khỏi danh sách (dùng sau khi API delete thành công) */
     public void removeItem(FileMetadataDto file) {
+        originalFiles.remove(file);
         int index = files.indexOf(file);
         if (index >= 0) {
             files.remove(index);
@@ -63,6 +67,7 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.FileViewHolder
 
     /** Thêm item vào đầu danh sách (sau khi tạo folder/upload thành công) */
     public void addItem(FileMetadataDto file) {
+        originalFiles.add(0, file);
         files.add(0, file);
         notifyItemInserted(0);
     }
@@ -84,6 +89,49 @@ public class FileAdapter extends RecyclerView.Adapter<FileAdapter.FileViewHolder
     @Override
     public int getItemCount() {
         return files.size();
+    }
+
+    /** Lọc danh sách theo tên */
+    public void filter(String query) {
+        files.clear();
+        if (query == null || query.trim().isEmpty()) {
+            files.addAll(originalFiles);
+        } else {
+            String lowerCaseQuery = query.toLowerCase();
+            for (FileMetadataDto file : originalFiles) {
+                if (file.getFileName() != null && file.getFileName().toLowerCase().contains(lowerCaseQuery)) {
+                    files.add(file);
+                }
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    /** Sắp xếp danh sách (0: Tên A-Z, 1: Tên Z-A, 2: Mới nhất, 3: Lớn nhất) */
+    public void sort(int sortOption) {
+        java.util.Collections.sort(originalFiles, (f1, f2) -> {
+            // Luôn ưu tiên folder lên đầu
+            if (f1.isFolder() && !f2.isFolder()) return -1;
+            if (!f1.isFolder() && f2.isFolder()) return 1;
+
+            switch (sortOption) {
+                case 1: // Tên Z-A
+                    return f2.getFileName().compareToIgnoreCase(f1.getFileName());
+                case 2: // Mới nhất
+                    if (f1.getCreatedAt() == null && f2.getCreatedAt() == null) return 0;
+                    if (f1.getCreatedAt() == null) return 1;
+                    if (f2.getCreatedAt() == null) return -1;
+                    return f2.getCreatedAt().compareTo(f1.getCreatedAt());
+                case 3: // Kích thước giảm dần (lớn nhất)
+                    return Long.compare(f2.getFileSize(), f1.getFileSize());
+                case 0: // Tên A-Z
+                default:
+                    return f1.getFileName().compareToIgnoreCase(f2.getFileName());
+            }
+        });
+        files.clear();
+        files.addAll(originalFiles);
+        notifyDataSetChanged();
     }
 
     // ==========================

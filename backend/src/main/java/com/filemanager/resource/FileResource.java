@@ -672,6 +672,41 @@ public class FileResource {
         fileRepository.delete(item);
     }
 
+    // ĐỔI TÊN FILE/FOLDER
+    @PUT
+    @Path("/{id}/rename")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response renameFile(@PathParam("id") Long id, Map<String, String> body, @Context ContainerRequestContext requestContext) {
+        try {
+            if (id == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Thiếu id\"}").build();
+            }
+            Object userIdObj = requestContext.getProperty("userId");
+            if (userIdObj == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\": \"Cần đăng nhập\"}").build();
+            }
+            Long userId = ((Number) userIdObj).longValue();
+            
+            String newName = body.get("name");
+            if (newName == null || newName.trim().isEmpty()) {
+                 return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Tên mới không hợp lệ\"}").build();
+            }
+
+            FileMetadata file = fileRepository.findById(id).orElse(null);
+            if (file == null || !file.getOwnerId().equals(userId)) {
+                return Response.status(Response.Status.NOT_FOUND).entity("{\"error\": \"File không tồn tại\"}").build();
+            }
+            
+            file.setFileName(newName.trim());
+            fileRepository.save(file);
+            return Response.ok(file).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().build();
+        }
+    }
+
 
    // 1. API TẠO LINK CHIA SẺ
     @POST

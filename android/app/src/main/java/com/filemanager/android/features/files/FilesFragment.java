@@ -1,14 +1,21 @@
 package com.filemanager.android.features.files;
 
 import android.app.Activity;
+import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,6 +32,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.filemanager.android.R;
 import com.filemanager.android.network.ApiClient;
 import com.filemanager.android.network.ApiService;
+import com.filemanager.android.network.ProgressRequestBody;
 import com.filemanager.android.network.dto.FileMetadataDto;
 import com.filemanager.android.utils.FileUtils;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -76,6 +84,11 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
     private View layoutEmpty;
     private LinearLayout breadcrumbContainer;
     private FloatingActionButton fabAdd;
+    private EditText etSearch;
+    private ImageButton btnSort;
+    private View layoutUploadProgress;
+    private TextView tvUploadProgressText;
+    private ProgressBar pbUpload;
 
     // ===== Dependencies =====
     private ApiService apiService;
@@ -107,6 +120,7 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         setupRecyclerView();
         setupSwipeRefresh();
         setupFab();
+        setupSearchAndSort();
         loadFiles();
     }
 
@@ -120,6 +134,11 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         layoutEmpty        = view.findViewById(R.id.layout_empty);
         breadcrumbContainer = view.findViewById(R.id.breadcrumb_container);
         fabAdd             = view.findViewById(R.id.fab_add);
+        etSearch           = view.findViewById(R.id.et_search);
+        btnSort            = view.findViewById(R.id.btn_sort);
+        layoutUploadProgress = view.findViewById(R.id.layout_upload_progress);
+        tvUploadProgressText = view.findViewById(R.id.tv_upload_progress_text);
+        pbUpload           = view.findViewById(R.id.pb_upload);
     }
 
     private void setupRecyclerView() {
@@ -145,14 +164,51 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         filePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK
-                            && result.getData() != null
-                            && result.getData().getData() != null) {
-                        Uri selectedUri = result.getData().getData();
-                        uploadFile(selectedUri);
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        Intent data = result.getData();
+                        if (data.getClipData() != null) {
+                            ClipData clipData = data.getClipData();
+                            List<Uri> uris = new ArrayList<>();
+                            for (int i = 0; i < clipData.getItemCount(); i++) {
+                                uris.add(clipData.getItemAt(i).getUri());
+                            }
+                            uploadMultipleFiles(uris);
+                        } else if (data.getData() != null) {
+                            List<Uri> uris = new ArrayList<>();
+                            uris.add(data.getData());
+                            uploadMultipleFiles(uris);
+                        }
                     }
                 }
         );
+    }
+
+    private void setupSearchAndSort() {
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                fileAdapter.filter(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        btnSort.setOnClickListener(v -> {
+            PopupMenu popup = new PopupMenu(requireContext(), v);
+            popup.getMenu().add(0, 0, 0, "Tên (A-Z)");
+            popup.getMenu().add(0, 1, 1, "Tên (Z-A)");
+            popup.getMenu().add(0, 2, 2, "Mới nhất");
+            popup.getMenu().add(0, 3, 3, "Kích thước (Lớn đến bé)");
+            popup.setOnMenuItemClickListener(item -> {
+                fileAdapter.sort(item.getItemId());
+                return true;
+            });
+            popup.show();
+        });
     }
 
     // ==================================================================
@@ -327,59 +383,73 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
         intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         filePickerLauncher.launch(intent);
     }
 
-    /**
-     * Upload file được chọn từ file picker lên server.
-     * Tạo MultipartBody từ Uri và gọi POST /api/files/upload
-     */
-    private void uploadFile(Uri fileUri) {
+    private void uploadMultipleFiles(List<Uri> uris) {
+        if (uris == null || uris.isEmpty()) return;
+        layoutUploadProgress.setVisibility(View.VISIBLE);
+        pbUpload.setProgress(0);
+        uploadNextFile(uris, 0, uris.size());
+    }
+
+    private void uploadNextFile(List<Uri> uris, int index, int total) {
+        if (index >= total) {
+            // Hoàn thành upload toàn bộ
+            layoutUploadProgress.setVisibility(View.GONE);
+            showToast("✅ Đã tải lên xong " + total + " file");
+            return;
+        }
+
+        Uri fileUri = uris.get(index);
         String fileName = FileUtils.getFileName(requireContext(), fileUri);
         String mimeType = FileUtils.getMimeType(requireContext(), fileUri);
 
-        showToast("⬆️ Đang tải lên: " + fileName + "...");
+        tvUploadProgressText.setText("Đang tải lên " + (index + 1) + "/" + total + ": " + fileName);
+        pbUpload.setProgress(0);
 
         try {
-            // Đọc file thành bytes
             byte[] fileBytes = readAllBytes(fileUri);
+            RequestBody fileBody = RequestBody.create(MediaType.parse(mimeType), fileBytes);
 
-            RequestBody fileBody = RequestBody.create(
-                    MediaType.parse(mimeType), fileBytes);
+            ProgressRequestBody progressRequestBody = new ProgressRequestBody(fileBody, percentage -> {
+                pbUpload.setProgress(percentage);
+            });
 
             MultipartBody.Part filePart = MultipartBody.Part.createFormData(
-                    "file", fileName, fileBody);
+                    "file", fileName, progressRequestBody);
 
-            // parentId (null nếu đang ở root)
             RequestBody parentIdBody = currentParentId != null
-                    ? RequestBody.create(MediaType.parse("text/plain"),
-                      String.valueOf(currentParentId))
+                    ? RequestBody.create(MediaType.parse("text/plain"), String.valueOf(currentParentId))
                     : RequestBody.create(MediaType.parse("text/plain"), "");
 
             apiService.uploadFile(filePart, parentIdBody)
                     .enqueue(new Callback<FileMetadataDto>() {
                 @Override
-                public void onResponse(Call<FileMetadataDto> call,
-                                       Response<FileMetadataDto> response) {
+                public void onResponse(Call<FileMetadataDto> call, Response<FileMetadataDto> response) {
                     if (response.isSuccessful() && response.body() != null) {
-                        showToast("✅ Tải lên thành công: " + fileName);
                         fileAdapter.addItem(response.body());
                         toggleEmptyState(false);
                     } else if (response.code() == 413) {
-                        showToast("⚠️ File quá lớn (giới hạn 10MB)");
+                        showToast("⚠️ File " + fileName + " quá lớn");
                     } else {
-                        showToast("❌ Tải lên thất bại");
+                        showToast("❌ Lỗi tải lên: " + fileName);
                     }
+                    // Tiếp tục file tiếp theo
+                    uploadNextFile(uris, index + 1, total);
                 }
 
                 @Override
                 public void onFailure(Call<FileMetadataDto> call, Throwable t) {
-                    showToast(getString(R.string.err_network));
+                    showToast(getString(R.string.err_network) + " (" + fileName + ")");
+                    uploadNextFile(uris, index + 1, total);
                 }
             });
 
         } catch (IOException e) {
-            showToast("Không thể đọc file: " + e.getMessage());
+            showToast("Không thể đọc file: " + fileName);
+            uploadNextFile(uris, index + 1, total);
         }
     }
 
@@ -478,10 +548,10 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
                     requireContext(), file.getId(), file.getFileName(), apiService);
         });
 
-        // Rename (TODO Phase 2 nâng cao)
+        // Rename
         sheetView.findViewById(R.id.action_rename).setOnClickListener(v -> {
             dialog.dismiss();
-            showToast("Tính năng đổi tên sẽ được bổ sung sớm");
+            showRenameDialog(file);
         });
 
         // Delete
@@ -491,6 +561,60 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         });
 
         dialog.show();
+    }
+
+    // ==================================================================
+    // Rename File/Folder
+    // ==================================================================
+
+    private void showRenameDialog(FileMetadataDto file) {
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_create_folder, null);
+
+        TextInputLayout til = dialogView.findViewById(R.id.til_folder_name);
+        TextInputEditText et = dialogView.findViewById(R.id.et_folder_name);
+        
+        til.setHint("Tên mới");
+        et.setText(file.getFileName());
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Đổi tên")
+                .setView(dialogView)
+                .setPositiveButton("Lưu", (dialog, which) -> {
+                    String newName = et.getText() != null
+                            ? et.getText().toString().trim() : "";
+                    if (TextUtils.isEmpty(newName)) {
+                        til.setError("Tên không được để trống");
+                        return;
+                    }
+                    if (newName.equals(file.getFileName())) return;
+                    
+                    renameFile(file, newName);
+                })
+                .setNegativeButton(getString(R.string.btn_cancel), null)
+                .show();
+    }
+
+    private void renameFile(FileMetadataDto file, String newName) {
+        Map<String, String> body = new HashMap<>();
+        body.put("name", newName);
+
+        apiService.renameFile(file.getId(), body).enqueue(new Callback<FileMetadataDto>() {
+            @Override
+            public void onResponse(Call<FileMetadataDto> call, Response<FileMetadataDto> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    showToast("✅ Đã đổi tên thành: " + newName);
+                    loadFiles(); // Reload to keep proper sorting
+                } else {
+                    showToast("❌ Không thể đổi tên");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<FileMetadataDto> call, Throwable t) {
+                showToast(getString(R.string.err_network));
+            }
+        });
     }
 
     // ==================================================================

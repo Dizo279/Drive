@@ -31,4 +31,5 @@ public class NotificationDto {
     public Boolean getIsRead() { return isRead; }
     public String getCreatedAt() { return createdAt; }
     public boolean isRead() { return Boolean.TRUE.equals(isRead); }
+    public void setRead(Boolean read) { this.isRead = read; }
 }
