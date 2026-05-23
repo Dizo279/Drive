@@ -1,0 +1,40 @@
+<!-- src/app/core/components/preview-modal/preview-modal.component.html -->
+<div class="modal-overlay" *ngIf="state().isOpen">
+  <div class="modal-content">
+    <button class="btn-close" (click)="onClose()" title="Close">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+
+    <div class="loading-container" *ngIf="state().loading">
+      <div class="spinner"></div>
+      <p>Đang tải...</p>
+    </div>
+
+    <div class="error-container" *ngIf="state().error">
+      <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ef4444" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <p>{{ state().error }}</p>
+    </div>
+
+    <div class="preview-container" *ngIf="!state().loading && !state().error && objectUrl()">
+      <img *ngIf="isImage()" [src]="objectUrl()" alt="Preview">
+      <video *ngIf="isVideo()" [src]="objectUrl()" autoplay controls></video>
+    </div>
+
+    <button
+      class="btn-download"
+      (click)="onDownload()"
+      *ngIf="!state().loading && !state().error && objectUrl()"
+      title="Download">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+      </svg>
+      Download
+    </button>
+  </div>
+</div>
