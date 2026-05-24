@@ -1,4 +1,4 @@
-<div class="app-layout" (dragover)="onDragOver($event)" (dragenter)="onDragEnter($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+<div class="app-layout" (click)="closeContextMenu()" (dragover)="onDragOver($event)" (dragenter)="onDragEnter($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
   
   <div class="drag-overlay" [class.show]="isDragging">
     <div class="drag-box">
@@ -177,7 +177,7 @@
       </button>
     </header>
 
-    <div class="content-scroll">
+    <div class="content-scroll" (contextmenu)="onContentContextMenu($event)">
       
       <div *ngIf="loading" class="loading-state">
         <div class="spinner"></div>
@@ -229,7 +229,7 @@
           </div>
           <div class="table-body">
             
-            <div class="file-row" *ngFor="let item of items" (dblclick)="onItemDoubleClick(item)" style="cursor: pointer;">
+            <div class="file-row" *ngFor="let item of items" (click)="onRowClick(item)" (contextmenu)="onRowContextMenu($event, item)" (dblclick)="onItemDoubleClick(item)" style="cursor: pointer;">
               <div class="td-checkbox" (click)="$event.stopPropagation()">
                 <input type="checkbox" [checked]="selectedItemIds.has(item.id)" (click)="toggleSelection(item, $event)">
               </div>
@@ -238,16 +238,13 @@
                   <svg *ngIf="item.isFolder" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
                   <svg *ngIf="!item.isFolder" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><path [attr.d]="getIconPath(item.category)"/></svg>
                 </div>
-                
                 <div class="r-info">
-                    <div class="title" [innerHTML]="highlightMatch(item.name, searchQuery)"></div>
-                    <div class="type">{{ item.isFolder ? 'Folder' : ((item.mimeType?.split('/') ?? [])[1] || 'File') | uppercase }}</div>
+                  <div class="title" [innerHTML]="highlightMatch(item.name, searchQuery)"></div>
+                  <div class="type">{{ item.isFolder ? 'Folder' : ((item.mimeType?.split('/') ?? [])[1] || 'File') | uppercase }}</div>
                 </div>
               </div>
-              
               <div class="r-size">{{ item.isFolder ? '--' : formatSize(item.sizeBytes) }}</div>
               <div class="r-date">{{ item.createdAt | date:'dd MMM yyyy' }}</div>
-              
               <div class="r-actions" (click)="$event.stopPropagation()">
                 <button *ngIf="!item.isFolder" (click)="openShareModal(item)" title="Share">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -263,6 +260,40 @@
           </div>
         </div>
       </section>
+
+      <div
+        class="context-menu"
+        *ngIf="contextMenuVisible"
+        [style.left.px]="contextMenuX"
+        [style.top.px]="contextMenuY"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="context-menu-title">
+          {{ getContextMenuTitle() }}
+        </div>
+
+        <button class="context-menu-item" type="button" *ngIf="contextMenuItem" (click)="copySelectedItem()">
+          <span>Copy</span>
+          <kbd>Ctrl+C</kbd>
+        </button>
+
+        <button class="context-menu-item" type="button" *ngIf="contextMenuItem" (click)="cutSelectedItem()">
+          <span>Cut</span>
+          <kbd>Ctrl+X</kbd>
+        </button>
+
+        <button class="context-menu-item" type="button" *ngIf="contextMenuItem" (click)="renameSelectedItem()">
+          <span>Rename</span>
+          <kbd>F2</kbd>
+        </button>
+
+        <div class="context-menu-separator" *ngIf="contextMenuItem"></div>
+
+        <button class="context-menu-item" type="button" (click)="pasteClipboardItem()" [disabled]="!canPasteToCurrentContext()">
+          <span>{{ getPasteMenuLabel() }}</span>
+          <kbd>Ctrl+V</kbd>
+        </button>
+      </div>
 
     </div>
   </main>

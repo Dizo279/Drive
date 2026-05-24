@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone, HostListener } from '@angular/core';
 import { HttpEventType, HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { CommonModule} from '@angular/common';
@@ -60,6 +60,17 @@ export class FileListComponent implements OnInit {
   bulkProcessMessage: string = '';
   bulkProgress: number = 0;
   bulkProcessType: 'download' | 'delete' | null = null;
+
+  contextMenuVisible: boolean = false;
+  contextMenuX: number = 0;
+  contextMenuY: number = 0;
+  contextMenuItem: any = null;
+  contextMenuHasPasteTarget: boolean = false;
+  contextMenuTargetParentId: number | null = null;
+
+  clipboardItem: any = null;
+  clipboardAction: 'copy' | 'cut' | null = null;
+  focusedItem: any = null;
 
   constructor(
     private fileService: FileService,
@@ -209,6 +220,233 @@ export class FileListComponent implements OnInit {
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  onContentContextMenu(event: MouseEvent): void {
+    event.preventDefault();
+    this.openContextMenu(event, null, this.currentParentId);
+  }
+
+  onRowContextMenu(event: MouseEvent, item: any): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.focusedItem = item;
+    this.openContextMenu(event, item, item.isFolder ? item.id : null);
+  }
+
+  private openContextMenu(event: MouseEvent, item: any, targetParentId: number | null): void {
+    this.contextMenuItem = item;
+    this.contextMenuTargetParentId = targetParentId;
+    this.contextMenuHasPasteTarget = item === null || !!item?.isFolder;
+    this.contextMenuVisible = true;
+
+    const menuWidth = 220;
+    const menuHeight = 190;
+    const margin = 12;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let x = event.clientX;
+    let y = event.clientY;
+
+    if (x + menuWidth + margin > viewportWidth) {
+      x = viewportWidth - menuWidth - margin;
+    }
+    if (y + menuHeight + margin > viewportHeight) {
+      y = viewportHeight - menuHeight - margin;
+    }
+    if (x < margin) x = margin;
+    if (y < margin) y = margin;
+
+    this.contextMenuX = x;
+    this.contextMenuY = y;
+    this.cdr.detectChanges();
+  }
+
+  closeContextMenu(): void {
+    this.contextMenuVisible = false;
+    this.contextMenuItem = null;
+    this.contextMenuHasPasteTarget = false;
+    this.contextMenuTargetParentId = null;
+  }
+
+  copySelectedItem(item: any = this.contextMenuItem): void {
+    if (!item) return;
+    this.contextMenuItem = item;
+    this.clipboardItem = item;
+    this.clipboardAction = 'copy';
+    this.displayToast(`Đã copy "${this.contextMenuItem.name}"`);
+    this.closeContextMenu();
+  }
+
+  cutSelectedItem(item: any = this.contextMenuItem): void {
+    if (!item) return;
+    this.contextMenuItem = item;
+    this.clipboardItem = item;
+    this.clipboardAction = 'cut';
+    this.displayToast(`Đã cut "${this.contextMenuItem.name}"`);
+    this.closeContextMenu();
+  }
+
+  async renameSelectedItem(): Promise<void> {
+    if (!this.contextMenuItem) return;
+    const item = this.contextMenuItem;
+    this.closeContextMenu();
+
+    const newName = await this.dialogService.prompt({
+      title: 'Đổi tên',
+      message: `Nhập tên mới cho "${item.name}"`,
+      promptPlaceholder: 'Tên mới...',
+      confirmText: 'Lưu',
+      type: 'info'
+    });
+
+    if (!newName || !newName.trim() || newName.trim() === item.name) {
+      return;
+    }
+
+    this.fileService.renameItem(item.id, newName.trim()).subscribe({
+      next: () => this.loadData(),
+      error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Đổi tên thất bại!', type: 'danger' })
+    });
+  }
+
+  pasteClipboardItem(targetParentId: number | null = this.contextMenuTargetParentId): void {
+    if (!this.clipboardItem || !this.clipboardAction) {
+      this.displayToast('Clipboard trống');
+      this.closeContextMenu();
+      return;
+    }
+
+    if (!this.contextMenuHasPasteTarget) {
+      this.displayToast('Chỉ có thể paste vào thư mục');
+      this.closeContextMenu();
+      return;
+    }
+
+    const sourceItem = this.clipboardItem;
+    const action = this.clipboardAction;
+
+    if (sourceItem.id === targetParentId) {
+      this.displayToast('Cannot paste into itself');
+      this.closeContextMenu();
+      return;
+    }
+
+    const request$ = action === 'copy'
+      ? this.fileService.copyItem(sourceItem.id, targetParentId)
+      : this.fileService.moveItem(sourceItem.id, targetParentId);
+
+    request$.subscribe({
+      next: () => {
+        this.displayToast(action === 'copy' ? 'Copy thành công' : 'Move thành công');
+        if (action === 'cut') {
+          this.clipboardItem = null;
+          this.clipboardAction = null;
+        }
+        this.loadData();
+      },
+      error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Paste thất bại!', type: 'danger' })
+    });
+
+    this.closeContextMenu();
+  }
+
+  canPasteToCurrentContext(): boolean {
+    return !!this.clipboardItem
+      && !!this.clipboardAction
+      && this.contextMenuHasPasteTarget
+      && this.clipboardItem.id !== this.contextMenuTargetParentId;
+  }
+
+  getContextMenuTitle(): string {
+    if (this.contextMenuItem) {
+      return this.contextMenuItem.name;
+    }
+    return this.folderHistory.length > 0 ? this.folderHistory[this.folderHistory.length - 1].name : 'My Drive';
+  }
+
+  getPasteMenuLabel(): string {
+    return this.contextMenuItem?.isFolder ? 'Paste into folder' : 'Paste here';
+  }
+
+  onRowClick(item: any): void {
+    this.focusedItem = item;
+  }
+
+  private getKeyboardTargetItem(): any {
+    if (this.contextMenuItem) {
+      return this.contextMenuItem;
+    }
+    if (this.selectedItemIds.size > 0) {
+      const selectedId = Array.from(this.selectedItemIds)[0];
+      return this.items.find(item => item.id === selectedId) || null;
+    }
+    return this.focusedItem;
+  }
+
+  private isTypingTarget(event: KeyboardEvent): boolean {
+    const target = event.target as HTMLElement | null;
+    if (!target) return false;
+    const tagName = target.tagName.toLowerCase();
+    return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || target.isContentEditable;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboardShortcuts(event: KeyboardEvent): void {
+    if (this.isTypingTarget(event) || this.isShareModalOpen) {
+      return;
+    }
+
+    const key = event.key.toLowerCase();
+    const hasModifier = event.ctrlKey || event.metaKey;
+
+    if (hasModifier && key === 'c') {
+      const item = this.getKeyboardTargetItem();
+      if (item) {
+        event.preventDefault();
+        this.copySelectedItem(item);
+      }
+      return;
+    }
+
+    if (hasModifier && key === 'x') {
+      const item = this.getKeyboardTargetItem();
+      if (item) {
+        event.preventDefault();
+        this.cutSelectedItem(item);
+      }
+      return;
+    }
+
+    if (hasModifier && key === 'v') {
+      event.preventDefault();
+      this.contextMenuHasPasteTarget = true;
+      this.pasteClipboardItem(this.currentParentId);
+      return;
+    }
+
+    if ((event.key === ' ' || event.key === 'Enter') && this.contextMenuVisible && this.canPasteToCurrentContext()) {
+      event.preventDefault();
+      this.pasteClipboardItem();
+      return;
+    }
+
+    if (event.key === 'Escape' && this.contextMenuVisible) {
+      event.preventDefault();
+      this.closeContextMenu();
+      return;
+    }
+
+    if (event.key === 'F2') {
+      const item = this.getKeyboardTargetItem();
+      if (item) {
+        event.preventDefault();
+        this.contextMenuItem = item;
+        this.renameSelectedItem();
+      }
+    }
   }
 
   onItemDoubleClick(item: any): void {

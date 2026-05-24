@@ -46,6 +46,14 @@ public class FileResource {
         public Integer expireDays; // Số ngày hết hạn
     }
 
+    public static class RenameRequest {
+        public String fileName;
+    }
+
+    public static class MoveCopyRequest {
+        public Long targetParentId;
+    }
+
     public static class SharedItemDTO {
         private Long shareId;
         private Long fileId;
@@ -453,6 +461,195 @@ public class FileResource {
         return Response.ok(fileStream)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipFileName + "\"")
                 .build();
+    }
+
+    @PUT
+    @Path("/{id}/rename")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response renameItem(@PathParam("id") Long id, RenameRequest requestData, @Context ContainerRequestContext requestContext) {
+        try {
+            Long userId = getCurrentUserId(requestContext);
+            if (id == null || requestData == null || requestData.fileName == null || requestData.fileName.trim().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Invalid rename request")).build();
+            }
+
+            FileMetadata item = getOwnedActiveItem(id, userId);
+            item.setFileName(requestData.fileName.trim());
+            fileRepository.save(item);
+
+            return Response.ok(item).build();
+        } catch (WebApplicationException e) {
+            return Response.status(e.getResponse().getStatus()).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity(Map.of("error", "Rename failed")).build();
+        }
+    }
+
+    @PUT
+    @Path("/{id}/move")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response moveItem(@PathParam("id") Long id, MoveCopyRequest requestData, @Context ContainerRequestContext requestContext) {
+        try {
+            Long userId = getCurrentUserId(requestContext);
+            if (id == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Missing id")).build();
+            }
+
+            Long targetParentId = requestData != null ? requestData.targetParentId : null;
+            FileMetadata item = getOwnedActiveItem(id, userId);
+            validateTargetFolder(targetParentId, userId);
+
+            if (Boolean.TRUE.equals(item.getIsFolder()) && targetParentId != null) {
+                if (item.getId().equals(targetParentId) || isDescendantFolder(item.getId(), targetParentId)) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity(Map.of("error", "Cannot move a folder into itself or its child folder")).build();
+                }
+            }
+
+            item.setParentId(targetParentId);
+            fileRepository.save(item);
+
+            return Response.ok(item).build();
+        } catch (WebApplicationException e) {
+            return Response.status(e.getResponse().getStatus()).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity(Map.of("error", "Move failed")).build();
+        }
+    }
+
+    @POST
+    @Path("/{id}/copy")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response copyItem(@PathParam("id") Long id, MoveCopyRequest requestData, @Context ContainerRequestContext requestContext) {
+        try {
+            Long userId = getCurrentUserId(requestContext);
+            if (id == null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Missing id")).build();
+            }
+
+            Long targetParentId = requestData != null ? requestData.targetParentId : null;
+            FileMetadata source = getOwnedActiveItem(id, userId);
+            validateTargetFolder(targetParentId, userId);
+
+            if (Boolean.TRUE.equals(source.getIsFolder())
+                    && targetParentId != null
+                    && (source.getId().equals(targetParentId) || isDescendantFolder(source.getId(), targetParentId))) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(Map.of("error", "Cannot copy a folder into itself or its child folder")).build();
+            }
+
+            long copySize = calculateCopySize(source);
+            long usedQuota = fileRepository.sumUsedQuotaByOwner(userId);
+            long maxQuota = userRepository.findById(userId)
+                    .map(user -> user.getMaxQuota() != null ? user.getMaxQuota() : 1073741824L)
+                    .orElse(1073741824L);
+            if (usedQuota + copySize > maxQuota) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(Map.of("error", "Not enough storage quota to copy this item")).build();
+            }
+
+            FileMetadata copied = copyItemRecursively(source, targetParentId, userId);
+            return Response.ok(copied).build();
+        } catch (WebApplicationException e) {
+            return Response.status(e.getResponse().getStatus()).entity(Map.of("error", e.getMessage())).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity(Map.of("error", "Copy failed")).build();
+        }
+    }
+
+    private Long getCurrentUserId(ContainerRequestContext requestContext) {
+        Object userIdObj = requestContext.getProperty("userId");
+        if (userIdObj == null) {
+            throw new WebApplicationException("Login required", Response.Status.UNAUTHORIZED);
+        }
+        return ((Number) userIdObj).longValue();
+    }
+
+    private FileMetadata getOwnedActiveItem(Long id, Long userId) {
+        FileMetadata item = fileRepository.findById(id)
+                .orElseThrow(() -> new WebApplicationException("Item not found", Response.Status.NOT_FOUND));
+        if (!userId.equals(item.getOwnerId()) || Boolean.TRUE.equals(item.getIsDeleted())) {
+            throw new WebApplicationException("Item not found", Response.Status.NOT_FOUND);
+        }
+        return item;
+    }
+
+    private void validateTargetFolder(Long targetParentId, Long userId) {
+        if (targetParentId == null) {
+            return;
+        }
+        FileMetadata targetFolder = getOwnedActiveItem(targetParentId, userId);
+        if (!Boolean.TRUE.equals(targetFolder.getIsFolder())) {
+            throw new WebApplicationException("Target is not a folder", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    private boolean isDescendantFolder(Long sourceFolderId, Long targetFolderId) {
+        return fileRepository.findAllRecursiveInFolder(sourceFolderId).stream()
+                .anyMatch(item -> targetFolderId.equals(item.getId()));
+    }
+
+    private long calculateCopySize(FileMetadata source) {
+        if (!Boolean.TRUE.equals(source.getIsFolder())) {
+            return source.getFileSize() != null ? source.getFileSize() : 0L;
+        }
+        return fileRepository.findAllRecursiveInFolder(source.getId()).stream()
+                .filter(item -> !Boolean.TRUE.equals(item.getIsFolder()))
+                .mapToLong(item -> item.getFileSize() != null ? item.getFileSize() : 0L)
+                .sum();
+    }
+
+    private FileMetadata copyItemRecursively(FileMetadata source, Long targetParentId, Long userId) throws java.io.IOException {
+        FileMetadata copy = new FileMetadata();
+        copy.setOwnerId(userId);
+        copy.setFileName(source.getFileName());
+        copy.setParentId(targetParentId);
+        copy.setIsFolder(Boolean.TRUE.equals(source.getIsFolder()));
+        copy.setFileSize(source.getFileSize() != null ? source.getFileSize() : 0L);
+        copy.setMimeType(source.getMimeType());
+        copy.setIsDeleted(false);
+        copy.setDeletedAt(null);
+
+        if (Boolean.TRUE.equals(source.getIsFolder())) {
+            copy.setFilePath("");
+            copy.setFileSize(0L);
+            fileRepository.save(copy);
+
+            List<FileMetadata> children = fileRepository.findByParentIdAndIsDeletedFalse(source.getId());
+            for (FileMetadata child : children) {
+                copyItemRecursively(child, copy.getId(), userId);
+            }
+        } else {
+            copy.setFilePath(copyPhysicalFile(source));
+            fileRepository.save(copy);
+        }
+
+        return copy;
+    }
+
+    private String copyPhysicalFile(FileMetadata source) throws java.io.IOException {
+        java.nio.file.Path sourcePath = Paths.get(uploadDir).resolve(source.getFilePath()).normalize();
+        if (!Files.exists(sourcePath) || !Files.isRegularFile(sourcePath)) {
+            throw new WebApplicationException("Physical file not found", Response.Status.NOT_FOUND);
+        }
+
+        String extension = "";
+        String fileName = source.getFileName();
+        int dotIndex = fileName != null ? fileName.lastIndexOf('.') : -1;
+        if (dotIndex > 0) {
+            extension = fileName.substring(dotIndex);
+        }
+
+        String copiedFileName = UUID.randomUUID().toString() + extension;
+        java.nio.file.Path targetPath = Paths.get(uploadDir).resolve(copiedFileName).normalize();
+        Files.copy(sourcePath, targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        return copiedFileName;
     }
 
     // SOFT DELETE: chuyển vào Trash (khôi phục trong 30 ngày)

@@ -88,6 +88,18 @@ export class FileService {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
 
+  renameItem(id: number, newName: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}/rename`, { fileName: newName });
+  }
+
+  moveItem(id: number, targetParentId: number | null): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}/move`, { targetParentId });
+  }
+
+  copyItem(id: number, targetParentId: number | null): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/copy`, { targetParentId });
+  }
+
   getTrash(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/trash`);
   }
