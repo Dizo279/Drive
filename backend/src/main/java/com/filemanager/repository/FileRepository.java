@@ -28,7 +28,7 @@ public interface FileRepository extends JpaRepository<FileMetadata, Long> {
 
     
     @Query("SELECT COALESCE(SUM(f.fileSize), 0) FROM FileMetadata f " +
-           "WHERE f.ownerId = :ownerId AND f.isDeleted = false AND f.isFolder = false")
+           "WHERE f.ownerId = :ownerId AND f.isFolder = false")
     long sumUsedQuotaByOwner(@Param("ownerId") Long ownerId);
 
     // Lấy tất cả file/folder bên trong một folder (đệ quy)
