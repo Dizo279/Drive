@@ -4,11 +4,16 @@ import com.filemanager.entity.User;
 import com.filemanager.repository.UserRepository;
 import com.filemanager.security.JwtUtil;
 import jakarta.inject.Inject;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -75,10 +80,54 @@ public class AuthResource {
         
         if (userOpt.isPresent() && passwordEncoder.matches(loginRequest.getPassword(), userOpt.get().getPassword())) {
             User user = userOpt.get();
-            String token = jwtUtil.generateToken(user.getUsername(), user.getId());
-            return Response.ok(Map.of("token", token, "username", user.getUsername())).build();
+            String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getId());
+            String refreshToken = jwtUtil.generateRefreshToken(user.getUsername(), user.getId());
+
+            NewCookie refreshCookie = new NewCookie.Builder("refresh_token")
+                    .value(refreshToken)
+                    .path("/api/auth")
+                    .httpOnly(true)
+                    .secure(true)
+                    .maxAge(7 * 24 * 60 * 60)
+                    .build();
+
+            return Response.ok(Map.of("accessToken", accessToken, "username", user.getUsername()))
+                    .cookie(refreshCookie)
+                    .build();
         }
-        
+
         return Response.status(Response.Status.UNAUTHORIZED).entity("Sai username hoặc password").build();
+    }
+
+    @POST
+    @Path("/refresh")
+    public Response refresh(@CookieParam("refresh_token") Cookie refreshCookie) {
+        if (refreshCookie == null || refreshCookie.getValue() == null || refreshCookie.getValue().isBlank()) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Thiếu refresh token").build();
+        }
+
+        try {
+            Claims claims = jwtUtil.validateRefreshTokenAndGetClaims(refreshCookie.getValue());
+            String username = claims.getSubject();
+            Long userId = claims.get("userId", Number.class).longValue();
+            String accessToken = jwtUtil.generateAccessToken(username, userId);
+            return Response.ok(Map.of("accessToken", accessToken)).build();
+        } catch (JwtException ex) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Refresh token không hợp lệ").build();
+        }
+    }
+
+    @POST
+    @Path("/logout")
+    public Response logout() {
+        NewCookie clearCookie = new NewCookie.Builder("refresh_token")
+                .value("")
+                .path("/api/auth")
+                .httpOnly(true)
+                .secure(true)
+                .maxAge(0)
+                .build();
+
+        return Response.ok("Đăng xuất thành công").cookie(clearCookie).build();
     }
 }
