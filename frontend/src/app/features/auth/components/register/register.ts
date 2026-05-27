@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-register',
@@ -15,7 +15,7 @@ import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 export class RegisterComponent {
   registerForm: FormGroup;
   
-  // Các biến điều khiển UI
+  // CÃ¡c biáº¿n Ä‘iá»u khiá»ƒn UI
   errorMsg: string = '';
   hidePassword: boolean = true;
   hideConfirmPassword: boolean = true;
@@ -52,15 +52,15 @@ export class RegisterComponent {
         next: async () => {
           this.loading = false;
           await this.dialogService.alert({
-            title: 'Đăng ký thành công!',
-            message: 'Tài khoản của bạn đã được tạo. Bạn có thể đăng nhập ngay.',
+            title: 'ÄÄƒng kÃ½ thÃ nh cÃ´ng!',
+            message: 'TÃ i khoáº£n cá»§a báº¡n Ä‘Ã£ Ä‘Æ°á»£c táº¡o. Báº¡n cÃ³ thá»ƒ Ä‘Äƒng nháº­p ngay.',
             type: 'success'
           });
           this.router.navigate(['/login']);
         },
         error: (err) => {
           this.loading = false;
-          this.errorMsg = err.error || 'Lỗi đăng ký. Email hoặc username có thể đã tồn tại.';
+          this.errorMsg = err.error || 'Lá»—i Ä‘Äƒng kÃ½. Email hoáº·c username cÃ³ thá»ƒ Ä‘Ã£ tá»“n táº¡i.';
         }
       });
     } else {

@@ -1,7 +1,7 @@
-import { signal } from '@angular/core';
+﻿import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PreviewService } from '../../services/preview.service';
-import { PreviewModalComponent } from './preview-modal.component';
+import { PreviewModalComponent } from './preview-modal';
 
 describe('PreviewModalComponent', () => {
   let component: PreviewModalComponent;
@@ -107,3 +107,4 @@ describe('PreviewModalComponent', () => {
     expect(mockPreviewService.close).toHaveBeenCalled();
   });
 });
+

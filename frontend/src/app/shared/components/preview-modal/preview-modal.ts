@@ -1,4 +1,4 @@
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+﻿import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Component, OnDestroy, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
 import { PreviewService } from '../../services/preview.service';
 
@@ -60,3 +60,4 @@ export class PreviewModalComponent implements OnDestroy {
     this.objectUrl.set(null);
   }
 }
+

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, NgZone, HostListener } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectorRef, NgZone, HostListener } from '@angular/core';
 import { HttpEventType, HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { CommonModule} from '@angular/common';
@@ -7,8 +7,8 @@ import { FileService } from '../../services/file.service';
 import { AuthService } from '@features/auth/services/auth.service';
 import { Router, RouterLink, RouterModule } from '@angular/router';
 import { NotificationBellComponent } from '@notification/components/notification-bell/notification-bell';
-import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
-import { PreviewService } from '@core/services/preview.service';
+import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
+import { PreviewService } from '@shared/services/preview.service';
 
 @Component({
   selector: 'app-file-list',
@@ -87,23 +87,23 @@ export class FileListComponent implements OnInit {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       const token = localStorage.getItem('jwt_token');
       if (token) {
-          // Gọi API để lấy dữ liệu Full từ Database
+          // Gá»i API Ä‘á»ƒ láº¥y dá»¯ liá»‡u Full tá»« Database
           const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
           this.http.get('http://localhost:8080/api/users/me', { headers }).subscribe({
             next: (data: any) => {
               this.currentUser = data;
               
-              // BỔ SUNG LỆNH NÀY: Kiểm tra role để hiện nút Admin
+              // Bá»” SUNG Lá»†NH NÃ€Y: Kiá»ƒm tra role Ä‘á»ƒ hiá»‡n nÃºt Admin
               this.isAdmin = (data.role && data.role.toUpperCase() === 'ADMIN');
               
               this.cdr.detectChanges();
             },
             error: () => {
-              // Fallback nếu API lỗi
+              // Fallback náº¿u API lá»—i
               const payload = JSON.parse(atob(token.split('.')[1]));
               this.currentUser = { username: payload.sub };
               
-              // Bổ sung kiểm tra role từ token (nếu token có chứa role)
+              // Bá»• sung kiá»ƒm tra role tá»« token (náº¿u token cÃ³ chá»©a role)
               this.isAdmin = (payload.role && payload.role.toUpperCase() === 'ADMIN');
             }
           });
@@ -120,7 +120,7 @@ export class FileListComponent implements OnInit {
     this.bulkProgress = 0;
     this.cdr.detectChanges();
 
-    // Reset trạng thái pending khi load lại
+    // Reset tráº¡ng thÃ¡i pending khi load láº¡i
     this.isUpgradePending = false;
 
     this.fileService.getFiles(this.currentParentId).subscribe({
@@ -131,7 +131,7 @@ export class FileListComponent implements OnInit {
             const safeData = Array.isArray(data) ? data : [];
             this.allFiles = safeData.map(f => ({
                 id: f.id,
-                name: f.fileName || 'Không tên',
+                name: f.fileName || 'KhÃ´ng tÃªn',
                 sizeBytes: f.fileSize || 0,
                 createdAt: f.createdAt,
                 mimeType: f.isFolder ? '' : (f.mimeType || this.guessMimeType(f.fileName || '')),
@@ -141,7 +141,7 @@ export class FileListComponent implements OnInit {
             this.applyFiltersAndSort();
             this.calculateUsedQuota();
           } catch (error) {
-            console.error('Lỗi khi map dữ liệu:', error);
+            console.error('Lá»—i khi map dá»¯ liá»‡u:', error);
           } finally {
             this.loading = false;
             this.cdr.detectChanges();
@@ -169,7 +169,7 @@ export class FileListComponent implements OnInit {
               }
             });
         },
-        error: (err) => console.log("Lỗi tải Quota.")
+        error: (err) => console.log("Lá»—i táº£i Quota.")
     });
   }
 
@@ -195,17 +195,17 @@ export class FileListComponent implements OnInit {
     }
     
     result.sort((a, b) => {
-      // 1. ƯU TIÊN SỐ 1: Folder luôn luôn đứng trước File
+      // 1. Æ¯U TIÃŠN Sá» 1: Folder luÃ´n luÃ´n Ä‘á»©ng trÆ°á»›c File
       if (a.isFolder && !b.isFolder) return -1;
       if (!a.isFolder && b.isFolder) return 1;
 
-      // 2. ƯU TIÊN SỐ 2: Sắp xếp theo tiêu chí người dùng chọn
+      // 2. Æ¯U TIÃŠN Sá» 2: Sáº¯p xáº¿p theo tiÃªu chÃ­ ngÆ°á»i dÃ¹ng chá»n
       if (this.sortBy === 'name') return a.name.localeCompare(b.name);
       if (this.sortBy === 'size') return b.sizeBytes - a.sizeBytes;
       
       const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return timeB - timeA; // Mặc định xếp theo ngày mới nhất
+      return timeB - timeA; // Máº·c Ä‘á»‹nh xáº¿p theo ngÃ y má»›i nháº¥t
     });
 
     this.zone.run(() => {
@@ -276,7 +276,7 @@ export class FileListComponent implements OnInit {
     this.contextMenuItem = item;
     this.clipboardItem = item;
     this.clipboardAction = 'copy';
-    this.displayToast(`Đã copy "${this.contextMenuItem.name}"`);
+    this.displayToast(`ÄÃ£ copy "${this.contextMenuItem.name}"`);
     this.closeContextMenu();
   }
 
@@ -285,7 +285,7 @@ export class FileListComponent implements OnInit {
     this.contextMenuItem = item;
     this.clipboardItem = item;
     this.clipboardAction = 'cut';
-    this.displayToast(`Đã cut "${this.contextMenuItem.name}"`);
+    this.displayToast(`ÄÃ£ cut "${this.contextMenuItem.name}"`);
     this.closeContextMenu();
   }
 
@@ -295,10 +295,10 @@ export class FileListComponent implements OnInit {
     this.closeContextMenu();
 
     const newName = await this.dialogService.prompt({
-      title: 'Đổi tên',
-      message: `Nhập tên mới cho "${item.name}"`,
-      promptPlaceholder: 'Tên mới...',
-      confirmText: 'Lưu',
+      title: 'Äá»•i tÃªn',
+      message: `Nháº­p tÃªn má»›i cho "${item.name}"`,
+      promptPlaceholder: 'TÃªn má»›i...',
+      confirmText: 'LÆ°u',
       type: 'info'
     });
 
@@ -308,19 +308,19 @@ export class FileListComponent implements OnInit {
 
     this.fileService.renameItem(item.id, newName.trim()).subscribe({
       next: () => this.loadData(),
-      error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Đổi tên thất bại!', type: 'danger' })
+      error: () => this.dialogService.alert({ title: 'Tháº¥t báº¡i', message: 'Äá»•i tÃªn tháº¥t báº¡i!', type: 'danger' })
     });
   }
 
   pasteClipboardItem(targetParentId: number | null = this.contextMenuTargetParentId): void {
     if (!this.clipboardItem || !this.clipboardAction) {
-      this.displayToast('Clipboard trống');
+      this.displayToast('Clipboard trá»‘ng');
       this.closeContextMenu();
       return;
     }
 
     if (!this.contextMenuHasPasteTarget) {
-      this.displayToast('Chỉ có thể paste vào thư mục');
+      this.displayToast('Chá»‰ cÃ³ thá»ƒ paste vÃ o thÆ° má»¥c');
       this.closeContextMenu();
       return;
     }
@@ -340,14 +340,14 @@ export class FileListComponent implements OnInit {
 
     request$.subscribe({
       next: () => {
-        this.displayToast(action === 'copy' ? 'Copy thành công' : 'Move thành công');
+        this.displayToast(action === 'copy' ? 'Copy thÃ nh cÃ´ng' : 'Move thÃ nh cÃ´ng');
         if (action === 'cut') {
           this.clipboardItem = null;
           this.clipboardAction = null;
         }
         this.loadData();
       },
-      error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Paste thất bại!', type: 'danger' })
+      error: () => this.dialogService.alert({ title: 'Tháº¥t báº¡i', message: 'Paste tháº¥t báº¡i!', type: 'danger' })
     });
 
     this.closeContextMenu();
@@ -523,17 +523,17 @@ export class FileListComponent implements OnInit {
 
     for (let i = 0; i < selectedItems.length; i++) {
       const item = selectedItems[i];
-      this.bulkProcessMessage = `Đang tải xuống ${item.name} (${i + 1}/${selectedItems.length})`;
+      this.bulkProcessMessage = `Äang táº£i xuá»‘ng ${item.name} (${i + 1}/${selectedItems.length})`;
       try {
         await this.downloadItem(item);
       } catch (error) {
-        console.error('Lỗi tải xuống mục:', item, error);
+        console.error('Lá»—i táº£i xuá»‘ng má»¥c:', item, error);
       }
       this.bulkProgress = Math.round(((i + 1) / selectedItems.length) * 100);
       this.cdr.detectChanges();
     }
 
-    this.bulkProcessMessage = 'Hoàn tất tải xuống đã chọn';
+    this.bulkProcessMessage = 'HoÃ n táº¥t táº£i xuá»‘ng Ä‘Ã£ chá»n';
     setTimeout(() => {
       this.bulkProcessing = false;
       this.bulkProcessMessage = '';
@@ -549,9 +549,9 @@ export class FileListComponent implements OnInit {
     }
 
     const confirmed = await this.dialogService.confirm({
-      title: 'Xóa mục đã chọn',
-      message: `Bạn có chắc muốn xóa ${this.selectedItemIds.size} mục đã chọn?`,
-      confirmText: 'Xóa',
+      title: 'XÃ³a má»¥c Ä‘Ã£ chá»n',
+      message: `Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a ${this.selectedItemIds.size} má»¥c Ä‘Ã£ chá»n?`,
+      confirmText: 'XÃ³a',
       type: 'danger'
     });
     if (!confirmed) {
@@ -569,21 +569,21 @@ export class FileListComponent implements OnInit {
 
     for (let i = 0; i < selectedItems.length; i++) {
       const item = selectedItems[i];
-      this.bulkProcessMessage = `Đang xóa ${item.name} (${i + 1}/${selectedItems.length})`;
+      this.bulkProcessMessage = `Äang xÃ³a ${item.name} (${i + 1}/${selectedItems.length})`;
       try {
         await firstValueFrom(this.fileService.deleteFile(item.id));
         this.allFiles = this.allFiles.filter(file => file.id !== item.id);
         this.selectedItemIds.delete(item.id);
         this.applyFiltersAndSort();
       } catch (error) {
-        console.error('Lỗi xóa mục:', item, error);
+        console.error('Lá»—i xÃ³a má»¥c:', item, error);
       }
       this.bulkProgress = Math.round(((i + 1) / selectedItems.length) * 100);
       this.cdr.detectChanges();
     }
 
     this.bulkProcessing = false;
-    this.bulkProcessMessage = 'Hoàn tất xóa đã chọn';
+    this.bulkProcessMessage = 'HoÃ n táº¥t xÃ³a Ä‘Ã£ chá»n';
     this.bulkProgress = 100;
     this.calculateUsedQuota();
     setTimeout(() => {
@@ -612,14 +612,14 @@ export class FileListComponent implements OnInit {
 
   navigateToBreadcrumb(index: number | null): void {
     if (index === null) {
-      // Về trang chủ (Drive)
+      // Vá» trang chá»§ (Drive)
       this.currentParentId = null;
       this.folderHistory = [];
     } else {
-      // Quay lại một thư mục cụ thể trong lịch sử
+      // Quay láº¡i má»™t thÆ° má»¥c cá»¥ thá»ƒ trong lá»‹ch sá»­
       const target = this.folderHistory[index];
       this.currentParentId = target.id;
-      // Cắt bỏ các thư mục phía sau thư mục được click
+      // Cáº¯t bá» cÃ¡c thÆ° má»¥c phÃ­a sau thÆ° má»¥c Ä‘Æ°á»£c click
       this.folderHistory = this.folderHistory.slice(0, index + 1);
     }
     this.loadData();
@@ -628,24 +628,24 @@ export class FileListComponent implements OnInit {
   async createFolder(): Promise<void> {
     if (typeof window !== 'undefined') {
       const folderName = await this.dialogService.prompt({
-        title: 'Thư mục mới',
-        message: 'Vui lòng nhập tên cho thư mục mới:',
-        promptPlaceholder: 'Nhập tên thư mục...',
-        confirmText: 'Tạo mới',
+        title: 'ThÆ° má»¥c má»›i',
+        message: 'Vui lÃ²ng nháº­p tÃªn cho thÆ° má»¥c má»›i:',
+        promptPlaceholder: 'Nháº­p tÃªn thÆ° má»¥c...',
+        confirmText: 'Táº¡o má»›i',
         type: 'info'
       });
       
       if (folderName && folderName.trim() !== '') {
         this.fileService.createFolder(folderName.trim(), this.currentParentId).subscribe({
           next: () => this.loadData(),
-          error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Tạo thư mục thất bại!', type: 'danger' })
+          error: () => this.dialogService.alert({ title: 'Tháº¥t báº¡i', message: 'Táº¡o thÆ° má»¥c tháº¥t báº¡i!', type: 'danger' })
         });
       }
     }
   }
 
   download(file: any): void {
-    // Kiểm tra xem có phải folder không
+    // Kiá»ƒm tra xem cÃ³ pháº£i folder khÃ´ng
     if (file.isFolder) {
       // Download folder as ZIP
       this.fileService.downloadFolder(file.id).subscribe({
@@ -659,7 +659,7 @@ export class FileListComponent implements OnInit {
           document.body.removeChild(a);
           window.URL.revokeObjectURL(url);
         },
-        error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Tải folder thất bại!', type: 'danger' })
+        error: () => this.dialogService.alert({ title: 'Tháº¥t báº¡i', message: 'Táº£i folder tháº¥t báº¡i!', type: 'danger' })
       });
     } else {
       // Download file
@@ -674,16 +674,16 @@ export class FileListComponent implements OnInit {
           document.body.removeChild(a);
           window.URL.revokeObjectURL(url);
         },
-        error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Tải file thất bại!', type: 'danger' })
+        error: () => this.dialogService.alert({ title: 'Tháº¥t báº¡i', message: 'Táº£i file tháº¥t báº¡i!', type: 'danger' })
       });
     }
   }
 
   async delete(file: any): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'Xóa file',
-      message: `Bạn có chắc muốn xóa "${file.name}"?`,
-      confirmText: 'Xóa',
+      title: 'XÃ³a file',
+      message: `Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a "${file.name}"?`,
+      confirmText: 'XÃ³a',
       type: 'danger'
     });
     if (!confirmed) return;
@@ -696,15 +696,15 @@ export class FileListComponent implements OnInit {
           this.cdr.detectChanges();
         });
       },
-      error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Xóa file thất bại.', type: 'danger' })
+      error: () => this.dialogService.alert({ title: 'Tháº¥t báº¡i', message: 'XÃ³a file tháº¥t báº¡i.', type: 'danger' })
     });
   }
 
   async logout(): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'Đăng xuất',
-      message: 'Bạn có muốn đăng xuất khỏi hệ thống?',
-      confirmText: 'Đăng xuất',
+      title: 'ÄÄƒng xuáº¥t',
+      message: 'Báº¡n cÃ³ muá»‘n Ä‘Äƒng xuáº¥t khá»i há»‡ thá»‘ng?',
+      confirmText: 'ÄÄƒng xuáº¥t',
       type: 'warning'
     });
     if (!confirmed) return;
@@ -726,7 +726,7 @@ export class FileListComponent implements OnInit {
 
     const items = event.dataTransfer?.items;
     if (items && items.length > 0) {
-      // Kiểm tra xem có folder không qua FileSystemEntry API
+      // Kiá»ƒm tra xem cÃ³ folder khÃ´ng qua FileSystemEntry API
       const entries: any[] = [];
       let hasDirectory = false;
       for (let i = 0; i < items.length; i++) {
@@ -740,18 +740,18 @@ export class FileListComponent implements OnInit {
       }
 
       if (hasDirectory && entries.length > 0) {
-        // Có folder -> đọc đệ quy rồi upload folder
+        // CÃ³ folder -> Ä‘á»c Ä‘á»‡ quy rá»“i upload folder
         await this.processDroppedEntries(entries);
         return;
       }
     }
 
-    // Fallback: upload file thường
+    // Fallback: upload file thÆ°á»ng
     const files = event.dataTransfer?.files;
     if (files && files.length > 0) this.processMultipleUploads(files);
   }
 
-  /** Đọc đệ quy các FileSystemEntry (folder) rồi upload */
+  /** Äá»c Ä‘á»‡ quy cÃ¡c FileSystemEntry (folder) rá»“i upload */
   private async processDroppedEntries(entries: any[]): Promise<void> {
     const collectedFiles: File[] = [];
     const relativePaths: string[] = [];
@@ -914,7 +914,7 @@ export class FileListComponent implements OnInit {
   openShareModal(file: any) {
     if (event) event.stopPropagation();
     this.selectedFileForShare = file;
-    this.shareLink = ''; // Xóa link cũ nếu có
+    this.shareLink = ''; // XÃ³a link cÅ© náº¿u cÃ³
     this.shareEmailsInput = '';
     this.expireDays = null;
     this.isShareModalOpen = true;
@@ -928,39 +928,39 @@ export class FileListComponent implements OnInit {
       next: (res: any) => {
         this.isSharing = false;
         const token = res.shareToken || res.token || res;
-        // Trỏ trực tiếp vào API Backend để tải luôn khi bấm vào link
+        // Trá» trá»±c tiáº¿p vÃ o API Backend Ä‘á»ƒ táº£i luÃ´n khi báº¥m vÃ o link
         this.shareLink = `http://localhost:8080/api/files/shared/${token}`;
         this.cdr.detectChanges();
       },
       error: (err) => {
         this.isSharing = false;
-        this.displayToast('Lỗi: ' + (err.error?.error || 'Không thể tạo link.'));
+        this.displayToast('Lá»—i: ' + (err.error?.error || 'KhÃ´ng thá»ƒ táº¡o link.'));
       }
     });
   }
 
-  // --- CHIA SẺ QUA EMAIL ---
+  // --- CHIA Sáºº QUA EMAIL ---
   submitEmailShare() {
     if (!this.shareEmailsInput.trim()) {
-      this.displayToast('Vui lòng nhập ít nhất 1 địa chỉ email!');
+      this.displayToast('Vui lÃ²ng nháº­p Ã­t nháº¥t 1 Ä‘á»‹a chá»‰ email!');
       return;
     }
 
     this.isSharing = true;
-    // Tách email bằng dấu phẩy, loại bỏ khoảng trắng thừa
+    // TÃ¡ch email báº±ng dáº¥u pháº©y, loáº¡i bá» khoáº£ng tráº¯ng thá»«a
     const emailList = this.shareEmailsInput.split(',').map(e => e.trim()).filter(e => e !== '');
     const payload = { emails: emailList, expireDays: this.expireDays };
 
     this.fileService.shareFile(this.selectedFileForShare.id, payload).subscribe({
       next: (res: any) => {
         this.isSharing = false;
-        this.displayToast(res.message || 'Đã cấp quyền truy cập thành công!');
-        this.shareEmailsInput = ''; // Xóa ô nhập sau khi thành công
+        this.displayToast(res.message || 'ÄÃ£ cáº¥p quyá»n truy cáº­p thÃ nh cÃ´ng!');
+        this.shareEmailsInput = ''; // XÃ³a Ã´ nháº­p sau khi thÃ nh cÃ´ng
         this.cdr.detectChanges();
       },
       error: (err) => {
         this.isSharing = false;
-        this.displayToast('Lỗi: ' + (err.error?.error || 'Không thể chia sẻ.'));
+        this.displayToast('Lá»—i: ' + (err.error?.error || 'KhÃ´ng thá»ƒ chia sáº».'));
       }
     });
   }
@@ -969,7 +969,7 @@ export class FileListComponent implements OnInit {
   copyLink(): void {
     if (typeof window !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(this.shareLink).then(() => {
-        this.displayToast('Đã copy liên kết chia sẻ!');
+        this.displayToast('ÄÃ£ copy liÃªn káº¿t chia sáº»!');
       });
     }
   }
@@ -983,20 +983,20 @@ export class FileListComponent implements OnInit {
     this.toastMessage = message;
     this.showToast = true;
     
-    // Xóa bộ đếm cũ nếu người dùng bấm liên tục
+    // XÃ³a bá»™ Ä‘áº¿m cÅ© náº¿u ngÆ°á»i dÃ¹ng báº¥m liÃªn tá»¥c
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
     
     this.toastTimeout = setTimeout(() => {
       this.showToast = false;
-      this.cdr.detectChanges(); // Ép Angular cập nhật UI
+      this.cdr.detectChanges(); // Ã‰p Angular cáº­p nháº­t UI
     }, 3000);
   }
 
   async requestUpgrade(): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'Nâng cấp PREMIUM',
-      message: 'Bạn có muốn gửi yêu cầu nâng cấp lên PREMIUM (100GB) không?',
-      confirmText: 'Gửi yêu cầu',
+      title: 'NÃ¢ng cáº¥p PREMIUM',
+      message: 'Báº¡n cÃ³ muá»‘n gá»­i yÃªu cáº§u nÃ¢ng cáº¥p lÃªn PREMIUM (100GB) khÃ´ng?',
+      confirmText: 'Gá»­i yÃªu cáº§u',
       type: 'info'
     });
     if (!confirmed) return;
@@ -1009,9 +1009,10 @@ export class FileListComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.displayToast(err.error?.error || 'Không thể gửi yêu cầu.');
+        this.displayToast(err.error?.error || 'KhÃ´ng thá»ƒ gá»­i yÃªu cáº§u.');
       }
     });
   }
 
 }
+

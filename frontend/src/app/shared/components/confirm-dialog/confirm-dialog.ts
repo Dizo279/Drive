@@ -1,7 +1,7 @@
-import { Component, computed } from '@angular/core';
+﻿import { Component, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-confirm-dialog',
@@ -100,7 +100,7 @@ export class ConfirmDialogComponent {
     this.promptValue = '';
   }
 
-  /** Nhấn backdrop chỉ đóng khi là alert-only, không đóng khi confirm */
+  /** Nháº¥n backdrop chá»‰ Ä‘Ã³ng khi lÃ  alert-only, khÃ´ng Ä‘Ã³ng khi confirm */
   onBackdropClick(event: MouseEvent): void {
     if ((event.target as HTMLElement).classList.contains('cd-backdrop')) {
       if (this.state().config.alertOnly) {
@@ -109,3 +109,4 @@ export class ConfirmDialogComponent {
     }
   }
 }
+

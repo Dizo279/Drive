@@ -1,15 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID, OnDestroy, NgZone } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NotificationBellComponent } from '@notification/components/notification-bell/notification-bell';
 import { AdminService } from '../../services/admin.service';
-import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, NotificationBellComponent],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.css']
 })
@@ -66,7 +65,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         this.stats = data;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Lỗi tải thống kê:', err)
+      error: (err) => console.error('Lá»—i táº£i thá»‘ng kÃª:', err)
     });
   }
 
@@ -193,7 +192,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         this.loadUsers();
       },
       error: () => {
-        this.dialogService.alert({ title: 'Lỗi', message: 'Xóa người dùng thất bại.', type: 'danger' });
+        this.dialogService.alert({ title: 'Lá»—i', message: 'XÃ³a ngÆ°á»i dÃ¹ng tháº¥t báº¡i.', type: 'danger' });
       }
     });
   }
@@ -221,7 +220,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.hasNewNotification = true;
           this.cdr.detectChanges();
         } catch (e) {
-          console.error('Lỗi parse SSE data:', e);
+          console.error('Lá»—i parse SSE data:', e);
         }
       });
     });
@@ -239,15 +238,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         });
       },
-      error: (err) => console.error('Lỗi tải yêu cầu nâng cấp:', err)
+      error: (err) => console.error('Lá»—i táº£i yÃªu cáº§u nÃ¢ng cáº¥p:', err)
     });
   }
 
   async approveRequest(requestId: number): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'Phê duyệt yêu cầu',
-      message: 'Bạn có chắc muốn PHÊ DUYỆT yêu cầu nâng cấp này?',
-      confirmText: 'Phê duyệt',
+      title: 'PhÃª duyá»‡t yÃªu cáº§u',
+      message: 'Báº¡n cÃ³ cháº¯c muá»‘n PHÃŠ DUYá»†T yÃªu cáº§u nÃ¢ng cáº¥p nÃ y?',
+      confirmText: 'PhÃª duyá»‡t',
       type: 'success'
     });
     if (!confirmed) return;
@@ -258,15 +257,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         });
       },
-      error: () => this.dialogService.alert({ title: 'Lỗi', message: 'Lỗi khi phê duyệt yêu cầu.', type: 'danger' })
+      error: () => this.dialogService.alert({ title: 'Lá»—i', message: 'Lá»—i khi phÃª duyá»‡t yÃªu cáº§u.', type: 'danger' })
     });
   }
 
   async rejectRequest(requestId: number): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'Từ chối yêu cầu',
-      message: 'Bạn có chắc muốn TỪ CHỐI yêu cầu nâng cấp này?',
-      confirmText: 'Từ chối',
+      title: 'Tá»« chá»‘i yÃªu cáº§u',
+      message: 'Báº¡n cÃ³ cháº¯c muá»‘n Tá»ª CHá»I yÃªu cáº§u nÃ¢ng cáº¥p nÃ y?',
+      confirmText: 'Tá»« chá»‘i',
       type: 'danger'
     });
     if (!confirmed) return;
@@ -277,7 +276,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         });
       },
-      error: () => this.dialogService.alert({ title: 'Lỗi', message: 'Lỗi khi từ chối yêu cầu.', type: 'danger' })
+      error: () => this.dialogService.alert({ title: 'Lá»—i', message: 'Lá»—i khi tá»« chá»‘i yÃªu cáº§u.', type: 'danger' })
     });
   }
 
@@ -288,3 +287,4 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
   }
 }
+

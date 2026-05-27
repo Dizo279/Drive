@@ -1,4 +1,4 @@
-/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+﻿/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
 /* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
 {
   "compileOnSave": false,
@@ -16,8 +16,9 @@
     "module": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@notification/*": ["src/app/notification/*"],
+      "@notification/*": ["src/app/features/notification/*"],
       "@core/*": ["src/app/core/*"],
+      "@shared/*": ["src/app/shared/*"],
       "@features/*": ["src/app/features/*"],
       "@env/*": ["src/environments/*"]
     }
