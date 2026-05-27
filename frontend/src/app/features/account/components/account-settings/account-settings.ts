@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
+import { AuthService } from '@features/auth/services/auth.service';
 
 @Component({
   selector: 'app-account-settings',
@@ -41,7 +42,8 @@ export class AccountSettingsComponent implements OnInit {
     private http: HttpClient,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private dialogService: ConfirmDialogService
+    private dialogService: ConfirmDialogService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -155,6 +157,19 @@ export class AccountSettingsComponent implements OnInit {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  onLogout(): void {
+    this.authService.logoutServer().subscribe({
+      next: () => {
+        this.authService.logout();
+        this.router.navigate(['/login']);
+      },
+      error: () => {
+        this.authService.logout();
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
   async requestUpgrade(): Promise<void> {
