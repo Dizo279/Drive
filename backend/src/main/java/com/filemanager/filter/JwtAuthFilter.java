@@ -54,7 +54,7 @@ public class JwtAuthFilter implements ContainerRequestFilter {
         // 4. Validate token và lấy thông tin userId, username từ token
         // lấy thông tin userId và username từ token để lưu vào context, giúp các endpoint khác có thể sử dụng mà không cần phải decode lại token nhiều lần
         try {
-            Claims claims = jwtUtil.validateTokenAndGetClaims(token);
+            Claims claims = jwtUtil.validateAccessTokenAndGetClaims(token);
             // Lưu userId vào context để các endpoint khác sử dụng
             requestContext.setProperty("userId", claims.get("userId"));
             requestContext.setProperty("username", claims.getSubject());
