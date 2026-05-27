@@ -17,14 +17,27 @@ export class AuthService {
   ) {}
 
   login(credentials: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
+    return this.http.post<any>(`${this.apiUrl}/login`, credentials, { withCredentials: true }).pipe(
       tap(response => {
-        if (response && response.token) {
-          localStorage.setItem('jwt_token', response.token);
-          localStorage.setItem('username', response.username);
+        if (response) {
+          const token = response.accessToken ?? response.token;
+          if (token) {
+            localStorage.setItem('jwt_token', token);
+          }
+          if (response.username) {
+            localStorage.setItem('username', response.username);
+          }
         }
       })
     );
+  }
+
+  refreshToken(): Observable<{ accessToken: string }> {
+    return this.http.post<{ accessToken: string }>(`${this.apiUrl}/refresh`, {}, { withCredentials: true });
+  }
+
+  logoutServer(): Observable<string> {
+    return this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true, responseType: 'text' });
   }
 
   register(user: any): Observable<any> {
