@@ -11,6 +11,7 @@
 | **Quản lý file** | Xem, đổi tên, xóa vào thùng rác và phục hồi |
 | **Chia sẻ file** | Tạo link chia sẻ an toàn và JWT-based auth |
 | **Authentication** | Đăng ký/đăng nhập với xác thực email/username/password |
+| **Bảo mật & Phân quyền** | Chặn truy cập trái phép bằng Angular Route Guards (Auth/Admin/NoAuth) và JWT claims. Tự động điều hướng trả về đường dẫn cũ (`returnUrl`) |
 | **Quota** | Giới hạn dung lượng theo user |
 | **Notifications** | Thông báo real-time qua SSE |
 | **Admin Dashboard** | Quản lý users, files, upgrade requests |
@@ -121,7 +122,9 @@ d:/file-manager/
 │   └── uploads/  # Thư mục lưu file
 ├── frontend/
 │   ├── src/app/
-│   │   ├── core/ (interceptors/)
+│   │   ├── core/
+│   │   │   ├── guards/ (auth.guard.ts, admin.guard.ts)
+│   │   │   └── interceptors/ (error-interceptor.ts, jwt-interceptor.ts)
 │   │   ├── features/
 │   │   │   ├── auth/ (login/register)
 │   │   │   ├── files/ (file-list, upload, trash, shared)
@@ -158,12 +161,17 @@ curl -X POST http://localhost:8080/api/auth/register \
   -d '{\"fullName\":\"Test User\",\"email\":\"test@example.com\",\"username\":\"testuser\",\"password\":\"password123\"}'
 ```
 
-## 🔒 Bảo mật
+## 🔒 Bảo mật & Phân quyền
 
-- **JWT Authentication** (24h expiry)
-- **Input Validation** (Client + Server)
-- **SQL Injection Protection** (JPA)
-- **Case-insensitive** unique email/username
+- **Xác thực JWT (24h expiry):** Tích hợp phân quyền trực tiếp qua JWT claims (chứa thông tin `role` của người dùng).
+- **Angular Route Guards (Bảo vệ đường dẫn):**
+  - `authGuard`: Chặn người dùng chưa đăng nhập, tự động lưu và chuyển hướng quay lại đúng trang cũ (`returnUrl`) sau khi login thành công.
+  - `noAuthGuard`: Chặn người dùng đã đăng nhập quay lại các trang `/login`, `/register`.
+  - `adminGuard`: Giải mã JWT kiểm tra quyền `ADMIN`. Nếu người dùng thường (`USER`) cố ý truy cập `/admin`, guard sẽ tự động đẩy về `/files` kèm theo hộp thoại cảnh báo (Danger Dialog UI) sắc nét.
+- **Xác thực Lớp kép (Server-side Validation):** Mọi REST endpoint quản trị (`/api/admin/*`) đều được bảo vệ nghiêm ngặt bằng helper `isAdmin()` đối chiếu ID với CSDL, loại bỏ nguy cơ tấn công bypass client.
+- **Input Validation:** Xác thực chặt chẽ dữ liệu đầu vào ở cả client-side (Angular Reactive Forms) và server-side.
+- **SQL Injection Protection:** Ngăn ngừa tấn công SQLi nhờ cơ chế Spring Data JPA & Hibernate.
+- **Case-insensitive:** Bảo vệ trùng lặp duy nhất email và username không phân biệt chữ hoa chữ thường.
 
 ## 📈 Performance
 
