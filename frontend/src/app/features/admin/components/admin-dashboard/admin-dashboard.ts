@@ -65,7 +65,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         this.stats = data;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Lá»—i táº£i thá»‘ng kÃª:', err)
+      error: (err) => console.error('Lỗi tải thống kê:', err)
     });
   }
 
@@ -192,7 +192,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         this.loadUsers();
       },
       error: () => {
-        this.dialogService.alert({ title: 'Lá»—i', message: 'XÃ³a ngÆ°á»i dÃ¹ng tháº¥t báº¡i.', type: 'danger' });
+        this.dialogService.alert({ title: 'Lỗi', message: 'Xóa người dùng thất bại.', type: 'danger' });
       }
     });
   }
@@ -220,7 +220,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.hasNewNotification = true;
           this.cdr.detectChanges();
         } catch (e) {
-          console.error('Lá»—i parse SSE data:', e);
+          console.error('Lỗi parse SSE data:', e);
         }
       });
     });
@@ -238,15 +238,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         });
       },
-      error: (err) => console.error('Lá»—i táº£i yÃªu cáº§u nÃ¢ng cáº¥p:', err)
+      error: (err) => console.error('Lỗi tải yêu cầu nâng cấp:', err)
     });
   }
 
   async approveRequest(requestId: number): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'PhÃª duyá»‡t yÃªu cáº§u',
-      message: 'Báº¡n cÃ³ cháº¯c muá»‘n PHÃŠ DUYá»†T yÃªu cáº§u nÃ¢ng cáº¥p nÃ y?',
-      confirmText: 'PhÃª duyá»‡t',
+      title: 'Phê duyệt yêu cầu',
+      message: 'Bạn có chắc muốn PHÊ DUYỆT yêu cầu nâng cấp này?',
+      confirmText: 'Phê duyệt',
       type: 'success'
     });
     if (!confirmed) return;
@@ -257,15 +257,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         });
       },
-      error: () => this.dialogService.alert({ title: 'Lá»—i', message: 'Lá»—i khi phÃª duyá»‡t yÃªu cáº§u.', type: 'danger' })
+      error: () => this.dialogService.alert({ title: 'Lỗi', message: 'Lỗi khi phê duyệt yêu cầu.', type: 'danger' })
     });
   }
 
   async rejectRequest(requestId: number): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'Tá»« chá»‘i yÃªu cáº§u',
-      message: 'Báº¡n cÃ³ cháº¯c muá»‘n Tá»ª CHá»I yÃªu cáº§u nÃ¢ng cáº¥p nÃ y?',
-      confirmText: 'Tá»« chá»‘i',
+      title: 'Từ chối yêu cầu',
+      message: 'Bạn có chắc muốn TỪ CHỐI yêu cầu nâng cấp này?',
+      confirmText: 'Từ chối',
       type: 'danger'
     });
     if (!confirmed) return;
@@ -276,7 +276,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         });
       },
-      error: () => this.dialogService.alert({ title: 'Lá»—i', message: 'Lá»—i khi tá»« chá»‘i yÃªu cáº§u.', type: 'danger' })
+      error: () => this.dialogService.alert({ title: 'Lỗi', message: 'Lỗi khi từ chối yêu cầu.', type: 'danger' })
     });
   }
 

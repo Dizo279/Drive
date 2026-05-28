@@ -52,10 +52,10 @@ export class AccountSettingsComponent implements OnInit {
     }
   }
 
-  // HÃ m tiá»‡n Ã­ch Ä‘á»ƒ tá»± Ä‘á»™ng láº¥y JWT Token tá»« LocalStorage
+  // Hàm tiện ích để tự động lấy JWT Token từ LocalStorage
   private getHeaders() {
     let token = '';
-    // Káº¹p Ä‘iá»u kiá»‡n kiá»ƒm tra mÃ´i trÆ°á»ng trÃ¬nh duyá»‡t
+    // Kẹp điều kiện kiểm tra môi trường trình duyệt
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       token = localStorage.getItem('jwt_token') || '';
     }
@@ -68,9 +68,9 @@ export class AccountSettingsComponent implements OnInit {
         this.user = data;
         this.securityData.username = data.username;
         this.securityData.email = data.email;
-        this.cdr.detectChanges(); // 3. Ã‰p giao diá»‡n cáº­p nháº­t thÃ´ng tin tá»« DB
+        this.cdr.detectChanges(); // 3. Ép giao diện cập nhật thông tin từ DB
       },
-      error: () => this.errorMsg = 'KhÃ´ng thá»ƒ táº£i dá»¯ liá»‡u.'
+      error: () => this.errorMsg = 'Không thể tải dữ liệu.'
     });
   }
 
@@ -80,7 +80,7 @@ export class AccountSettingsComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.user.avatarUrl = e.target.result;
-        this.cdr.detectChanges(); // 4. Ã‰p giao diá»‡n hiá»ƒn thá»‹ áº£nh preview ngay láº­p tá»©c
+        this.cdr.detectChanges(); // 4. Ép giao diện hiển thị ảnh preview ngay lập tức
       };
       reader.readAsDataURL(file);
     }
@@ -91,14 +91,14 @@ export class AccountSettingsComponent implements OnInit {
     this.successMsg = '';
     this.errorMsg = '';
 
-    // Kiá»ƒm tra máº­t kháº©u xÃ¡c nháº­n
+    // Kiểm tra mật khẩu xác nhận
     if (this.securityData.newPassword && this.securityData.newPassword !== this.securityData.confirmPassword) {
-      this.errorMsg = 'Máº­t kháº©u xÃ¡c nháº­n khÃ´ng khá»›p!';
+      this.errorMsg = 'Mật khẩu xác nhận không khớp!';
       this.loading = false;
       return;
     }
 
-    // ÄÃ³ng gÃ³i dá»¯ liá»‡u gá»­i lÃªn Backend
+    // Đóng gói dữ liệu gửi lên Backend
     const updateData = {
       fullName: this.user.fullName,
       avatarUrl: this.user.avatarUrl,
@@ -111,7 +111,7 @@ export class AccountSettingsComponent implements OnInit {
     this.http.put(`${this.apiUrl}/profile`, updateData, this.getHeaders()).subscribe({
       next: (res: any) => {
         this.loading = false;
-        this.successMsg = 'Há»“ sÆ¡ Ä‘Ã£ Ä‘Æ°á»£c lÆ°u thÃ nh cÃ´ng!';
+        this.successMsg = 'Hồ sơ đã được lưu thành công!';
         this.user = res;
         this.securityData.currentPassword = '';
         this.securityData.newPassword = '';
@@ -121,31 +121,31 @@ export class AccountSettingsComponent implements OnInit {
       error: (err) => {
         this.loading = false;
         
-        // Báº¯t Ä‘áº§u bÃ³c tÃ¡ch lá»—i thÃ´ng minh
+        // Bắt đầu bóc tách lỗi thông minh
         if (err.status === 400) {
-          // TrÆ°á»ng há»£p 1: Backend gá»­i vá» object JSON cÃ³ chá»©a trÆ°á»ng "error"
+          // Trường hợp 1: Backend gửi về object JSON có chứa trường "error"
           if (err.error && err.error.error) {
             this.errorMsg = err.error.error;
           }
-          // TrÆ°á»ng há»£p 2: Backend gá»­i vá» má»™t chuá»—i Text thuáº§n tÃºy
+          // Trường hợp 2: Backend gửi về một chuỗi Text thuần túy
           else if (typeof err.error === 'string') {
             try {
               const parsed = JSON.parse(err.error);
-              this.errorMsg = parsed.error || 'Máº­t kháº©u hiá»‡n táº¡i khÃ´ng Ä‘Ãºng!';
+              this.errorMsg = parsed.error || 'Mật khẩu hiện tại không đúng!';
             } catch (e) {
-              this.errorMsg = err.error; // Láº¥y luÃ´n chuá»—i text Ä‘Ã³
+              this.errorMsg = err.error; // Lấy luôn chuỗi text đó
             }
           }
-          // TrÆ°á»ng há»£p 3: Fallback máº·c Ä‘á»‹nh
+          // Trường hợp 3: Fallback mặc định
           else {
-            this.errorMsg = 'Máº­t kháº©u hiá»‡n táº¡i khÃ´ng Ä‘Ãºng hoáº·c bá»‹ bá» trá»‘ng!';
+            this.errorMsg = 'Mật khẩu hiện tại không đúng hoặc bị bỏ trống!';
           }
         } else {
-          // Báº¯t cÃ¡c lá»—i khÃ¡c nhÆ° 500 (sáº­p server) hoáº·c 404
-          this.errorMsg = 'ÄÃ£ cÃ³ lá»—i xáº£y ra tá»« mÃ¡y chá»§. Vui lÃ²ng thá»­ láº¡i sau.';
+          // Bắt các lỗi khác như 500 (sập server) hoặc 404
+          this.errorMsg = 'Đã có lỗi xảy ra từ máy chủ. Vui lòng thử lại sau.';
         }
         
-        this.cdr.detectChanges(); // Ã‰p giao diá»‡n hiá»ƒn thá»‹ dÃ²ng chá»¯ Ä‘á» ngay láº­p tá»©c
+        this.cdr.detectChanges(); // Ép giao diện hiển thị dòng chữ đỏ ngay lập tức
       }
     });
   }
@@ -174,20 +174,20 @@ export class AccountSettingsComponent implements OnInit {
 
   async requestUpgrade(): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'NÃ¢ng cáº¥p PREMIUM',
-      message: 'Báº¡n cÃ³ muá»‘n gá»­i yÃªu cáº§u nÃ¢ng cáº¥p lÃªn PREMIUM (100GB)?',
-      confirmText: 'Gá»­i yÃªu cáº§u',
+      title: 'Nâng cấp PREMIUM',
+      message: 'Bạn có muốn gửi yêu cầu nâng cấp lên PREMIUM (100GB)?',
+      confirmText: 'Gửi yêu cầu',
       type: 'info'
     });
     if (!confirmed) return;
     this.http.post(`${this.apiUrl}/upgrade-request`, {}, this.getHeaders()).subscribe({
       next: (res: any) => {
-        this.successMsg = res.message || 'YÃªu cáº§u nÃ¢ng cáº¥p Ä‘Ã£ Ä‘Æ°á»£c gá»­i!';
+        this.successMsg = res.message || 'Yêu cầu nâng cấp đã được gửi!';
         this.errorMsg = '';
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.errorMsg = err.error?.error || 'KhÃ´ng thá»ƒ gá»­i yÃªu cáº§u nÃ¢ng cáº¥p.';
+        this.errorMsg = err.error?.error || 'Không thể gửi yêu cầu nâng cấp.';
         this.successMsg = '';
         this.cdr.detectChanges();
       }

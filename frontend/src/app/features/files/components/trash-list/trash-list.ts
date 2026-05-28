@@ -54,9 +54,9 @@ export class TrashListComponent implements OnInit {
 
   async restore(item: any): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'KhÃ´i phá»¥c',
-      message: `KhÃ´i phá»¥c "${item.name}" vá» Drive?`,
-      confirmText: 'KhÃ´i phá»¥c',
+      title: 'Khôi phục',
+      message: `Khôi phục "${item.name}" về Drive?`,
+      confirmText: 'Khôi phục',
       type: 'success'
     });
     if (!confirmed) return;
@@ -67,15 +67,15 @@ export class TrashListComponent implements OnInit {
           this.cdr.detectChanges();
         });
       },
-      error: () => this.dialogService.alert({ title: 'Tháº¥t báº¡i', message: 'KhÃ´i phá»¥c tháº¥t báº¡i.', type: 'danger' })
+      error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Khôi phục thất bại.', type: 'danger' })
     });
   }
 
   async permanentlyDelete(item: any): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'XÃ³a vÄ©nh viá»…n',
-      message: `XÃ³a vÄ©nh viá»…n "${item.name}"? HÃ nh Ä‘á»™ng nÃ y khÃ´ng thá»ƒ hoÃ n tÃ¡c.`,
-      confirmText: 'XÃ³a',
+      title: 'Xóa vĩnh viễn',
+      message: `Xóa vĩnh viễn "${item.name}"? Hành động này không thể hoàn tác.`,
+      confirmText: 'Xóa',
       type: 'danger'
     });
     if (!confirmed) return;
@@ -86,16 +86,16 @@ export class TrashListComponent implements OnInit {
           this.cdr.detectChanges();
         });
       },
-      error: () => this.dialogService.alert({ title: 'Tháº¥t báº¡i', message: 'XÃ³a vÄ©nh viá»…n tháº¥t báº¡i.', type: 'danger' })
+      error: () => this.dialogService.alert({ title: 'Thất bại', message: 'Xóa vĩnh viễn thất bại.', type: 'danger' })
     });
   }
 
   async emptyTrash(): Promise<void> {
     if (!this.items.length) return;
     const confirmed = await this.dialogService.confirm({
-      title: 'Dá»n sáº¡ch Trash',
-      message: 'XÃ³a vÄ©nh viá»…n toÃ n bá»™ Trash? HÃ nh Ä‘á»™ng nÃ y khÃ´ng thá»ƒ hoÃ n tÃ¡c.',
-      confirmText: 'Dá»n sáº¡ch',
+      title: 'Dọn sạch Trash',
+      message: 'Xóa vĩnh viễn toàn bộ Trash? Hành động này không thể hoàn tác.',
+      confirmText: 'Dọn sạch',
       type: 'danger'
     });
     if (!confirmed) return;
@@ -113,7 +113,7 @@ export class TrashListComponent implements OnInit {
           this.clearing = false;
           this.cdr.detectChanges();
         });
-        this.dialogService.alert({ title: 'Tháº¥t báº¡i', message: 'Dá»n Trash tháº¥t báº¡i.', type: 'danger' });
+        this.dialogService.alert({ title: 'Thất bại', message: 'Dọn Trash thất bại.', type: 'danger' });
       }
     });
   }

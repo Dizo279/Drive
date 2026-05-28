@@ -100,7 +100,7 @@ export class ConfirmDialogComponent {
     this.promptValue = '';
   }
 
-  /** Nháº¥n backdrop chá»‰ Ä‘Ã³ng khi lÃ  alert-only, khÃ´ng Ä‘Ã³ng khi confirm */
+  /** Nhấn backdrop chỉ đóng khi là alert-only, không đóng khi confirm */
   onBackdropClick(event: MouseEvent): void {
     if ((event.target as HTMLElement).classList.contains('cd-backdrop')) {
       if (this.state().config.alertOnly) {

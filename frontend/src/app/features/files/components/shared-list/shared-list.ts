@@ -36,7 +36,7 @@ export class SharedListComponent implements OnInit {
     this.loading = true;
     const endpoint = this.activeTab === 'by-me' ? `${this.apiUrl}/list/shared-by-me` : `${this.apiUrl}/list/shared-with-me`;
     
-    // ÄÃ£ gá»¡ bá» this.getHeaders()
+    // Đã gỡ bỏ this.getHeaders()
     this.http.get(endpoint).subscribe({
       next: (data: any) => {
         this.sharedItems = data;
@@ -49,29 +49,29 @@ export class SharedListComponent implements OnInit {
 
   async revokeAccess(shareId: number): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'Thu há»“i quyá»n truy cáº­p',
-      message: 'Báº¡n cÃ³ cháº¯c cháº¯n muá»‘n thu há»“i quyá»n truy cáº­p nÃ y khÃ´ng?',
-      confirmText: 'Thu há»“i',
+      title: 'Thu hồi quyền truy cập',
+      message: 'Bạn có chắc chắn muốn thu hồi quyền truy cập này không?',
+      confirmText: 'Thu hồi',
       type: 'warning'
     });
     if (!confirmed) return;
     this.http.delete(`${this.apiUrl}/revoke-share/${shareId}`).subscribe({
       next: () => this.loadData(),
-      error: () => this.dialogService.alert({ title: 'Lá»—i', message: 'Lá»—i khi thu há»“i quyá»n truy cáº­p.', type: 'danger' })
+      error: () => this.dialogService.alert({ title: 'Lỗi', message: 'Lỗi khi thu hồi quyền truy cập.', type: 'danger' })
     });
   }
 
   async deleteAccess(shareId: number): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'XÃ³a chia sáº»',
-      message: 'Báº¡n cÃ³ cháº¯c cháº¯n muá»‘n xÃ³a má»¥c chia sáº» Ä‘Ã£ háº¿t háº¡n nÃ y khÃ´ng?',
-      confirmText: 'XÃ³a',
+      title: 'Xóa chia sẻ',
+      message: 'Bạn có chắc chắn muốn xóa mục chia sẻ đã hết hạn này không?',
+      confirmText: 'Xóa',
       type: 'danger'
     });
     if (!confirmed) return;
     this.http.delete(`${this.apiUrl}/revoke-share/${shareId}`).subscribe({
       next: () => this.loadData(),
-      error: () => this.dialogService.alert({ title: 'Lá»—i', message: 'Lá»—i khi xÃ³a má»¥c chia sáº».', type: 'danger' })
+      error: () => this.dialogService.alert({ title: 'Lỗi', message: 'Lỗi khi xóa mục chia sẻ.', type: 'danger' })
     });
   }
 
@@ -79,7 +79,7 @@ export class SharedListComponent implements OnInit {
     const link = `http://localhost:8080/api/files/shared/${token}`;
     if (navigator.clipboard) {
         navigator.clipboard.writeText(link).then(() => {
-            this.dialogService.alert({ title: 'ThÃ nh cÃ´ng', message: 'ÄÃ£ sao chÃ©p liÃªn káº¿t vÃ o clipboard', type: 'success' });
+            this.dialogService.alert({ title: 'Thành công', message: 'Đã sao chép liên kết vào clipboard', type: 'success' });
         });
     } else {
         // Fallback for older browsers or non-secure contexts if needed
@@ -90,16 +90,16 @@ export class SharedListComponent implements OnInit {
         textArea.select();
         try {
             document.execCommand('copy');
-            this.dialogService.alert({ title: 'ThÃ nh cÃ´ng', message: 'ÄÃ£ sao chÃ©p liÃªn káº¿t vÃ o clipboard', type: 'success' });
+            this.dialogService.alert({ title: 'Thành công', message: 'Đã sao chép liên kết vào clipboard', type: 'success' });
         } catch (err) {
-            this.dialogService.alert({ title: 'Lá»—i', message: 'KhÃ´ng thá»ƒ sao chÃ©p liÃªn káº¿t.', type: 'danger' });
+            this.dialogService.alert({ title: 'Lỗi', message: 'Không thể sao chép liên kết.', type: 'danger' });
         }
         document.body.removeChild(textArea);
     }
   }
 
   downloadShared(token: string) {
-    // Táº¡o tháº» <a> áº©n Ä‘á»ƒ Ã©p trÃ¬nh duyá»‡t táº£i file mÃ  khÃ´ng má»Ÿ tab lá»—i rÃ¡c
+    // Tạo thẻ <a> ẩn để ép trình duyệt tải file mà không mở tab lỗi rác
     const link = document.createElement('a');
     link.href = `http://localhost:8080/api/files/shared/${token}`;
     link.target = '_blank';

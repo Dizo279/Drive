@@ -2,32 +2,30 @@
 
 ## 🎯 Giới thiệu
 
-**File Manager** là hệ thống quản lý file hoàn chỉnh với giao diện hiện đại theo phong cách Apple Design, được xây dựng bằng **Java Spring Boot (Backend)** và **Angular (Frontend)**.
+**File Manager** là hệ thống quản lý file toàn diện, bao gồm backend Spring Boot + Jersey, frontend Angular SSR và một ứng dụng Android native. Dự án sử dụng phong cách Apple Design, tính năng upload/download, chia sẻ file, quản lý thùng rác và dashboard quản trị.
 
 ### Tính năng chính
 | Tính năng | Mô tả |
 |-----------|-------|
-| **Upload/Tải lên** | Hỗ trợ file tối đa 10MB, lưu trữ local |
-| **Quản lý file** | Xem danh sách, rename, delete, restore từ thùng rác |
-| **Chia sẻ file** | Tạo link chia sẻ an toàn với JWT |
-| **Authentication** | Đăng ký/đăng nhập với validation chặt chẽ |
+| **Upload/Tải lên** | Hỗ trợ file tối đa 10MB, lưu trữ trên filesystem local |
+| **Quản lý file** | Xem, đổi tên, xóa vào thùng rác và phục hồi |
+| **Chia sẻ file** | Tạo link chia sẻ an toàn và JWT-based auth |
+| **Authentication** | Đăng ký/đăng nhập với xác thực email/username/password |
 | **Quota** | Giới hạn dung lượng theo user |
-| **Notifications** | Hệ thống thông báo real-time |
+| **Notifications** | Thông báo real-time qua SSE |
 | **Admin Dashboard** | Quản lý users, files, upgrade requests |
-| **Thùng rác tự động** | Cleanup files theo lịch (@EnableScheduling) |
+| **Thùng rác tự động** | Cleanup files theo lịch trình |
 
 ## 🏗️ Kiến trúc
 
 ```
-File Manager (Monorepo)
+file-manager/
 ├── backend/          # Spring Boot + Jersey REST API
-│   ├── entities/     # JPA: User, FileMetadata, FileShare, Notification
-│   ├── resources/    # REST endpoints: /api/auth, /api/files, /api/admin
-│   └── services/     # StorageService, AuthService, QuotaService
-├── frontend/         # Angular SPA (SSR support)
-│   ├── features/     # auth/, files/, admin/
-│   └── core/         # JWT Interceptor, Error handling
-└── README.md         # Bạn đang đọc!
+├── frontend/         # Angular 21 SPA với SSR
+├── android/          # Android native app
+├── docs/             # Tài liệu và kế hoạch
+├── uploads/          # Local filesystem uploads
+└── README.md
 ```
 
 ## 🚀 Cài đặt & Chạy
@@ -131,7 +129,9 @@ d:/file-manager/
 │   │   └── app.ts  # Root component
 │   ├── angular.json
 │   └── package.json
-├── README.md
+├── android/          # Android native app
+├── docs/             # Documentation and plans
+├── uploads/          # Local filesystem upload storage
 └── AGENTS.md  # Hướng dẫn cho AI Agents
 ```
 

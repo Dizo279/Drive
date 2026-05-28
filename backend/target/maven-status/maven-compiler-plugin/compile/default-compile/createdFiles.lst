@@ -8,6 +8,8 @@ com\filemanager\resource\UserResource.class
 com\filemanager\resource\FileResource$ShareRequest.class
 com\filemanager\entity\FileMetadata.class
 com\filemanager\entity\FileShare.class
+com\filemanager\resource\FileResource$2.class
+com\filemanager\resource\FileResource$RenameRequest.class
 com\filemanager\entity\User.class
 com\filemanager\repository\FileShareRepository.class
 com\filemanager\entity\Notification.class
@@ -17,8 +19,10 @@ com\filemanager\resource\FileResource$1.class
 com\filemanager\resource\AdminResource.class
 com\filemanager\repository\FileRepository.class
 com\filemanager\config\SecurityConfig.class
+com\filemanager\filter\CorsFilter.class
 com\filemanager\service\QuotaService.class
 com\filemanager\config\JerseyConfig.class
+com\filemanager\resource\FileResource$MoveCopyRequest.class
 com\filemanager\repository\UserRepository.class
 com\filemanager\repository\UpgradeRequestRepository.class
 com\filemanager\security\JwtUtil.class
