@@ -10,6 +10,7 @@ import com.filemanager.resource.NotificationResource;
 
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.media.sse.SseFeature;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -23,9 +24,12 @@ public class JerseyConfig extends ResourceConfig {
         
         // KÃ­ch hoáº¡t tÃ­nh nÄƒng Upload File (Multipart)
         register(MultiPartFeature.class);
+        // Kích ho?t SSE (Server-Sent Events) cho thông báo real-time
+        register(SseFeature.class);
         register(UserResource.class);
         register(AdminResource.class);
         register(NotificationResource.class);
         
     }
 }
+

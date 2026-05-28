@@ -50,7 +50,7 @@ mvn spring-boot:run
 ```bash
 cd frontend
 npm install
-ng serve
+
 ```
 **App chạy tại:** `http://localhost:4200`
 

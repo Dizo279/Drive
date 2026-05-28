@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common'; // Cung cấp *ngIf
 import { Router, RouterLink, ActivatedRoute } from '@angular/router'; // Cung cấp routerLink
@@ -25,7 +25,8 @@ export class LoginComponent implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdRef: ChangeDetectorRef
   ) {
     this.loginForm = this.fb.group({
       username: ['', Validators.required],
@@ -52,6 +53,7 @@ export class LoginComponent implements OnInit {
           this.loading = false;
           // Lấy tin nhắn lỗi từ Backend, nếu không có thì dùng câu mặc định
           this.errorMsg = err.error?.message || err.error || 'Sai tài khoản hoặc mật khẩu';
+          this.cdRef.detectChanges();
         }
       });
     } else {

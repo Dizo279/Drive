@@ -34,7 +34,19 @@ public class NotificationResource {
     private Long getCurrentUserId(ContainerRequestContext requestContext) {
         Object userIdObj = requestContext.getProperty("userId");
         if (userIdObj == null) return null;
-        return ((Number) userIdObj).longValue();
+
+        if (userIdObj instanceof Number number) {
+            return number.longValue();
+        }
+        if (userIdObj instanceof String s) {
+            try {
+                return Long.parseLong(s);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+
+        return null;
     }
 
     // 1. Lấy danh sách thông báo của user hiện tại
