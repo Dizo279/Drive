@@ -7,7 +7,7 @@
 ### Tính năng chính
 | Tính năng | Mô tả |
 |-----------|-------|
-| **Upload/Tải lên** | Hỗ trợ file tối đa 10MB, lưu trữ trên filesystem local |
+| **Upload/Tải lên** | Hỗ trợ file, lưu trữ trên filesystem local |
 | **Quản lý file** | Xem, đổi tên, xóa vào thùng rác và phục hồi |
 | **Chia sẻ file** | Tạo link chia sẻ an toàn và JWT-based auth |
 | **Authentication** | Đăng ký/đăng nhập với xác thực email/username/password |

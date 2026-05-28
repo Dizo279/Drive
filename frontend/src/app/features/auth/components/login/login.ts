@@ -9,7 +9,6 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './login.html',
   styleUrls: ['./login.css'],
   standalone: true,
-  // Import đầy đủ các module cần thiết cho HTML
   imports: [ReactiveFormsModule, FormsModule, CommonModule, RouterLink]
 })
 export class LoginComponent implements OnInit {
@@ -35,14 +34,14 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Get return url from route parameters or default to '/files'
+    // Lấy returnUrl từ query params nếu có, mặc định là '/files'
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/files';
   }
 
   onSubmit(): void {
     if (this.loginForm.valid) {
-      this.loading = true; // Bật hiệu ứng loading
-      this.errorMsg = '';  // Xóa lỗi cũ
+      this.loading = true;
+      this.errorMsg = '';
 
       this.authService.login(this.loginForm.value).subscribe({
         next: () => {
@@ -50,7 +49,7 @@ export class LoginComponent implements OnInit {
           this.router.navigateByUrl(this.returnUrl);
         },
         error: (err) => {
-          this.loading = false; // Tắt loading khi có lỗi
+          this.loading = false;
           // Lấy tin nhắn lỗi từ Backend, nếu không có thì dùng câu mặc định
           this.errorMsg = err.error?.message || err.error || 'Sai tài khoản hoặc mật khẩu';
         }

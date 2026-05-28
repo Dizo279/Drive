@@ -61,10 +61,11 @@ public class AuthResource {
             return Response.status(Response.Status.BAD_REQUEST).entity("Email đã được sử dụng").build();
         }
 
-        // Trim and normalize inputs
+        // Trim inputs (NO normalize case to keep username case-sensitive)
         user.setFullName(user.getFullName().trim());
-        user.setEmail(user.getEmail().trim().toLowerCase());
-        user.setUsername(user.getUsername().trim().toLowerCase());
+        user.setEmail(user.getEmail().trim());
+        user.setUsername(user.getUsername().trim());
+
 
         // Encode password and save
         user.setPassword(passwordEncoder.encode(user.getPassword()));
