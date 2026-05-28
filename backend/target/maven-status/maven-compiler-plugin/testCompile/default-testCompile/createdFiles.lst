@@ -1,0 +1,4 @@
+com\filemanager\security\JwtUtilTest.class
+com\filemanager\config\CorsConfigTest.class
+com\filemanager\resource\AuthResourceTest.class
+com\filemanager\filter\JwtAuthFilterTest.class

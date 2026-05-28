@@ -7,18 +7,18 @@ import { AccountSettingsComponent } from '@features/account/components/account-s
 import { SharedListComponent } from '@features/files/components/shared-list/shared-list';
 import { AdminDashboardComponent } from '@features/admin/components/admin-dashboard/admin-dashboard';
 import { TrashListComponent } from '@features/files/components/trash-list/trash-list';
-
-
+import { authGuard, noAuthGuard } from '@core/guards/auth.guard';
+import { adminGuard } from '@core/guards/admin.guard';
 
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
-  { path: 'files', component: FileListComponent }, // MỚI THÊM
-  { path: 'files/upload', component: FileUploadComponent },
+  { path: 'login', component: LoginComponent, canActivate: [noAuthGuard] },
+  { path: 'register', component: RegisterComponent, canActivate: [noAuthGuard] },
+  { path: 'files', component: FileListComponent, canActivate: [authGuard] },
+  { path: 'files/upload', component: FileUploadComponent, canActivate: [authGuard] },
+  { path: 'settings', component: AccountSettingsComponent, canActivate: [authGuard] },
+  { path: 'shared', component: SharedListComponent, canActivate: [authGuard] },
+  { path: 'trash', component: TrashListComponent, canActivate: [authGuard] },
+  { path: 'admin', component: AdminDashboardComponent, canActivate: [adminGuard] },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: 'settings', component: AccountSettingsComponent },
-  { path: 'shared', component: SharedListComponent },
-  { path: 'trash', component: TrashListComponent },
-  { path: 'admin', component: AdminDashboardComponent }
-
+  { path: '**', redirectTo: '/login' }
 ];

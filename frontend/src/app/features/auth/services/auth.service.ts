@@ -27,6 +27,9 @@ export class AuthService {
           if (response.username) {
             localStorage.setItem('username', response.username);
           }
+          if (response.role) {
+            localStorage.setItem('role', response.role);
+          }
         }
       })
     );
@@ -51,8 +54,26 @@ export class AuthService {
     return null;
   }
 
+  getUserRole(): string | null {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.role) {
+        return payload.role;
+      }
+    } catch (e) {
+      // ignore
+    }
+    if (isPlatformBrowser(this.platformId)) {
+      return localStorage.getItem('role');
+    }
+    return null;
+  }
+
   logout(): void {
     localStorage.removeItem('jwt_token');
     localStorage.removeItem('username');
+    localStorage.removeItem('role');
   }
 }

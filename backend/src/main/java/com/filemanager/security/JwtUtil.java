@@ -31,12 +31,20 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
+    public String generateAccessToken(String username, Long userId, String role) {
+        return buildToken(username, userId, "access", role, accessExpirationMs);
+    }
+
     public String generateAccessToken(String username, Long userId) {
-        return buildToken(username, userId, "access", accessExpirationMs);
+        return generateAccessToken(username, userId, "USER");
+    }
+
+    public String generateRefreshToken(String username, Long userId, String role) {
+        return buildToken(username, userId, "refresh", role, refreshExpirationMs);
     }
 
     public String generateRefreshToken(String username, Long userId) {
-        return buildToken(username, userId, "refresh", refreshExpirationMs);
+        return generateRefreshToken(username, userId, "USER");
     }
 
     public String generateToken(String username, Long userId) {
@@ -67,11 +75,12 @@ public class JwtUtil {
         return claims;
     }
 
-    private String buildToken(String username, Long userId, String type, long expirationMs) {
+    private String buildToken(String username, Long userId, String type, String role, long expirationMs) {
         return Jwts.builder()
                 .setSubject(username)
                 .claim("userId", userId)
                 .claim("type", type)
+                .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(key, SignatureAlgorithm.HS256)

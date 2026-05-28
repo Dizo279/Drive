@@ -80,8 +80,8 @@ public class AuthResource {
         
         if (userOpt.isPresent() && passwordEncoder.matches(loginRequest.getPassword(), userOpt.get().getPassword())) {
             User user = userOpt.get();
-            String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getId());
-            String refreshToken = jwtUtil.generateRefreshToken(user.getUsername(), user.getId());
+            String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getId(), user.getRole());
+            String refreshToken = jwtUtil.generateRefreshToken(user.getUsername(), user.getId(), user.getRole());
 
             NewCookie refreshCookie = new NewCookie.Builder("refresh_token")
                     .value(refreshToken)
@@ -91,7 +91,7 @@ public class AuthResource {
                     .maxAge(7 * 24 * 60 * 60)
                     .build();
 
-            return Response.ok(Map.of("accessToken", accessToken, "username", user.getUsername()))
+            return Response.ok(Map.of("accessToken", accessToken, "username", user.getUsername(), "role", user.getRole()))
                     .cookie(refreshCookie)
                     .build();
         }
@@ -110,7 +110,8 @@ public class AuthResource {
             Claims claims = jwtUtil.validateRefreshTokenAndGetClaims(refreshCookie.getValue());
             String username = claims.getSubject();
             Long userId = claims.get("userId", Number.class).longValue();
-            String accessToken = jwtUtil.generateAccessToken(username, userId);
+            User user = userRepository.findById(userId).orElseThrow(() -> new JwtException("User not found"));
+            String accessToken = jwtUtil.generateAccessToken(username, userId, user.getRole());
             return Response.ok(Map.of("accessToken", accessToken)).build();
         } catch (JwtException ex) {
             return Response.status(Response.Status.UNAUTHORIZED).entity("Refresh token không hợp lệ").build();

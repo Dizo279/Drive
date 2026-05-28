@@ -46,4 +46,14 @@ class JwtUtilTest {
 
         assertThrows(JwtException.class, () -> jwtUtil.validateRefreshTokenAndGetClaims(accessToken));
     }
+
+    @Test
+    void shouldGenerateAccessTokenWithRoleClaim() {
+        String token = jwtUtil.generateAccessToken("alice", 1L, "ADMIN");
+        Claims claims = jwtUtil.validateAccessTokenAndGetClaims(token);
+
+        assertEquals("alice", claims.getSubject());
+        assertEquals("access", claims.get("type", String.class));
+        assertEquals("ADMIN", claims.get("role", String.class));
+    }
 }

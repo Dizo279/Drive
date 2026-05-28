@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common'; // Cung cấp *ngIf
-import { Router, RouterLink } from '@angular/router'; // Cung cấp routerLink
+import { Router, RouterLink, ActivatedRoute } from '@angular/router'; // Cung cấp routerLink
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -12,7 +12,7 @@ import { AuthService } from '../../services/auth.service';
   // Import đầy đủ các module cần thiết cho HTML
   imports: [ReactiveFormsModule, FormsModule, CommonModule, RouterLink]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   
   // Khai báo các biến trạng thái mới cho giao diện
@@ -20,16 +20,23 @@ export class LoginComponent {
   hidePassword: boolean = true;
   rememberMe: boolean = false;
   loading: boolean = false;
+  returnUrl: string = '/files';
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.loginForm = this.fb.group({
       username: ['', Validators.required],
       password: ['', Validators.required]
     });
+  }
+
+  ngOnInit(): void {
+    // Get return url from route parameters or default to '/files'
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/files';
   }
 
   onSubmit(): void {
@@ -40,7 +47,7 @@ export class LoginComponent {
       this.authService.login(this.loginForm.value).subscribe({
         next: () => {
           this.loading = false;
-          this.router.navigate(['/files']);
+          this.router.navigateByUrl(this.returnUrl);
         },
         error: (err) => {
           this.loading = false; // Tắt loading khi có lỗi

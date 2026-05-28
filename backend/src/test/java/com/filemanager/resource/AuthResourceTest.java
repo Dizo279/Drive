@@ -73,6 +73,12 @@ class AuthResourceTest {
 
     @Test
     void refreshShouldReturnNewAccessTokenWhenCookieValid() {
+        User existing = new User();
+        existing.setUsername("alice");
+        existing.setRole("USER");
+        ReflectionTestUtils.setField(existing, "id", 1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
+
         String refreshToken = jwtUtil.generateRefreshToken("alice", 1L);
 
         Response response = authResource.refresh(new Cookie("refresh_token", refreshToken));
