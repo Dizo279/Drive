@@ -25,7 +25,7 @@
 
 ### C4 Container Diagram
 
-![C4 Container Diagram](docs/images/c4-container.png)
+![C4 Container Diagram](docs/images/c4-container.jpg)
 
 *Sơ đồ kiến trúc C4 ở mức Container — thể hiện các container chính và luồng tương tác.*
 
