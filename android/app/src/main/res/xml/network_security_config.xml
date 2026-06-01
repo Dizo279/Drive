@@ -6,11 +6,6 @@
     - 192.168.x.x: IP LAN của máy khi test trên thiết bị thật
 -->
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <!-- Android Emulator -->
-        <domain includeSubdomains="false">10.0.2.2</domain>
-        <!-- Thiết bị thật - thay bằng IP LAN của máy bạn -->
-        <domain includeSubdomains="false">192.168.1.1</domain>
-        <domain includeSubdomains="false">localhost</domain>
-    </domain-config>
+    <!-- Development: cho phép HTTP tới backend local (emulator + LAN) -->
+    <base-config cleartextTrafficPermitted="true" />
 </network-security-config>

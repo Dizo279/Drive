@@ -61,8 +61,10 @@ public class AuthResource {
         user.setEmail(user.getEmail().trim().toLowerCase());
         user.setUsername(user.getUsername().trim().toLowerCase());
 
-        // Encode password and save
+        // Encode password and save — luôn là tài khoản thường, không cho đăng ký Admin qua API
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole("USER");
+        user.setTier("FREE");
         userRepository.save(user);
         
         return Response.status(Response.Status.CREATED).entity("Đăng ký thành công").build();
@@ -76,7 +78,11 @@ public class AuthResource {
         if (userOpt.isPresent() && passwordEncoder.matches(loginRequest.getPassword(), userOpt.get().getPassword())) {
             User user = userOpt.get();
             String token = jwtUtil.generateToken(user.getUsername(), user.getId());
-            return Response.ok(Map.of("token", token, "username", user.getUsername())).build();
+            return Response.ok(Map.of(
+                    "token", token,
+                    "username", user.getUsername(),
+                    "role", user.getRole() != null ? user.getRole() : "USER"
+            )).build();
         }
         
         return Response.status(Response.Status.UNAUTHORIZED).entity("Sai username hoặc password").build();

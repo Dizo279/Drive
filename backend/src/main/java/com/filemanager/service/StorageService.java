@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -23,16 +24,33 @@ public class StorageService {
 
     private Path rootLocation;
 
-    // Chạy ngay khi Backend vừa khởi động
+    // Chạy ngay khi Backend vừa khởi động — chỉ dùng app.storage.upload-dir (không fallback)
     @PostConstruct
     public void init() {
         try {
-            rootLocation = Paths.get(uploadDir);
-            // Tự động tạo thư mục nếu trên ổ cứng chưa có
+            rootLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
             Files.createDirectories(rootLocation);
-            System.out.println("Thư mục lưu trữ file được đặt tại: " + rootLocation.toAbsolutePath());
+            verifyWritable(rootLocation);
+            uploadDir = rootLocation.toString();
+            System.out.println("=== Thư mục lưu trữ file (duy nhất): " + rootLocation + " ===");
         } catch (Exception e) {
-            throw new RuntimeException("Không thể khởi tạo thư mục lưu trữ file!", e);
+            String hint = "Mở CMD (Run as Administrator) và chạy: icacls \""
+                    + uploadDir + "\" /grant Users:(OI)(CI)M /T";
+            throw new RuntimeException(
+                    "Không thể ghi vào thư mục lưu trữ " + uploadDir + ". " + hint, e);
+        }
+    }
+
+    private void verifyWritable(Path dir) throws IOException {
+        Path testFile = Files.createTempFile(dir, ".write-test-", ".tmp");
+        try {
+            Files.writeString(testFile, "ok");
+        } finally {
+            Files.deleteIfExists(testFile);
+        }
+        // Trên Windows, thử set quyền ghi nếu thư mục vừa tạo
+        if (!Files.isWritable(dir)) {
+            throw new IOException("Thư mục không có quyền ghi: " + dir);
         }
     }
 
@@ -43,6 +61,9 @@ public class StorageService {
     // Hàm lưu file (Đã đổi tên file thành UUID để chống trùng lặp tên)
     public String storeFile(InputStream fileInputStream, String originalName) {
         try {
+            if (originalName == null || originalName.isBlank()) {
+                originalName = "upload.bin";
+            }
             // Giữ lại phần đuôi mở rộng của file (vd: .pdf, .png)
             String extension = "";
             int i = originalName.lastIndexOf('.');
@@ -52,9 +73,11 @@ public class StorageService {
             
             // Tạo tên file mới để tránh người dùng up 2 file trùng tên
             String savedFileName = UUID.randomUUID().toString() + extension;
-            Path destinationFile = rootLocation.resolve(Paths.get(savedFileName)).normalize().toAbsolutePath();
+            Path destinationFile = rootLocation.resolve(savedFileName).normalize();
+            if (!destinationFile.startsWith(rootLocation)) {
+                throw new SecurityException("Đường dẫn file không hợp lệ");
+            }
 
-            // Copy luồng dữ liệu vào ổ cứng
             Files.copy(fileInputStream, destinationFile, StandardCopyOption.REPLACE_EXISTING);
             return savedFileName;
             

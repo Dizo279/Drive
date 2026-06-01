@@ -101,49 +101,93 @@ public class FileResource {
     public Response uploadFile(
             @FormDataParam("file") InputStream fileInputStream,
             @FormDataParam("file") FormDataContentDisposition fileDetail,
-            @FormDataParam("parentId") Long parentId,
+            @FormDataParam("parentId") Long parentIdForm,
+            @QueryParam("parentId") Long parentIdQuery,
             @Context ContainerRequestContext requestContext) {
-        
+
         try {
             Object userIdObj = requestContext.getProperty("userId");
             if (userIdObj == null) {
                 return Response.status(Response.Status.UNAUTHORIZED).entity("Cần đăng nhập").build();
             }
+            if (fileInputStream == null) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"error\": \"Thiếu dữ liệu file\"}").build();
+            }
+
             Long userId = ((Number) userIdObj).longValue();
-            String originalName = fileDetail.getFileName();
-            
-            // 1. Lưu file xuống disk (Lưu tạm để lấy chính xác dung lượng byte)
+            Long parentId = parentIdForm != null ? parentIdForm : parentIdQuery;
+            String originalName = resolveUploadFileName(fileDetail);
+
+            // 1. Lưu file xuống disk
             String savedFileName = storageService.storeFile(fileInputStream, originalName);
             long exactSizeBytes = storageService.getFileSize(savedFileName);
-            
-            // 2. Kiểm tra dung lượng Quota TRƯỚC KHI lưu vào Database
+
+            // 2. Kiểm tra quota
             try {
                 quotaService.validateAndAddQuota(userId, exactSizeBytes);
             } catch (WebApplicationException e) {
-                // Nếu vượt dung lượng -> Xóa file vật lý vừa lưu tạm và ném lỗi ra
                 Files.deleteIfExists(Paths.get(storageService.getUploadDir()).resolve(savedFileName));
                 throw e;
             }
-            
-            // 3. Nếu hợp lệ, lưu metadata vào Database
+
+            // 3. Lưu metadata
+            java.nio.file.Path savedPath = Paths.get(storageService.getUploadDir()).resolve(savedFileName);
+            String mimeType = Files.probeContentType(savedPath);
+            if (mimeType == null || mimeType.isBlank()) {
+                mimeType = guessMimeType(originalName);
+            }
+
             FileMetadata metadata = new FileMetadata();
             metadata.setOwnerId(userId);
             metadata.setFileName(originalName);
             metadata.setFilePath(savedFileName);
             metadata.setFileSize(exactSizeBytes);
-            metadata.setMimeType(Files.probeContentType(Paths.get(storageService.getUploadDir()).resolve(savedFileName)));
-            metadata.setIsFolder(false); // Xác nhận đây là file, không phải thư mục
+            metadata.setMimeType(mimeType);
+            metadata.setIsFolder(false);
             metadata.setParentId(parentId);
-            
+
             fileRepository.save(metadata);
-            
+
             return Response.ok(metadata).build();
         } catch (WebApplicationException we) {
-            throw we; // Ném tiếp lỗi Quota ra ngoài
+            throw we;
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.serverError().entity("Lỗi upload: " + e.getMessage()).build();
+            return Response.serverError()
+                    .entity("{\"error\": \"Lỗi upload: " + e.getMessage() + "\"}")
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
         }
+    }
+
+    /** Lấy tên file từ multipart (Android/iOS đôi khi không gửi disposition đầy đủ). */
+    private String resolveUploadFileName(FormDataContentDisposition fileDetail) {
+        if (fileDetail != null && fileDetail.getFileName() != null && !fileDetail.getFileName().isBlank()) {
+            String name = fileDetail.getFileName().trim();
+            int slash = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
+            if (slash >= 0 && slash < name.length() - 1) {
+                name = name.substring(slash + 1);
+            }
+            return name;
+        }
+        return "upload_" + UUID.randomUUID().toString().substring(0, 8) + ".bin";
+    }
+
+    private String guessMimeType(String fileName) {
+        if (fileName == null) return "application/octet-stream";
+        String lower = fileName.toLowerCase();
+        if (lower.endsWith(".pdf")) return "application/pdf";
+        if (lower.endsWith(".png")) return "image/png";
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+        if (lower.endsWith(".gif")) return "image/gif";
+        if (lower.endsWith(".txt")) return "text/plain";
+        if (lower.endsWith(".doc")) return "application/msword";
+        if (lower.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        if (lower.endsWith(".xls")) return "application/vnd.ms-excel";
+        if (lower.endsWith(".xlsx")) return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        if (lower.endsWith(".zip")) return "application/zip";
+        return "application/octet-stream";
     }
 
     /**

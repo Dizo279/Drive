@@ -22,6 +22,7 @@ export class AuthService {
         if (response && response.token) {
           localStorage.setItem('jwt_token', response.token);
           localStorage.setItem('username', response.username);
+          localStorage.setItem('role', response.role || 'USER');
         }
       })
     );
@@ -41,5 +42,13 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem('jwt_token');
     localStorage.removeItem('username');
+    localStorage.removeItem('role');
+  }
+
+  isAdmin(): boolean {
+    if (isPlatformBrowser(this.platformId)) {
+      return localStorage.getItem('role') === 'ADMIN';
+    }
+    return false;
   }
 }

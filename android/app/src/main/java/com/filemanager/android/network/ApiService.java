@@ -7,6 +7,7 @@ import com.filemanager.android.network.dto.NotificationDto;
 import com.filemanager.android.network.dto.ProfileUpdateRequest;
 import com.filemanager.android.network.dto.SharedItemDto;
 import com.filemanager.android.network.dto.RegisterRequest;
+import com.filemanager.android.network.dto.UpgradeRequestDto;
 import com.filemanager.android.network.dto.UserDto;
 
 import java.util.List;
@@ -53,12 +54,12 @@ public interface ApiService {
     @GET("files")
     Call<List<FileMetadataDto>> getFiles(@Query("parentId") Long parentId);
 
-    /** Upload file (multipart) */
+    /** Upload file (multipart). parentId truyền qua query để tránh lỗi parse multipart rỗng. */
     @Multipart
     @POST("files/upload")
     Call<FileMetadataDto> uploadFile(
             @Part MultipartBody.Part file,
-            @Part("parentId") RequestBody parentId
+            @Query("parentId") Long parentId
     );
 
     /** Download file theo ID */
@@ -154,4 +155,30 @@ public interface ApiService {
     /** Xóa thông báo */
     @DELETE("notifications/{id}")
     Call<ResponseBody> deleteNotification(@Path("id") Long id);
+
+
+    // =====================
+    // ADMIN — /api/admin
+    // =====================
+
+    @GET("admin/stats")
+    Call<Map<String, Object>> getAdminStats();
+
+    @GET("admin/users")
+    Call<List<UserDto>> getAdminUsers();
+
+    @PUT("admin/users/{userId}/role")
+    Call<ResponseBody> updateUserRole(@Path("userId") Long userId, @Body Map<String, String> body);
+
+    @PUT("admin/users/{userId}/tier")
+    Call<ResponseBody> updateUserTier(@Path("userId") Long userId, @Body Map<String, String> body);
+
+    @DELETE("admin/users/{userId}")
+    Call<ResponseBody> deleteAdminUser(@Path("userId") Long userId);
+
+    @GET("admin/upgrade-requests")
+    Call<List<UpgradeRequestDto>> getUpgradeRequests();
+
+    @POST("admin/upgrade-requests/{id}/process")
+    Call<ResponseBody> processUpgradeRequest(@Path("id") Long id, @Body Map<String, String> body);
 }

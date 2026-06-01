@@ -7,6 +7,7 @@ import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.filemanager.android.auth.AuthRouter;
 import com.filemanager.android.features.auth.LoginActivity;
 import com.filemanager.android.storage.SessionManager;
 
@@ -32,8 +33,7 @@ public class SplashActivity extends AppCompatActivity {
         Intent intent;
 
         if (session.isLoggedIn()) {
-            // Đã đăng nhập → vào màn hình chính
-            intent = new Intent(this, MainActivity.class);
+            intent = AuthRouter.createHomeIntent(this);
         } else {
             // Chưa đăng nhập → màn hình Login
             intent = new Intent(this, LoginActivity.class);

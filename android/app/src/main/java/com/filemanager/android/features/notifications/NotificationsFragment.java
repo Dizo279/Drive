@@ -16,6 +16,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.filemanager.android.R;
 import com.filemanager.android.network.ApiClient;
 import com.filemanager.android.network.ApiService;
+import com.filemanager.android.network.NotificationSseClient;
 import com.filemanager.android.network.dto.NotificationDto;
 import com.google.android.material.button.MaterialButton;
 
@@ -66,6 +67,18 @@ public class NotificationsFragment extends Fragment
         setupSwipeRefresh();
         setupMarkAllRead();
         loadNotifications();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        NotificationSseClient.getInstance().setListener(this::loadNotifications);
+    }
+
+    @Override
+    public void onPause() {
+        NotificationSseClient.getInstance().setListener(null);
+        super.onPause();
     }
 
     private void initViews(View view) {

@@ -3,7 +3,9 @@ package com.filemanager.android.features.files;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -23,6 +25,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -96,6 +99,7 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
 
     // ===== File Picker Launcher =====
     private ActivityResultLauncher<Intent> filePickerLauncher;
+    private ActivityResultLauncher<String[]> permissionLauncher;
 
     // ==================================================================
     // Lifecycle
@@ -117,6 +121,7 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         apiService = ApiClient.getApiService(requireContext());
 
         setupFilePicker();
+        setupPermissionLauncher();
         setupRecyclerView();
         setupSwipeRefresh();
         setupFab();
@@ -157,6 +162,26 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
     /** FAB hiển thị popup menu với 2 lựa chọn: Upload File / Tạo thư mục */
     private void setupFab() {
         fabAdd.setOnClickListener(v -> showFabMenu());
+    }
+
+    private void setupPermissionLauncher() {
+        permissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestMultiplePermissions(),
+                result -> {
+                    boolean granted = true;
+                    for (Boolean ok : result.values()) {
+                        if (!Boolean.TRUE.equals(ok)) {
+                            granted = false;
+                            break;
+                        }
+                    }
+                    if (granted) {
+                        launchFilePickerIntent();
+                    } else {
+                        showToast("Cần quyền đọc file để tải lên");
+                    }
+                }
+        );
     }
 
     /** Đăng ký file picker (ACTION_GET_CONTENT) */
@@ -380,11 +405,40 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
     // ==================================================================
 
     private void openFilePicker() {
+        if (!hasStoragePermission()) {
+            permissionLauncher.launch(getRequiredStoragePermissions());
+            return;
+        }
+        launchFilePickerIntent();
+    }
+
+    private void launchFilePickerIntent() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         filePickerLauncher.launch(intent);
+    }
+
+    private boolean hasStoragePermission() {
+        for (String perm : getRequiredStoragePermissions()) {
+            if (ContextCompat.checkSelfPermission(requireContext(), perm)
+                    != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private String[] getRequiredStoragePermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return new String[]{
+                    android.Manifest.permission.READ_MEDIA_IMAGES,
+                    android.Manifest.permission.READ_MEDIA_VIDEO,
+                    android.Manifest.permission.READ_MEDIA_AUDIO
+            };
+        }
+        return new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE};
     }
 
     private void uploadMultipleFiles(List<Uri> uris) {
@@ -396,35 +450,43 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
 
     private void uploadNextFile(List<Uri> uris, int index, int total) {
         if (index >= total) {
-            // Hoàn thành upload toàn bộ
             layoutUploadProgress.setVisibility(View.GONE);
             showToast("✅ Đã tải lên xong " + total + " file");
+            loadFiles();
             return;
         }
 
         Uri fileUri = uris.get(index);
-        String fileName = FileUtils.getFileName(requireContext(), fileUri);
-        String mimeType = FileUtils.getMimeType(requireContext(), fileUri);
+        String rawName = FileUtils.getFileName(requireContext(), fileUri);
+        final String fileName = (rawName == null || rawName.isEmpty()) ? "upload.bin" : rawName;
+        String rawMime = FileUtils.getMimeType(requireContext(), fileUri);
+        final String mimeType = (rawMime == null || rawMime.isEmpty())
+                ? "application/octet-stream" : rawMime;
 
         tvUploadProgressText.setText("Đang tải lên " + (index + 1) + "/" + total + ": " + fileName);
         pbUpload.setProgress(0);
 
         try {
             byte[] fileBytes = readAllBytes(fileUri);
-            RequestBody fileBody = RequestBody.create(MediaType.parse(mimeType), fileBytes);
+            if (fileBytes.length == 0) {
+                showToast("File rỗng: " + fileName);
+                uploadNextFile(uris, index + 1, total);
+                return;
+            }
+
+            MediaType mediaType = MediaType.parse(mimeType);
+            RequestBody fileBody = RequestBody.create(fileBytes, mediaType);
 
             ProgressRequestBody progressRequestBody = new ProgressRequestBody(fileBody, percentage -> {
-                pbUpload.setProgress(percentage);
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> pbUpload.setProgress(percentage));
+                }
             });
 
             MultipartBody.Part filePart = MultipartBody.Part.createFormData(
                     "file", fileName, progressRequestBody);
 
-            RequestBody parentIdBody = currentParentId != null
-                    ? RequestBody.create(MediaType.parse("text/plain"), String.valueOf(currentParentId))
-                    : RequestBody.create(MediaType.parse("text/plain"), "");
-
-            apiService.uploadFile(filePart, parentIdBody)
+            apiService.uploadFile(filePart, currentParentId)
                     .enqueue(new Callback<FileMetadataDto>() {
                 @Override
                 public void onResponse(Call<FileMetadataDto> call, Response<FileMetadataDto> response) {
@@ -432,9 +494,10 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
                         fileAdapter.addItem(response.body());
                         toggleEmptyState(false);
                     } else if (response.code() == 413) {
-                        showToast("⚠️ File " + fileName + " quá lớn");
+                        showToast("⚠️ File " + fileName + " quá lớn (tối đa 10MB)");
                     } else {
-                        showToast("❌ Lỗi tải lên: " + fileName);
+                        String err = readErrorBody(response);
+                        showToast("❌ Lỗi tải lên " + fileName + ": " + err);
                     }
                     // Tiếp tục file tiếp theo
                     uploadNextFile(uris, index + 1, total);
@@ -504,7 +567,7 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
                     fileAdapter.addItem(response.body());
                     toggleEmptyState(false);
                 } else {
-                    showToast("❌ Không thể tạo thư mục");
+                    showToast("❌ Không thể tạo thư mục (HTTP " + response.code() + ")");
                 }
             }
 
@@ -697,6 +760,29 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         if (getContext() != null) {
             Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private String readErrorBody(Response<?> response) {
+        try {
+            if (response.errorBody() != null) {
+                String body = response.errorBody().string();
+                if (body.contains("\"error\"")) {
+                    int start = body.indexOf("\"error\"");
+                    int colon = body.indexOf(':', start);
+                    int q1 = body.indexOf('"', colon + 1);
+                    int q2 = body.indexOf('"', q1 + 1);
+                    if (q2 > q1) {
+                        return body.substring(q1 + 1, q2);
+                    }
+                }
+                if (body.length() > 120) {
+                    return body.substring(0, 120);
+                }
+                return body;
+            }
+        } catch (Exception ignored) {
+        }
+        return "HTTP " + response.code();
     }
 
     // ==================================================================

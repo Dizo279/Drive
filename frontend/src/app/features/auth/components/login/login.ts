@@ -38,9 +38,10 @@ export class LoginComponent {
       this.errorMsg = '';  // Xóa lỗi cũ
 
       this.authService.login(this.loginForm.value).subscribe({
-        next: () => {
+        next: (res) => {
           this.loading = false;
-          this.router.navigate(['/files']);
+          const target = res?.role === 'ADMIN' ? '/admin' : '/files';
+          this.router.navigate([target]);
         },
         error: (err) => {
           this.loading = false; // Tắt loading khi có lỗi

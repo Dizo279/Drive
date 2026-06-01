@@ -52,12 +52,13 @@
                         android:textSize="36sp"
                         android:textStyle="bold" />
 
-                    <!-- Ảnh avatar (hiện khi đã có avatar URL) -->
+                    <!-- Ảnh avatar tròn (hiện khi đã có avatar URL) -->
                     <ImageView
                         android:id="@+id/iv_avatar"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:scaleType="centerCrop"
+                        android:clipToOutline="true"
                         android:visibility="gone" />
 
                     <!-- Icon camera overlay -->

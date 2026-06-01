@@ -1,0 +1,129 @@
+package com.filemanager.android.network;
+
+import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
+
+import com.filemanager.android.storage.SessionManager;
+
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okio.BufferedSource;
+
+/**
+ * SSE Admin — GET /api/admin/sse/notifications?token=...
+ * Nhận sự kiện {@code upgrade-request} khi có user xin nâng cấp Premium.
+ */
+public class AdminSseClient {
+
+    public interface Listener {
+        void onUpgradeRequestEvent();
+    }
+
+    private static AdminSseClient instance;
+
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private ExecutorService executor;
+    private Call activeCall;
+    private Listener listener;
+
+    public static AdminSseClient getInstance() {
+        if (instance == null) {
+            instance = new AdminSseClient();
+        }
+        return instance;
+    }
+
+    public void setListener(Listener listener) {
+        this.listener = listener;
+    }
+
+    public void connect(Context context) {
+        disconnect();
+
+        String token = SessionManager.getInstance(context).getToken();
+        if (token == null || token.isEmpty()) {
+            return;
+        }
+
+        try {
+            String encoded = URLEncoder.encode(token, StandardCharsets.UTF_8.name());
+            String url = ApiClient.BASE_URL + "admin/sse/notifications?token=" + encoded;
+
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(0, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
+                    .build();
+
+            Request request = new Request.Builder()
+                    .url(url)
+                    .header("Accept", "text/event-stream")
+                    .build();
+
+            activeCall = client.newCall(request);
+            executor = Executors.newSingleThreadExecutor();
+            executor.execute(() -> {
+                try (Response response = activeCall.execute()) {
+                    if (!response.isSuccessful() || response.body() == null) {
+                        return;
+                    }
+                    readEventStream(response.body().source());
+                } catch (IOException ignored) {
+                }
+            });
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void readEventStream(BufferedSource source) throws IOException {
+        String currentEvent = null;
+        while (activeCall != null && !activeCall.isCanceled()) {
+            String line = source.readUtf8Line();
+            if (line == null) {
+                break;
+            }
+            if (line.startsWith("event:")) {
+                currentEvent = line.substring(6).trim();
+            } else if (line.startsWith("data:")) {
+                if ("upgrade-request".equals(currentEvent)) {
+                    notifyUpgradeRequest();
+                }
+                currentEvent = null;
+            } else if (line.isEmpty()) {
+                currentEvent = null;
+            }
+        }
+    }
+
+    private void notifyUpgradeRequest() {
+        if (listener == null) {
+            return;
+        }
+        mainHandler.post(() -> {
+            if (listener != null) {
+                listener.onUpgradeRequestEvent();
+            }
+        });
+    }
+
+    public void disconnect() {
+        if (activeCall != null) {
+            activeCall.cancel();
+            activeCall = null;
+        }
+        if (executor != null) {
+            executor.shutdownNow();
+            executor = null;
+        }
+    }
+}

@@ -6,12 +6,15 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import com.filemanager.android.auth.AuthRouter;
+import com.filemanager.android.features.admin.AdminActivity;
 import com.filemanager.android.features.auth.LoginActivity;
 import com.filemanager.android.features.files.FilesFragment;
 import com.filemanager.android.features.notifications.NotificationsFragment;
 import com.filemanager.android.features.profile.ProfileFragment;
 import com.filemanager.android.features.shared.SharedFragment;
 import com.filemanager.android.features.trash.TrashFragment;
+import com.filemanager.android.network.NotificationSseClient;
 import com.filemanager.android.storage.SessionManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -28,8 +31,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         // Bảo vệ: nếu chưa đăng nhập thì không vào được
-        if (!SessionManager.getInstance(this).isLoggedIn()) {
+        SessionManager session = SessionManager.getInstance(this);
+        if (!session.isLoggedIn()) {
             redirectToLogin();
+            return;
+        }
+        // Admin chỉ dùng màn quản trị, không vào app file của user thường
+        if (session.isAdmin()) {
+            startActivity(AuthRouter.createHomeIntent(this));
+            finish();
             return;
         }
 
@@ -43,6 +53,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         setupBottomNavigation();
+        NotificationSseClient.getInstance().connect(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        NotificationSseClient.getInstance().disconnect();
+        super.onDestroy();
     }
 
     private void setupBottomNavigation() {

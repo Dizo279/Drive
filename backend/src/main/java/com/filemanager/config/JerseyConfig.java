@@ -8,6 +8,7 @@ import com.filemanager.resource.UserResource;
 import com.filemanager.resource.AdminResource;
 import com.filemanager.resource.NotificationResource;
 
+import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class JerseyConfig extends ResourceConfig {
     public JerseyConfig() {
+        register(JacksonFeature.class);
+        register(JerseyJacksonConfig.class);
+
         // Đăng ký các Resource và Filter
         register(AuthResource.class);
         register(FileResource.class);

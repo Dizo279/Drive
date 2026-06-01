@@ -103,13 +103,14 @@ Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Andr
 ---
 
 ## 7. 🛡️ Admin Dashboard (Quản trị viên)
+*Activity: `AdminActivity.java` — mở từ nút "👑 Bảng quản trị" trên Profile (chỉ role ADMIN)*
 
 | Tính năng trên Web | Trạng thái trên Android | Chi tiết |
 |---|---|---|
-| **Thống kê tổng quan** | ❌ Thiếu hoàn toàn | Không có bất kỳ Activity/Fragment nào dành cho Admin. |
-| **Quản lý Users (Role, Tier, Xóa)** | ❌ Thiếu hoàn toàn | Không có giao diện danh sách người dùng. |
-| **Duyệt/Từ chối Upgrade Requests** | ❌ Thiếu hoàn toàn | Admin không thể duyệt yêu cầu nâng cấp Premium từ App. |
-| **Admin SSE Notifications** | ❌ Thiếu hoàn toàn | Không nhận được thông báo khi có người xin nâng cấp. |
+| **Thống kê tổng quan** | ✅ Đã có | `GET /api/admin/stats` — tổng user, admin, dung lượng đã dùng. |
+| **Quản lý Users (Role, Tier, Xóa)** | ✅ Đã có | Danh sách user, tìm kiếm theo tên/email, đổi role/tier, xóa user. |
+| **Duyệt/Từ chối Upgrade Requests** | ✅ Đã có | Tab "Nâng cấp", duyệt/từ chối qua `POST /api/admin/upgrade-requests/{id}/process`. |
+| **Admin SSE Notifications** | ✅ Đã có | `AdminSseClient` — SSE `upgrade-request`, badge trên tab + toast. |
 
 ---
 
@@ -140,5 +141,4 @@ Dựa trên việc kiểm tra **toàn bộ source code** của ứng dụng Andr
 - Bottom Navigation + Session management
 
 ### 🔧 Cần sửa / hoàn thiện:
-1. **Ưu tiên 1 — Real-time (SSE):** Tích hợp `okhttp-sse` để nhận thông báo real-time thay vì chỉ pull-to-refresh.
-2. **Ưu tiên 2 — Admin Dashboard:** Xây dựng luồng Admin (Thống kê, Quản lý Users, Duyệt/Từ chối Upgrade Requests) nếu có yêu cầu.
+*(Không còn mục bắt buộc — Admin Dashboard và SSE thông báo user đã có trên Android.)*

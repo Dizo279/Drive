@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Outline;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.ViewOutlineProvider;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Base64;
@@ -93,6 +95,7 @@ public class ProfileFragment extends Fragment {
     private LinearLayout actionLogout;
 
     private ApiService apiService;
+    private SessionManager sessionManager;
     /** Cache dữ liệu profile hiện tại để pre-fill vào dialog chỉnh sửa */
     private UserDto currentUser;
 
@@ -130,9 +133,31 @@ public class ProfileFragment extends Fragment {
 
         initViews(view);
         apiService = ApiClient.getApiService(requireContext());
+        sessionManager = SessionManager.getInstance(requireContext());
 
+        setupAvatarClip();
         setupActions();
+        showCachedAvatarIfAny();
         loadProfile();
+    }
+
+    private void setupAvatarClip() {
+        ivAvatar.setClipToOutline(true);
+        ivAvatar.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setOval(0, 0, view.getWidth(), view.getHeight());
+            }
+        });
+    }
+
+    /** Hiển thị avatar đã lưu local trước khi API trả về (tránh nhấp nháy / mất ảnh). */
+    private void showCachedAvatarIfAny() {
+        String cached = sessionManager.getAvatarUrl();
+        if (cached != null && !cached.isEmpty()) {
+            displayAvatarUrl(cached, currentUser != null && currentUser.getFullName() != null
+                    ? currentUser.getFullName() : sessionManager.getUsername());
+        }
     }
 
     private void initViews(View view) {
@@ -217,23 +242,10 @@ public class ProfileFragment extends Fragment {
         // Avatar: ưu tiên hiện ảnh, fallback chữ cái đầu
         String avatarUrl = user.getAvatarUrl();
         if (avatarUrl != null && !avatarUrl.isEmpty()) {
-            tvAvatarLetter.setVisibility(View.GONE);
-            ivAvatar.setVisibility(View.VISIBLE);
-            if (avatarUrl.startsWith("data:image")) {
-                // Base64 data URI
-                try {
-                    String base64 = avatarUrl.substring(avatarUrl.indexOf(",") + 1);
-                    byte[] decoded = Base64.decode(base64, Base64.DEFAULT);
-                    Bitmap bmp = BitmapFactory.decodeByteArray(decoded, 0, decoded.length);
-                    ivAvatar.setImageBitmap(bmp);
-                } catch (Exception e) {
-                    showLetterAvatar(displayName);
-                }
-            } else {
-                // URL ảnh bình thường → dùng Glide
-                Glide.with(this).load(avatarUrl).circleCrop().into(ivAvatar);
-            }
+            sessionManager.saveAvatarUrl(avatarUrl);
+            displayAvatarUrl(avatarUrl, displayName);
         } else {
+            sessionManager.saveAvatarUrl(null);
             showLetterAvatar(displayName);
         }
 
@@ -289,6 +301,23 @@ public class ProfileFragment extends Fragment {
         layoutEmailInfo.setVisibility(View.VISIBLE);
         dividerEmail.setVisibility(View.VISIBLE);
         layoutRoleInfo.setVisibility(View.VISIBLE);
+    }
+
+    private void displayAvatarUrl(String avatarUrl, String displayName) {
+        tvAvatarLetter.setVisibility(View.GONE);
+        ivAvatar.setVisibility(View.VISIBLE);
+        if (avatarUrl.startsWith("data:image")) {
+            try {
+                String base64 = avatarUrl.substring(avatarUrl.indexOf(",") + 1);
+                byte[] decoded = Base64.decode(base64, Base64.DEFAULT);
+                Bitmap bmp = BitmapFactory.decodeByteArray(decoded, 0, decoded.length);
+                Glide.with(this).load(bmp).circleCrop().into(ivAvatar);
+            } catch (Exception e) {
+                showLetterAvatar(displayName);
+            }
+        } else {
+            Glide.with(this).load(avatarUrl).circleCrop().into(ivAvatar);
+        }
     }
 
     private void showLetterAvatar(String displayName) {
@@ -351,12 +380,11 @@ public class ProfileFragment extends Fragment {
             String base64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP);
             String dataUri = "data:image/jpeg;base64," + base64;
 
-            // Hiện preview ngay lập tức
+            sessionManager.saveAvatarUrl(dataUri);
+            Glide.with(this).load(resized).circleCrop().into(ivAvatar);
             tvAvatarLetter.setVisibility(View.GONE);
             ivAvatar.setVisibility(View.VISIBLE);
-            ivAvatar.setImageBitmap(resized);
 
-            // Gửi lên server
             uploadAvatar(dataUri);
 
         } catch (Exception e) {
@@ -382,6 +410,10 @@ public class ProfileFragment extends Fragment {
             public void onResponse(Call<UserDto> call, Response<UserDto> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     currentUser = response.body();
+                    if (currentUser.getAvatarUrl() != null) {
+                        sessionManager.saveAvatarUrl(currentUser.getAvatarUrl());
+                    }
+                    bindProfile(currentUser);
                     showToast("✅ Cập nhật avatar thành công!");
                 } else {
                     showToast("❌ Không thể cập nhật avatar");

@@ -14,6 +14,14 @@ public class LoginResponse {
     @SerializedName("username")
     private String username;
 
+    @SerializedName("role")
+    private String role;
+
     public String getToken() { return token; }
     public String getUsername() { return username; }
+    public String getRole() { return role; }
+
+    public boolean isAdmin() {
+        return "ADMIN".equals(role);
+    }
 }

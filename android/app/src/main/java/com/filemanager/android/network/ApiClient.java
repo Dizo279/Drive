@@ -2,6 +2,7 @@ package com.filemanager.android.network;
 
 import android.content.Context;
 
+import com.filemanager.android.BuildConfig;
 import com.filemanager.android.storage.SessionManager;
 
 import okhttp3.OkHttpClient;
@@ -24,10 +25,12 @@ public class ApiClient {
     // ⚠️ THAY ĐỔI URL NÀY KHI TEST TRÊN THIẾT BỊ THẬT:
     // private static final String BASE_URL = "http://192.168.1.x:8080/api/";
     // ============================================================
-    public static final String BASE_URL = "http://10.0.2.2:8080/api/";
+    /** Đọc từ gradle.properties (API_BASE_URL); đổi IP khi test trên thiết bị thật. */
+    public static final String BASE_URL = BuildConfig.API_BASE_URL;
 
     private static Retrofit retrofit;
     private static ApiService apiService;
+    private static OkHttpClient httpClient;
 
     /**
      * Lấy instance ApiService đã được inject JWT interceptor.
@@ -49,7 +52,7 @@ public class ApiClient {
             loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
 
             // OkHttpClient với Auth + Logging interceptors
-            OkHttpClient client = new OkHttpClient.Builder()
+            httpClient = new OkHttpClient.Builder()
                     .addInterceptor(new AuthInterceptor(sessionManager))
                     .addInterceptor(loggingInterceptor)
                     .connectTimeout(30, TimeUnit.SECONDS)
@@ -59,7 +62,7 @@ public class ApiClient {
 
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
-                    .client(client)
+                    .client(httpClient)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }
@@ -69,8 +72,16 @@ public class ApiClient {
     /**
      * Reset singleton — dùng khi cần thay đổi URL (switch emulator ↔ device)
      */
+    public static OkHttpClient getHttpClient(Context context) {
+        if (httpClient == null) {
+            getRetrofit(context);
+        }
+        return httpClient;
+    }
+
     public static void reset() {
         retrofit = null;
         apiService = null;
+        httpClient = null;
     }
 }

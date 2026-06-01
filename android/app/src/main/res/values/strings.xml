@@ -44,6 +44,14 @@
     <string name="nav_trash">Thùng rác</string>
     <string name="nav_notifications">Thông báo</string>
     <string name="nav_profile">Cá nhân</string>
+    <string name="nav_admin_home">Trang chủ</string>
+    <string name="nav_admin_profile">Cá nhân</string>
+    <string name="admin_stats_users">Người dùng: %1$s | Admin: %2$s</string>
+    <string name="admin_stats_storage">Tổng dung lượng: %1$s</string>
+    <string name="admin_profile_name">Tên: %1$s</string>
+    <string name="admin_profile_email">Email: %1$s</string>
+    <string name="admin_profile_role">Vai trò: %1$s</string>
+    <string name="admin_logout_confirm">Đăng xuất khỏi tài khoản quản trị?</string>
 
     <!-- Files Screen -->
     <string name="title_my_files">Tệp của tôi</string>

@@ -9,8 +9,8 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.filemanager.android.MainActivity;
 import com.filemanager.android.R;
+import com.filemanager.android.auth.AuthRouter;
 import com.filemanager.android.network.ApiClient;
 import com.filemanager.android.network.ApiService;
 import com.filemanager.android.network.dto.LoginRequest;
@@ -121,13 +121,12 @@ public class LoginActivity extends AppCompatActivity {
                     // Lưu session
                     sessionManager.saveSession(
                             loginResponse.getToken(),
-                            loginResponse.getUsername()
+                            loginResponse.getUsername(),
+                            loginResponse.getRole()
                     );
 
-                    // Vào màn hình chính
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
+                    AuthRouter.startHome(LoginActivity.this);
+                    finish();
 
                 } else if (response.code() == 401) {
                     showError("Sai tên đăng nhập hoặc mật khẩu");
