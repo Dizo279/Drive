@@ -30,10 +30,19 @@ public class JwtAuthFilter implements ContainerRequestFilter {
         
         System.out.println("-----> [JwtFilter] Đang kiểm tra đường dẫn: " + path);
 
-        //"shared/" (có dấu /) để phân biệt hoàn toàn với "shared-by-me"
-        if (path.contains("auth") || path.contains("shared/")) {
-            return; // Mở cổng cho phép tải file mà không cần Token
+        // Skip các endpoint auth cụ thể (tránh sai do khác format path)
+        if (path != null && (path.equals("/auth/login") || path.equals("auth/login")
+                || path.equals("/auth/register") || path.equals("auth/register")
+                || path.equals("/auth/refresh") || path.equals("auth/refresh")
+                || path.equals("/auth/logout") || path.equals("auth/logout"))) {
+            return;
         }
+
+        // Cho phép các endpoint share tải file không cần token (giữ logic cũ)
+        if (path != null && path.contains("shared/")) {
+            return;
+        }
+
 
         // 3. Kiểm tra Token cho các request còn lại
         String token = null;

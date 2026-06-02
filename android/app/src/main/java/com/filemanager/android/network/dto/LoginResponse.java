@@ -2,13 +2,9 @@ package com.filemanager.android.network.dto;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * DTO cho response đăng nhập thành công.
- * Backend trả về: {"token": "...", "username": "..."}
- */
 public class LoginResponse {
 
-    @SerializedName("token")
+    @SerializedName("accessToken")
     private String token;
 
     @SerializedName("username")
