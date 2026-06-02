@@ -49,6 +49,8 @@
     <string name="title_my_files">Tệp của tôi</string>
     <string name="empty_files">Chưa có tệp tin nào</string>
     <string name="empty_trash">Thùng rác trống</string>
+    <string name="hint_search_files">Tìm kiếm tệp hoặc thư mục</string>
+    <string name="btn_edit_profile">✏️  Chỉnh sửa hồ sơ</string>
     <string name="action_upload">Tải lên</string>
     <string name="action_new_folder">Thư mục mới</string>
     <string name="action_delete">Xóa</string>

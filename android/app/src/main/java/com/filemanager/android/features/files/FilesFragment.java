@@ -17,10 +17,14 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import android.text.Editable;
+import android.text.TextWatcher;
 
 import com.filemanager.android.R;
 import com.filemanager.android.network.ApiClient;
@@ -33,8 +37,10 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -76,10 +82,12 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
     private View layoutEmpty;
     private LinearLayout breadcrumbContainer;
     private FloatingActionButton fabAdd;
+    private TextInputEditText etSearch;
 
     // ===== Dependencies =====
     private ApiService apiService;
     private FileAdapter fileAdapter;
+    private final List<FileMetadataDto> allFiles = new ArrayList<>();
 
     // ===== File Picker Launcher =====
     private ActivityResultLauncher<Intent> filePickerLauncher;
@@ -107,6 +115,7 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         setupRecyclerView();
         setupSwipeRefresh();
         setupFab();
+        setupSearch();
         loadFiles();
     }
 
@@ -120,6 +129,7 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         layoutEmpty        = view.findViewById(R.id.layout_empty);
         breadcrumbContainer = view.findViewById(R.id.breadcrumb_container);
         fabAdd             = view.findViewById(R.id.fab_add);
+        etSearch           = view.findViewById(R.id.et_search);
     }
 
     private void setupRecyclerView() {
@@ -130,7 +140,7 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
 
     private void setupSwipeRefresh() {
         swipeRefresh.setColorSchemeColors(
-                requireContext().getColor(R.color.apple_blue)
+                ContextCompat.getColor(requireContext(), R.color.apple_blue)
         );
         swipeRefresh.setOnRefreshListener(this::loadFiles);
     }
@@ -140,16 +150,39 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         fabAdd.setOnClickListener(v -> showFabMenu());
     }
 
+    private void setupSearch() {
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filterFiles(s != null ? s.toString() : "");
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) { }
+        });
+    }
+
     /** Đăng ký file picker (ACTION_GET_CONTENT) */
     private void setupFilePicker() {
         filePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK
-                            && result.getData() != null
-                            && result.getData().getData() != null) {
-                        Uri selectedUri = result.getData().getData();
-                        uploadFile(selectedUri);
+                    if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) {
+                        return;
+                    }
+
+                    Intent data = result.getData();
+                    if (data.getClipData() != null) {
+                        int count = data.getClipData().getItemCount();
+                        for (int i = 0; i < count; i++) {
+                            Uri uri = data.getClipData().getItemAt(i).getUri();
+                            if (uri != null) uploadFile(uri);
+                        }
+                    } else if (data.getData() != null) {
+                        uploadFile(data.getData());
                     }
                 }
         );
@@ -169,9 +202,9 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
                 swipeRefresh.setRefreshing(false);
 
                 if (response.isSuccessful() && response.body() != null) {
-                    List<FileMetadataDto> files = response.body();
-                    fileAdapter.setData(files);
-                    toggleEmptyState(files.isEmpty());
+                    allFiles.clear();
+                    allFiles.addAll(response.body());
+                    filterFiles(etSearch.getText() != null ? etSearch.getText().toString() : "");
                 } else {
                     showToast("Không thể tải danh sách file");
                     toggleEmptyState(true);
@@ -185,6 +218,24 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
                 toggleEmptyState(true);
             }
         });
+    }
+
+    private void filterFiles(String query) {
+        String normalized = query != null ? query.trim().toLowerCase() : "";
+        if (normalized.isEmpty()) {
+            fileAdapter.setData(new ArrayList<>(allFiles));
+            toggleEmptyState(allFiles.isEmpty());
+            return;
+        }
+
+        List<FileMetadataDto> filtered = new ArrayList<>();
+        for (FileMetadataDto file : allFiles) {
+            if (file.getFileName() != null && file.getFileName().toLowerCase().contains(normalized)) {
+                filtered.add(file);
+            }
+        }
+        fileAdapter.setData(filtered);
+        toggleEmptyState(filtered.isEmpty());
     }
 
     // ==================================================================
@@ -247,8 +298,8 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         tv.setText(text);
         tv.setTextSize(13f);
         tv.setTextColor(isClickable
-                ? requireContext().getColor(R.color.apple_blue)
-                : requireContext().getColor(R.color.apple_black));
+                ? ContextCompat.getColor(requireContext(), R.color.apple_blue)
+                : ContextCompat.getColor(requireContext(), R.color.apple_black));
         // Normal weight for clickable breadcrumb items
         return tv;
     }
@@ -257,7 +308,7 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         TextView sep = new TextView(requireContext());
         sep.setText("  ›  ");
         sep.setTextSize(13f);
-        sep.setTextColor(requireContext().getColor(R.color.apple_gray));
+        sep.setTextColor(ContextCompat.getColor(requireContext(), R.color.apple_gray));
         breadcrumbContainer.addView(sep);
     }
 
@@ -327,6 +378,7 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
         intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         filePickerLauncher.launch(intent);
     }
 
@@ -385,10 +437,16 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
 
     /** Đọc toàn bộ bytes từ Uri (phù hợp với file ≤ 10MB theo giới hạn backend) */
     private byte[] readAllBytes(Uri uri) throws IOException {
-        try (java.io.InputStream is = requireContext()
-                .getContentResolver().openInputStream(uri)) {
+        try (InputStream is = requireContext().getContentResolver().openInputStream(uri)) {
             if (is == null) throw new IOException("Cannot open stream");
-            return is.readAllBytes();
+
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] data = new byte[8192];
+            int read;
+            while ((read = is.read(data)) != -1) {
+                buffer.write(data, 0, read);
+            }
+            return buffer.toByteArray();
         }
     }
 
@@ -478,10 +536,10 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
                     requireContext(), file.getId(), file.getFileName(), apiService);
         });
 
-        // Rename (TODO Phase 2 nâng cao)
+        // Rename
         sheetView.findViewById(R.id.action_rename).setOnClickListener(v -> {
             dialog.dismiss();
-            showToast("Tính năng đổi tên sẽ được bổ sung sớm");
+            showRenameDialog(file);
         });
 
         // Delete
@@ -555,6 +613,54 @@ public class FilesFragment extends Fragment implements FileAdapter.OnFileActionL
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
+                showToast(getString(R.string.err_network));
+            }
+        });
+    }
+
+    private void showRenameDialog(FileMetadataDto file) {
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_create_folder, null);
+
+        TextInputLayout til = dialogView.findViewById(R.id.til_folder_name);
+        TextInputEditText et = dialogView.findViewById(R.id.et_folder_name);
+        et.setHint("Tên mới");
+        et.setText(file.getFileName());
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Đổi tên")
+                .setView(dialogView)
+                .setPositiveButton("Lưu", (dialog, which) -> {
+                    String newName = et.getText() != null
+                            ? et.getText().toString().trim() : "";
+                    if (TextUtils.isEmpty(newName)) {
+                        til.setError("Tên không được để trống");
+                        return;
+                    }
+                    renameFile(file, newName);
+                })
+                .setNegativeButton(getString(R.string.btn_cancel), null)
+                .show();
+    }
+
+    private void renameFile(FileMetadataDto file, String newName) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("fileName", newName);
+
+        apiService.renameFile(file.getId(), body).enqueue(new Callback<FileMetadataDto>() {
+            @Override
+            public void onResponse(Call<FileMetadataDto> call, Response<FileMetadataDto> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    file.setFileName(response.body().getFileName());
+                    fileAdapter.notifyDataSetChanged();
+                    showToast("✅ Đổi tên thành công");
+                } else {
+                    showToast("❌ Không thể đổi tên");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<FileMetadataDto> call, Throwable t) {
                 showToast(getString(R.string.err_network));
             }
         });

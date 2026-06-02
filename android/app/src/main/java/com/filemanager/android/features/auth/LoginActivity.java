@@ -113,25 +113,47 @@ public class LoginActivity extends AppCompatActivity {
         apiService.login(request).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
-                setLoading(false);
-
                 if (response.isSuccessful() && response.body() != null) {
                     LoginResponse loginResponse = response.body();
 
-                    // Lưu session
-                    sessionManager.saveSession(
-                            loginResponse.getToken(),
-                            loginResponse.getUsername()
-                    );
+                    // Temporarily save token so that ApiClient (AuthInterceptor) can use it for the next call
+                    sessionManager.saveSession(loginResponse.getToken(), loginResponse.getUsername(), false);
 
-                    // Vào màn hình chính
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
+                    // Lấy thông tin user để biết có phải Admin không
+                    apiService.getMyProfile().enqueue(new Callback<com.filemanager.android.network.dto.UserDto>() {
+                        @Override
+                        public void onResponse(Call<com.filemanager.android.network.dto.UserDto> profileCall, Response<com.filemanager.android.network.dto.UserDto> profileResponse) {
+                            setLoading(false);
+                            boolean isAdmin = false;
+                            if (profileResponse.isSuccessful() && profileResponse.body() != null) {
+                                isAdmin = profileResponse.body().isAdmin();
+                            }
+                            
+                            // Cập nhật lại session với cờ admin chính xác
+                            sessionManager.saveSession(
+                                    loginResponse.getToken(),
+                                    loginResponse.getUsername(),
+                                    isAdmin
+                            );
+
+                            // Vào màn hình chính
+                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                        }
+
+                        @Override
+                        public void onFailure(Call<com.filemanager.android.network.dto.UserDto> profileCall, Throwable t) {
+                            setLoading(false);
+                            showError("Không thể lấy thông tin profile");
+                        }
+                    });
 
                 } else if (response.code() == 401) {
+                    setLoading(false);
                     showError("Sai tên đăng nhập hoặc mật khẩu");
                 } else {
+                    setLoading(false);
                     showError("Lỗi đăng nhập: " + response.code());
                 }
             }
