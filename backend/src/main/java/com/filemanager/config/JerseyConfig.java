@@ -24,7 +24,7 @@ public class JerseyConfig extends ResourceConfig {
         
         // Kích hoạt tính năng Upload File (Multipart)
         register(MultiPartFeature.class);
-        // K�ch ho?t SSE (Server-Sent Events) cho th�ng b�o real-time
+        // Kích hoạt SSE (Server-Sent Events) cho thông báo real-time
         register(SseFeature.class);
         register(UserResource.class);
         register(AdminResource.class);

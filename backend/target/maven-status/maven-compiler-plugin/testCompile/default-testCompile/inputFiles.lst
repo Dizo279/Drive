@@ -1,4 +1,4 @@
-d:\file-manager\backend\src\test\java\com\filemanager\filter\JwtAuthFilterTest.java
-d:\file-manager\backend\src\test\java\com\filemanager\security\JwtUtilTest.java
-d:\file-manager\backend\src\test\java\com\filemanager\config\CorsConfigTest.java
-d:\file-manager\backend\src\test\java\com\filemanager\resource\AuthResourceTest.java
+D:\project\Drive\backend\src\test\java\com\filemanager\filter\JwtAuthFilterTest.java
+D:\project\Drive\backend\src\test\java\com\filemanager\resource\AuthResourceTest.java
+D:\project\Drive\backend\src\test\java\com\filemanager\security\JwtUtilTest.java
+D:\project\Drive\backend\src\test\java\com\filemanager\config\CorsConfigTest.java
