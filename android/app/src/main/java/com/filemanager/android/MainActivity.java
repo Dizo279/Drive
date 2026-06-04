@@ -22,36 +22,64 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNavigation;
+    private com.filemanager.android.network.AdminSseClient adminSseClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-        // Bảo vệ: nếu chưa đăng nhập thì không vào được
         if (!SessionManager.getInstance(this).isLoggedIn()) {
-            redirectToLogin();
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
             return;
         }
 
-        setContentView(R.layout.activity_main);
-
         bottomNavigation = findViewById(R.id.bottom_navigation);
 
-        // Load fragment mặc định (Files)
-        if (savedInstanceState == null) {
-            loadFragment(new FilesFragment());
+        boolean isAdmin = SessionManager.getInstance(this).isAdmin();
+
+        if (isAdmin) {
+            bottomNavigation.getMenu().removeItem(R.id.nav_shared);
+            bottomNavigation.getMenu().removeItem(R.id.nav_trash);
+            
+            // Start listening for SSE notifications
+            adminSseClient = new com.filemanager.android.network.AdminSseClient(this);
+            adminSseClient.startListening();
         }
 
-        setupBottomNavigation();
+        // Load fragment mặc định (Files or Admin Dashboard)
+        if (savedInstanceState == null) {
+            if (isAdmin) {
+                loadFragment(new com.filemanager.android.features.admin.AdminDashboardFragment());
+            } else {
+                loadFragment(new FilesFragment());
+            }
+        }
+
+        setupBottomNavigation(isAdmin);
+        requestNotificationPermission();
     }
 
-    private void setupBottomNavigation() {
+    private void requestNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
+    }
+
+    private void setupBottomNavigation(boolean isAdmin) {
         bottomNavigation.setOnItemSelectedListener(item -> {
             Fragment fragment = null;
             int itemId = item.getItemId();
 
             if (itemId == R.id.nav_files) {
-                fragment = new FilesFragment();
+                if (isAdmin) {
+                    fragment = new com.filemanager.android.features.admin.AdminDashboardFragment();
+                } else {
+                    fragment = new FilesFragment();
+                }
             } else if (itemId == R.id.nav_shared) {
                 fragment = new SharedFragment();
             } else if (itemId == R.id.nav_trash) {

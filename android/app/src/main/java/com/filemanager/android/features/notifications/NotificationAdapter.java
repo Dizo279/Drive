@@ -10,6 +10,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.filemanager.android.R;
@@ -135,22 +136,22 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
          * Các type: FILE_SHARED, UPGRADE_REQUEST, SYSTEM, DOWNLOAD, etc.
          */
         private NotifConfig getConfigForType(String type) {
-            if (type == null) return new NotifConfig("🔔", context.getColor(R.color.apple_gray));
+            if (type == null) return new NotifConfig("🔔", ContextCompat.getColor(context, R.color.apple_gray));
 
             switch (type.toUpperCase()) {
                 case "FILE_SHARED":
-                    return new NotifConfig("🔗", context.getColor(R.color.apple_blue));
+                    return new NotifConfig("🔗", ContextCompat.getColor(context, R.color.apple_blue));
                 case "UPGRADE_REQUEST":
                 case "UPGRADE_APPROVED":
-                    return new NotifConfig("⭐", context.getColor(R.color.apple_orange));
+                    return new NotifConfig("⭐", ContextCompat.getColor(context, R.color.apple_orange));
                 case "FILE_DELETED":
-                    return new NotifConfig("🗑️", context.getColor(R.color.apple_red));
+                    return new NotifConfig("🗑️", ContextCompat.getColor(context, R.color.apple_red));
                 case "SYSTEM":
-                    return new NotifConfig("📢", context.getColor(R.color.apple_gray));
+                    return new NotifConfig("📢", ContextCompat.getColor(context, R.color.apple_gray));
                 case "DOWNLOAD":
-                    return new NotifConfig("⬇️", context.getColor(R.color.apple_green));
+                    return new NotifConfig("⬇️", ContextCompat.getColor(context, R.color.apple_green));
                 default:
-                    return new NotifConfig("🔔", context.getColor(R.color.apple_blue));
+                    return new NotifConfig("🔔", ContextCompat.getColor(context, R.color.apple_blue));
             }
         }
     }

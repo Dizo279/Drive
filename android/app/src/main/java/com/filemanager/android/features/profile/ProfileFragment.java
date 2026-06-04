@@ -1,28 +1,45 @@
 package com.filemanager.android.features.profile;
 
-import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
 import com.filemanager.android.MainActivity;
 import com.filemanager.android.R;
 import com.filemanager.android.network.ApiClient;
 import com.filemanager.android.network.ApiService;
+import com.filemanager.android.network.dto.ProfileUpdateRequest;
 import com.filemanager.android.network.dto.UserDto;
 import com.filemanager.android.storage.SessionManager;
 import com.filemanager.android.utils.FileUtils;
+import android.widget.Button;
+
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -42,6 +59,7 @@ import retrofit2.Response;
 public class ProfileFragment extends Fragment {
 
     // === Header views ===
+    private ImageView ivAvatar;
     private TextView tvAvatarLetter;
     private TextView tvFullName;
     private TextView tvEmail;
@@ -66,9 +84,12 @@ public class ProfileFragment extends Fragment {
     private TextView tvInfoRole;
 
     // === Action views ===
+    private MaterialButton btnEditProfile;
     private LinearLayout actionLogout;
 
     private ApiService apiService;
+    private ActivityResultLauncher<String> avatarPickerLauncher;
+    private UserDto currentUser;
 
     @Nullable
     @Override
@@ -85,12 +106,14 @@ public class ProfileFragment extends Fragment {
         initViews(view);
         apiService = ApiClient.getApiService(requireContext());
 
+        setupAvatarPicker();
         setupActions();
         loadProfile();
     }
 
     private void initViews(View view) {
         // Header
+        ivAvatar         = view.findViewById(R.id.iv_avatar_image);
         tvAvatarLetter   = view.findViewById(R.id.tv_avatar_letter);
         tvFullName       = view.findViewById(R.id.tv_full_name);
         tvEmail          = view.findViewById(R.id.tv_email);
@@ -114,6 +137,8 @@ public class ProfileFragment extends Fragment {
         tvInfoEmail       = view.findViewById(R.id.tv_info_email);
         tvInfoRole        = view.findViewById(R.id.tv_info_role);
 
+        btnEditProfile = view.findViewById(R.id.btn_edit_profile);
+
         // Actions
         actionLogout = view.findViewById(R.id.action_logout);
     }
@@ -121,6 +146,18 @@ public class ProfileFragment extends Fragment {
     private void setupActions() {
         // Nút đăng xuất
         actionLogout.setOnClickListener(v -> confirmLogout());
+
+        // Chỉnh sửa thông tin cá nhân từ header
+        btnEditProfile.setOnClickListener(v -> showEditProfileDialog());
+
+        // Chỉnh sửa thông tin cá nhân từ Card "Thông tin tài khoản"
+        View tvEditProfileLink = requireView().findViewById(R.id.tv_edit_profile_link);
+        if (tvEditProfileLink != null) {
+            tvEditProfileLink.setOnClickListener(v -> showEditProfileDialog());
+        }
+
+        // Đổi avatar
+        ivAvatar.setOnClickListener(v -> chooseAvatar());
 
         // TODO: Đổi mật khẩu
         View actionChangePassword = requireView().findViewById(R.id.action_change_password);
@@ -166,23 +203,42 @@ public class ProfileFragment extends Fragment {
      * Bind dữ liệu UserDto lên toàn bộ UI.
      */
     private void bindProfile(UserDto user) {
-        // === Header ===
-        // Avatar chữ cái đầu
-        String displayName = user.getFullName() != null ? user.getFullName() : user.getUsername();
-        String avatarLetter = displayName != null && !displayName.isEmpty()
-                ? String.valueOf(displayName.charAt(0)).toUpperCase() : "U";
-        tvAvatarLetter.setText(avatarLetter);
+        currentUser = user;
 
+        // === Header ===
+        // Avatar (ảnh hoặc chữ cái đầu)
+        if (!TextUtils.isEmpty(user.getAvatarUrl())) {
+            ivAvatar.setVisibility(View.VISIBLE);
+            tvAvatarLetter.setVisibility(View.GONE);
+            if (user.getAvatarUrl().startsWith("data:image/")) {
+                loadDataUriAvatar(user.getAvatarUrl());
+            } else {
+                Glide.with(requireContext())
+                        .load(user.getAvatarUrl())
+                        .circleCrop()
+                        .placeholder(R.drawable.bg_avatar_circle)
+                        .into(ivAvatar);
+            }
+        } else {
+            ivAvatar.setImageResource(android.R.color.transparent);
+            tvAvatarLetter.setVisibility(View.VISIBLE);
+            String displayName = user.getFullName() != null ? user.getFullName() : user.getUsername();
+            String avatarLetter = displayName != null && !displayName.isEmpty()
+                    ? String.valueOf(displayName.charAt(0)).toUpperCase() : "U";
+            tvAvatarLetter.setText(avatarLetter);
+        }
+
+        String displayName = user.getFullName() != null ? user.getFullName() : user.getUsername();
         tvFullName.setText(displayName != null ? displayName : "—");
         tvEmail.setText(user.getEmail() != null ? user.getEmail() : "—");
 
         // Tier badge
         if (user.isPremium()) {
             tvTierBadge.setText("⭐ PREMIUM");
-            tvTierBadge.setTextColor(requireContext().getColor(R.color.apple_orange));
+            tvTierBadge.setTextColor(ContextCompat.getColor(requireContext(), R.color.apple_orange));
         } else if (user.isAdmin()) {
             tvTierBadge.setText("👑 ADMIN");
-            tvTierBadge.setTextColor(requireContext().getColor(R.color.apple_blue));
+            tvTierBadge.setTextColor(ContextCompat.getColor(requireContext(), R.color.apple_blue));
         } else {
             tvTierBadge.setText("FREE");
         }
@@ -199,12 +255,15 @@ public class ProfileFragment extends Fragment {
 
         // Đổi màu progress bar nếu gần đầy (>80% = cam, >90% = đỏ)
         if (percent >= 90) {
-            progressQuota.setIndicatorColor(requireContext().getColor(R.color.apple_red));
-            tvQuotaPercent.setTextColor(requireContext().getColor(R.color.apple_red));
+            progressQuota.setIndicatorColor(ContextCompat.getColor(requireContext(), R.color.apple_red));
+            tvQuotaPercent.setTextColor(ContextCompat.getColor(requireContext(), R.color.apple_red));
         } else if (percent >= 80) {
-            progressQuota.setIndicatorColor(requireContext().getColor(R.color.apple_orange));
-            tvQuotaPercent.setTextColor(requireContext().getColor(R.color.apple_orange));
+            progressQuota.setIndicatorColor(ContextCompat.getColor(requireContext(), R.color.apple_orange));
+            tvQuotaPercent.setTextColor(ContextCompat.getColor(requireContext(), R.color.apple_orange));
         }
+
+        // Nút chỉnh sửa hồ sơ
+        btnEditProfile.setVisibility(View.VISIBLE);
 
         // Nút nâng cấp Premium
         if (user.isPremium() || user.isAdmin()) {
@@ -291,6 +350,199 @@ public class ProfileFragment extends Fragment {
                 .setPositiveButton(getString(R.string.btn_logout), (d, w) -> doLogout())
                 .setNegativeButton(getString(R.string.btn_cancel), null)
                 .show();
+    }
+
+    private void setupAvatarPicker() {
+        avatarPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        updateAvatar(uri);
+                    }
+                }
+        );
+    }
+
+    private void chooseAvatar() {
+        avatarPickerLauncher.launch("image/*");
+    }
+
+    private void updateAvatar(Uri uri) {
+        try {
+            // Đọc thông tin xoay ảnh (EXIF) từ Uri
+            int rotationDegrees = 0;
+            InputStream exifStream = requireContext().getContentResolver().openInputStream(uri);
+            if (exifStream != null) {
+                android.media.ExifInterface exif = new android.media.ExifInterface(exifStream);
+                int orientation = exif.getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, 
+                        android.media.ExifInterface.ORIENTATION_NORMAL);
+                exifStream.close();
+
+                switch (orientation) {
+                    case android.media.ExifInterface.ORIENTATION_ROTATE_90:
+                        rotationDegrees = 90;
+                        break;
+                    case android.media.ExifInterface.ORIENTATION_ROTATE_180:
+                        rotationDegrees = 180;
+                        break;
+                    case android.media.ExifInterface.ORIENTATION_ROTATE_270:
+                        rotationDegrees = 270;
+                        break;
+                }
+            }
+
+            InputStream stream = requireContext().getContentResolver().openInputStream(uri);
+            if (stream == null) {
+                showToast("Không thể đọc ảnh");
+                return;
+            }
+
+            Bitmap bitmap = BitmapFactory.decodeStream(stream);
+            stream.close();
+            if (bitmap == null) {
+                showToast("Ảnh không hợp lệ");
+                return;
+            }
+
+            // Tự động xoay đứng thẳng ảnh nếu cần thiết
+            if (rotationDegrees != 0) {
+                android.graphics.Matrix matrix = new android.graphics.Matrix();
+                matrix.postRotate(rotationDegrees);
+                Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                if (rotatedBitmap != bitmap) {
+                    bitmap.recycle();
+                    bitmap = rotatedBitmap;
+                }
+            }
+
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, output);
+            String base64 = Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP);
+            String avatarDataUri = "data:image/jpeg;base64," + base64;
+
+            ProfileUpdateRequest request = new ProfileUpdateRequest();
+            request.avatarUrl = avatarDataUri;
+            showLoading(true);
+            apiService.updateProfile(request).enqueue(new Callback<UserDto>() {
+                @Override
+                public void onResponse(Call<UserDto> call, Response<UserDto> response) {
+                    showLoading(false);
+                    if (response.isSuccessful() && response.body() != null) {
+                        bindProfile(response.body());
+                        showToast("Avatar đã được cập nhật");
+                    } else {
+                        showToast("Không thể cập nhật avatar");
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<UserDto> call, Throwable t) {
+                    showLoading(false);
+                    showToast(getString(R.string.err_network));
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            showToast("Không thể đổi avatar");
+        }
+    }
+
+    private void showEditProfileDialog() {
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_edit_profile, null, false);
+
+        TextInputLayout tilFullName = dialogView.findViewById(R.id.til_full_name);
+        TextInputLayout tilEmail = dialogView.findViewById(R.id.til_email);
+        TextInputLayout tilPassword = dialogView.findViewById(R.id.til_current_password);
+
+        TextInputEditText etFullName = dialogView.findViewById(R.id.et_full_name);
+        TextInputEditText etEmail = dialogView.findViewById(R.id.et_email);
+        TextInputEditText etPassword = dialogView.findViewById(R.id.et_current_password);
+
+        if (currentUser != null) {
+            etFullName.setText(currentUser.getFullName());
+            etEmail.setText(currentUser.getEmail());
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle("Chỉnh sửa hồ sơ")
+                .setView(dialogView)
+                .setPositiveButton(getString(R.string.btn_confirm), null)
+                .setNegativeButton(getString(R.string.btn_cancel), null)
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            if (positiveButton != null) {
+                positiveButton.setOnClickListener(v -> {
+                    String fullName = etFullName.getText() != null ? etFullName.getText().toString().trim() : "";
+                    String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
+                    String currentPassword = etPassword.getText() != null ? etPassword.getText().toString() : "";
+
+                    tilFullName.setError(null);
+                    tilEmail.setError(null);
+                    tilPassword.setError(null);
+
+                    if (TextUtils.isEmpty(fullName)) {
+                        tilFullName.setError("Họ tên không được để trống");
+                        return;
+                    }
+                    if (TextUtils.isEmpty(email) || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                        tilEmail.setError("Email không hợp lệ");
+                        return;
+                    }
+                    boolean emailChanged = currentUser != null && !TextUtils.equals(email, currentUser.getEmail());
+                    if (emailChanged && TextUtils.isEmpty(currentPassword)) {
+                        tilPassword.setError("Nhập mật khẩu hiện tại để đổi email");
+                        return;
+                    }
+
+                    ProfileUpdateRequest request = new ProfileUpdateRequest();
+                    request.fullName = fullName;
+                    request.email = email;
+                    if (emailChanged) {
+                        request.currentPassword = currentPassword;
+                    }
+                    sendProfileUpdate(request);
+                    dialog.dismiss();
+                });
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void sendProfileUpdate(ProfileUpdateRequest request) {
+        showLoading(true);
+        apiService.updateProfile(request).enqueue(new Callback<UserDto>() {
+            @Override
+            public void onResponse(Call<UserDto> call, Response<UserDto> response) {
+                showLoading(false);
+                if (response.isSuccessful() && response.body() != null) {
+                    bindProfile(response.body());
+                    showToast("Thông tin cá nhân đã được cập nhật");
+                } else {
+                    showToast("Không thể cập nhật thông tin");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserDto> call, Throwable t) {
+                showLoading(false);
+                showToast(getString(R.string.err_network));
+            }
+        });
+    }
+
+    private void loadDataUriAvatar(String dataUri) {
+        try {
+            String base64Data = dataUri.substring(dataUri.indexOf(",") + 1);
+            byte[] bytes = Base64.decode(base64Data, Base64.DEFAULT);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            ivAvatar.setImageBitmap(bitmap);
+        } catch (Exception e) {
+            ivAvatar.setImageResource(android.R.color.transparent);
+        }
     }
 
     private void doLogout() {

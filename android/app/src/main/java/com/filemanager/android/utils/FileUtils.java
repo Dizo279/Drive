@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
 
+import androidx.core.content.ContextCompat;
+
 import com.filemanager.android.R;
 
 import java.io.File;
@@ -54,14 +56,14 @@ public class FileUtils {
     public static int getFileIconColor(Context ctx, String mimeType, boolean isFolder) {
         String category = getFileCategory(mimeType, isFolder);
         switch (category) {
-            case TYPE_FOLDER:  return ctx.getColor(R.color.file_type_folder);
-            case TYPE_IMAGE:   return ctx.getColor(R.color.file_type_image);
-            case TYPE_VIDEO:   return ctx.getColor(R.color.file_type_video);
-            case TYPE_AUDIO:   return ctx.getColor(R.color.file_type_audio);
+            case TYPE_FOLDER:  return ContextCompat.getColor(ctx, R.color.file_type_folder);
+            case TYPE_IMAGE:   return ContextCompat.getColor(ctx, R.color.file_type_image);
+            case TYPE_VIDEO:   return ContextCompat.getColor(ctx, R.color.file_type_video);
+            case TYPE_AUDIO:   return ContextCompat.getColor(ctx, R.color.file_type_audio);
             case TYPE_PDF:
-            case TYPE_DOC:     return ctx.getColor(R.color.file_type_doc);
-            case TYPE_ARCHIVE: return ctx.getColor(R.color.apple_orange);
-            default:           return ctx.getColor(R.color.file_type_other);
+            case TYPE_DOC:     return ContextCompat.getColor(ctx, R.color.file_type_doc);
+            case TYPE_ARCHIVE: return ContextCompat.getColor(ctx, R.color.apple_orange);
+            default:           return ContextCompat.getColor(ctx, R.color.file_type_other);
         }
     }
 

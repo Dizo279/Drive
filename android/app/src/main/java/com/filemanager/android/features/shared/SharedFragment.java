@@ -15,6 +15,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -122,7 +123,7 @@ public class SharedFragment extends Fragment implements SharedItemAdapter.OnShar
     }
 
     private void setupSwipeRefresh() {
-        swipeRefresh.setColorSchemeColors(requireContext().getColor(R.color.apple_blue));
+        swipeRefresh.setColorSchemeColors(ContextCompat.getColor(requireContext(), R.color.apple_blue));
         swipeRefresh.setOnRefreshListener(() -> {
             if (isShowingByMe) loadSharedByMe();
             else loadSharedWithMe();
@@ -141,11 +142,18 @@ public class SharedFragment extends Fragment implements SharedItemAdapter.OnShar
                                    Response<List<SharedItemDto>> response) {
                 swipeRefresh.setRefreshing(false);
                 if (response.isSuccessful() && response.body() != null) {
-                    List<SharedItemDto> items = response.body();
+                    List<SharedItemDto> items = new java.util.ArrayList<>(response.body());
+                    
+                    // Merge local items
+                    List<SharedItemDto> localItems = com.filemanager.android.utils.LocalNotificationHelper.getLocalSharedItems(requireContext());
+                    items.addAll(0, localItems);
+                    
                     sharedAdapter.setData(items, true);
                     toggleEmptyState(items.isEmpty());
                 } else {
-                    toggleEmptyState(true);
+                    List<SharedItemDto> localItems = com.filemanager.android.utils.LocalNotificationHelper.getLocalSharedItems(requireContext());
+                    sharedAdapter.setData(localItems, true);
+                    toggleEmptyState(localItems.isEmpty());
                 }
             }
 
@@ -153,7 +161,10 @@ public class SharedFragment extends Fragment implements SharedItemAdapter.OnShar
             public void onFailure(Call<List<SharedItemDto>> call, Throwable t) {
                 swipeRefresh.setRefreshing(false);
                 showToast(getString(R.string.err_network));
-                toggleEmptyState(true);
+                
+                List<SharedItemDto> localItems = com.filemanager.android.utils.LocalNotificationHelper.getLocalSharedItems(requireContext());
+                sharedAdapter.setData(localItems, true);
+                toggleEmptyState(localItems.isEmpty());
             }
         });
     }
@@ -351,6 +362,15 @@ public class SharedFragment extends Fragment implements SharedItemAdapter.OnShar
                         Toast.makeText(context,
                                 "✅ Đã chia sẻ với " + emails.size() + " người",
                                 Toast.LENGTH_SHORT).show();
+                        com.filemanager.android.utils.LocalNotificationHelper.addShareNotification(context, fileName, false);
+                        
+                        // Save shared item locally
+                        String dateString = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US).format(new java.util.Date());
+                        com.filemanager.android.network.dto.SharedItemDto dto = new com.filemanager.android.network.dto.SharedItemDto(
+                                -System.currentTimeMillis(), fileId, fileName, emailInput, dateString, null
+                        );
+                        com.filemanager.android.utils.LocalNotificationHelper.saveLocalSharedItem(context, dto);
+                        
                         dialog.dismiss();
                     } else {
                         Toast.makeText(context, "❌ Không thể chia sẻ", Toast.LENGTH_SHORT).show();
@@ -391,6 +411,15 @@ public class SharedFragment extends Fragment implements SharedItemAdapter.OnShar
                             String shareLink = "http://10.0.2.2:8080/api/files/shared/" + token;
                             tvResultLink.setText(shareLink);
                             layoutResult.setVisibility(View.VISIBLE);
+                            
+                            com.filemanager.android.utils.LocalNotificationHelper.addShareNotification(context, fileName, true);
+
+                            // Save shared item locally
+                            String dateString = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US).format(new java.util.Date());
+                            com.filemanager.android.network.dto.SharedItemDto dto = new com.filemanager.android.network.dto.SharedItemDto(
+                                    -System.currentTimeMillis(), fileId, fileName, "Public Link", dateString, token
+                            );
+                            com.filemanager.android.utils.LocalNotificationHelper.saveLocalSharedItem(context, dto);
 
                             // Copy link
                             btnCopyLink.setOnClickListener(cv -> {

@@ -21,10 +21,7 @@ import java.util.concurrent.TimeUnit;
 public class ApiClient {
 
     // ============================================================
-    // ⚠️ THAY ĐỔI URL NÀY KHI TEST TRÊN THIẾT BỊ THẬT:
-    // private static final String BASE_URL = "http://192.168.1.x:8080/api/";
-    // ============================================================
-    private static final String BASE_URL = "http://10.0.2.2:8080/api/";
+    public static final String BASE_URL = "http://10.0.2.2:8080/api/";
 
     private static Retrofit retrofit;
     private static ApiService apiService;
@@ -40,7 +37,7 @@ public class ApiClient {
         return apiService;
     }
 
-    private static Retrofit getRetrofit(Context context) {
+    public static Retrofit getRetrofit(Context context) {
         if (retrofit == null) {
             SessionManager sessionManager = SessionManager.getInstance(context);
 

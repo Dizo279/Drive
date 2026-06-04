@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -81,7 +82,7 @@ public class NotificationsFragment extends Fragment
     }
 
     private void setupSwipeRefresh() {
-        swipeRefresh.setColorSchemeColors(requireContext().getColor(R.color.apple_blue));
+        swipeRefresh.setColorSchemeColors(ContextCompat.getColor(requireContext(), R.color.apple_blue));
         swipeRefresh.setOnRefreshListener(this::loadNotifications);
     }
 
@@ -89,6 +90,10 @@ public class NotificationsFragment extends Fragment
         btnMarkAllRead.setOnClickListener(v -> {
             // TODO: Gọi API mark-all-read khi backend có endpoint
             // apiService.markAllNotificationsRead().enqueue(...)
+            
+            // Clear local notifications
+            com.filemanager.android.utils.LocalNotificationHelper.clearLocalNotifications(requireContext());
+            
             notificationAdapter.markAllRead();
             showToast("✅ Đã đánh dấu tất cả là đã đọc");
         });
@@ -108,7 +113,12 @@ public class NotificationsFragment extends Fragment
                 swipeRefresh.setRefreshing(false);
 
                 if (response.isSuccessful() && response.body() != null) {
-                    List<NotificationDto> items = response.body();
+                    List<NotificationDto> items = new java.util.ArrayList<>(response.body());
+                    
+                    // Merge local notifications
+                    List<NotificationDto> localItems = com.filemanager.android.utils.LocalNotificationHelper.getLocalNotifications(requireContext());
+                    items.addAll(0, localItems);
+
                     notificationAdapter.setData(items);
                     toggleEmptyState(items.isEmpty());
 
@@ -121,7 +131,18 @@ public class NotificationsFragment extends Fragment
                         btnMarkAllRead.setVisibility(View.GONE);
                     }
                 } else {
-                    toggleEmptyState(true);
+                    // Load only local notifications if API fails
+                    List<NotificationDto> localItems = com.filemanager.android.utils.LocalNotificationHelper.getLocalNotifications(requireContext());
+                    notificationAdapter.setData(localItems);
+                    toggleEmptyState(localItems.isEmpty());
+                    
+                    int unread = notificationAdapter.getUnreadCount();
+                    if (unread > 0) {
+                        btnMarkAllRead.setVisibility(View.VISIBLE);
+                        btnMarkAllRead.setText("Đọc hết (" + unread + ")");
+                    } else {
+                        btnMarkAllRead.setVisibility(View.GONE);
+                    }
                 }
             }
 
@@ -129,7 +150,19 @@ public class NotificationsFragment extends Fragment
             public void onFailure(Call<List<NotificationDto>> call, Throwable t) {
                 swipeRefresh.setRefreshing(false);
                 showToast(getString(R.string.err_network));
-                toggleEmptyState(true);
+                
+                // Load only local notifications on failure
+                List<NotificationDto> localItems = com.filemanager.android.utils.LocalNotificationHelper.getLocalNotifications(requireContext());
+                notificationAdapter.setData(localItems);
+                toggleEmptyState(localItems.isEmpty());
+                
+                int unread = notificationAdapter.getUnreadCount();
+                if (unread > 0) {
+                    btnMarkAllRead.setVisibility(View.VISIBLE);
+                    btnMarkAllRead.setText("Đọc hết (" + unread + ")");
+                } else {
+                    btnMarkAllRead.setVisibility(View.GONE);
+                }
             }
         });
     }

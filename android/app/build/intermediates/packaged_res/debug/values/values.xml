@@ -44,6 +44,7 @@
     <string name="app_subtitle">Quản lý tệp tin thông minh</string>
     <string name="btn_cancel">Hủy</string>
     <string name="btn_confirm">Xác nhận</string>
+    <string name="btn_edit_profile">✏️  Chỉnh sửa hồ sơ</string>
     <string name="btn_login">Đăng nhập</string>
     <string name="btn_logout">Đăng xuất</string>
     <string name="btn_ok">OK</string>
@@ -71,6 +72,7 @@
     <string name="hint_email">Email</string>
     <string name="hint_full_name">Họ và tên</string>
     <string name="hint_password">Mật khẩu</string>
+    <string name="hint_search_files">Tìm kiếm tệp hoặc thư mục</string>
     <string name="hint_username">Tên đăng nhập</string>
     <string name="loading">Đang tải...</string>
     <string name="login_subtitle">Chào mừng trở lại!</string>
@@ -86,6 +88,12 @@
     <string name="register_title">Tạo tài khoản</string>
     <string name="title_my_files">Tệp của tôi</string>
     <string name="uploading">Đang tải lên...</string>
+    <style name="ShapeAppearance.Circle" parent="">
+        <item name="cornerSize">50%</item>
+    </style>
+    <style name="ShapeAppearance.Straight" parent="">
+        <item name="cornerSize">12dp</item>
+    </style>
     <style name="Theme.FileManager" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/apple_blue</item>
         <item name="colorOnPrimary">@color/apple_white</item>

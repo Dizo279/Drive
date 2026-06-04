@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nền vuông bo góc nhẹ cho avatar (chữ cái đầu tên) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/apple_blue" />
+    <corners android:radius="12dp" />
+</shape>

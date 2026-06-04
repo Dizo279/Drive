@@ -6,6 +6,7 @@ import com.filemanager.android.network.dto.LoginResponse;
 import com.filemanager.android.network.dto.NotificationDto;
 import com.filemanager.android.network.dto.SharedItemDto;
 import com.filemanager.android.network.dto.RegisterRequest;
+import com.filemanager.android.network.dto.ProfileUpdateRequest;
 import com.filemanager.android.network.dto.UserDto;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
 import retrofit2.http.Part;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
@@ -83,6 +85,10 @@ public interface ApiService {
     @POST("files/folder")
     Call<FileMetadataDto> createFolder(@Body Map<String, Object> body);
 
+    /** Đổi tên file/thư mục */
+    @PUT("files/{id}/rename")
+    Call<FileMetadataDto> renameFile(@Path("id") Long id, @Body Map<String, Object> body);
+
     /** Lấy danh sách Trash */
     @GET("files/trash")
     Call<List<FileMetadataDto>> getTrash();
@@ -128,6 +134,9 @@ public interface ApiService {
     @POST("users/upgrade-request")
     Call<ResponseBody> requestUpgrade();
 
+    /** Cập nhật profile cá nhân */
+    @PUT("users/profile")
+    Call<UserDto> updateProfile(@Body ProfileUpdateRequest request);
 
     // =====================
     // NOTIFICATIONS — /api/notifications
@@ -136,4 +145,29 @@ public interface ApiService {
     /** Lấy danh sách thông báo */
     @GET("notifications")
     Call<List<NotificationDto>> getNotifications();
+
+    // =====================
+    // ADMIN — /api/admin
+    // =====================
+
+    @GET("admin/stats")
+    Call<com.filemanager.android.network.dto.AdminStatsDto> getAdminStats();
+
+    @GET("admin/users")
+    Call<List<UserDto>> getAdminUsers();
+
+    @PUT("admin/users/{userId}/role")
+    Call<ResponseBody> updateUserRole(@Path("userId") Long userId, @Body Map<String, String> body);
+
+    @PUT("admin/users/{userId}/tier")
+    Call<ResponseBody> updateUserTier(@Path("userId") Long userId, @Body Map<String, String> body);
+
+    @DELETE("admin/users/{userId}")
+    Call<ResponseBody> deleteUser(@Path("userId") Long userId);
+
+    @GET("admin/upgrade-requests")
+    Call<List<com.filemanager.android.network.dto.UpgradeRequestDto>> getUpgradeRequests();
+
+    @POST("admin/upgrade-requests/{requestId}/process")
+    Call<ResponseBody> processUpgradeRequest(@Path("requestId") Long requestId, @Body Map<String, String> body);
 }

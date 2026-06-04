@@ -43,6 +43,12 @@ public class FileMetadataDto {
     public String getDeletedAt() { return deletedAt; }
     public String getCreatedAt() { return createdAt; }
 
+    // --- Setters ---
+    public void setFileName(String fileName) { this.fileName = fileName; }
+    public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
+    public void setMimeType(String mimeType) { this.mimeType = mimeType; }
+    public void setParentId(Long parentId) { this.parentId = parentId; }
+
     /** Kiểm tra nhanh đây có phải folder không */
     public boolean isFolder() {
         return Boolean.TRUE.equals(isFolder);

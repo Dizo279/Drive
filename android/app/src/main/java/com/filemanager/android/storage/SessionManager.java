@@ -13,6 +13,7 @@ public class SessionManager {
     private static final String KEY_TOKEN = "jwt_token";
     private static final String KEY_USERNAME = "username";
     private static final String KEY_USER_ID = "user_id";
+    private static final String KEY_IS_ADMIN = "is_admin";
 
     private final SharedPreferences prefs;
     private static SessionManager instance;
@@ -34,12 +35,19 @@ public class SessionManager {
      * Lưu thông tin đăng nhập sau khi login thành công.
      * @param token    JWT token từ API
      * @param username Tên đăng nhập
+     * @param isAdmin  Cờ Admin
      */
-    public void saveSession(String token, String username) {
+    public void saveSession(String token, String username, boolean isAdmin) {
         prefs.edit()
                 .putString(KEY_TOKEN, token)
                 .putString(KEY_USERNAME, username)
+                .putBoolean(KEY_IS_ADMIN, isAdmin)
                 .apply();
+    }
+    
+    // Fallback for old calls if any
+    public void saveSession(String token, String username) {
+        saveSession(token, username, false);
     }
 
     /** Lấy JWT token để gắn vào API request header. */
@@ -50,6 +58,11 @@ public class SessionManager {
     /** Lấy username đang đăng nhập. */
     public String getUsername() {
         return prefs.getString(KEY_USERNAME, null);
+    }
+
+    /** Kiểm tra xem user có phải Admin không. */
+    public boolean isAdmin() {
+        return prefs.getBoolean(KEY_IS_ADMIN, false);
     }
 
     /** Kiểm tra user đã đăng nhập chưa (token tồn tại). */

@@ -64,4 +64,14 @@
         <item name="itemTextColor">@color/nav_item_color</item>
         <item name="elevation">8dp</item>
     </style>
+
+    <!-- Style bo tròn cho ShapeableImageView (Avatar) -->
+    <style name="ShapeAppearance.Circle" parent="">
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <!-- Style góc vuông bo nhẹ (thẳng) cho ShapeableImageView (Avatar) -->
+    <style name="ShapeAppearance.Straight" parent="">
+        <item name="cornerSize">12dp</item>
+    </style>
 </resources>
