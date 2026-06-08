@@ -14,8 +14,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 // Cấu hình bảo mật Spring Security, chủ yếu để kích hoạt CORS và cấu hình mã hóa mật khẩu
-// Các API cụ thể sẽ được bảo vệ bởi JwtAuthFilter của JAX-RS, nên ở đây ta chỉ cần cấu hình cơ bản để cho phép CORS hoạt động tốt với Angular.
-// cors là gì? CORS (Cross-Origin Resource Sharing) là một cơ chế bảo mật của trình duyệt cho phép hoặc từ chối các yêu cầu từ một nguồn khác (domain, protocol, hoặc port) so với nguồn của tài nguyên được yêu cầu. Trong trường hợp này, Angular chạy trên localhost:4200 sẽ gửi yêu cầu đến backend trên localhost:8080, nên cần cấu hình CORS để cho phép điều này.
+// cors là gì? CORS (Cross-Origin Resource Sharing) là một cơ chế bảo mật của trình duyệt cho phép hoặc từ chối các yêu cầu từ một nguồn khác (domain, protocol, hoặc port)
+// so với nguồn của tài nguyên được yêu cầu. Trong trường hợp này, Angular chạy trên localhost:4200 sẽ gửi yêu cầu đến backend trên localhost:8080, nên cần cấu hình CORS để cho phép điều này.
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {

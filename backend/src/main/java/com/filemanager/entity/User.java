@@ -16,7 +16,6 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    // --- CÁC CỘT MỚI BỔ SUNG CHO PROFILE ---
     @Column(unique = true, length = 100)
     private String email;
 
@@ -34,7 +33,7 @@ public class User {
     private String tier = "FREE"; // "FREE" hoặc "PREMIUM"
 
     @Column(name = "max_quota")
-    private Long maxQuota = 1073741824L; // Mặc định 1GB
+    private Long maxQuota = 5368709120L; // Mặc định 5GB
 
     @Column(name = "used_quota")
     private Long usedQuota = 0L;
