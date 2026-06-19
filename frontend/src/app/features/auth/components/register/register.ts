@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
+import { ConfirmDialogService } from '@ui/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-register',

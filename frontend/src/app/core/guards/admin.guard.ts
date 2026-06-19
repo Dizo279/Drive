@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from '@features/auth/services/auth.service';
-import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
+import { ConfirmDialogService } from '@ui/services/confirm-dialog.service';
 
 /**
  * Guard to prevent non-admin users from accessing administrative routes.

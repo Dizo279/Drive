@@ -1,8 +1,8 @@
-﻿import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
+import { ConfirmDialogService } from '@ui/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-shared-list',
@@ -12,13 +12,15 @@ import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
   imports: [CommonModule, RouterLink]
 })
 export class SharedListComponent implements OnInit {
+  private readonly http = inject(HttpClient);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly dialogService = inject(ConfirmDialogService);
+
   activeTab: 'by-me' | 'with-me' = 'by-me';
   sharedItems: any[] = [];
   loading: boolean = false;
   
   private apiUrl = 'http://localhost:8080/api/files';
-
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef, private dialogService: ConfirmDialogService) {}
 
   ngOnInit(): void {
     if (typeof window !== 'undefined') {

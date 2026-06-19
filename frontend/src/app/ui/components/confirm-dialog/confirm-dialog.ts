@@ -1,7 +1,7 @@
-﻿import { Component, computed } from '@angular/core';
+﻿import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
+import { ConfirmDialogService } from '@ui/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-confirm-dialog',
@@ -77,10 +77,10 @@ import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
   styleUrls: ['./confirm-dialog.component.css']
 })
 export class ConfirmDialogComponent {
+  private readonly dialogService = inject(ConfirmDialogService);
+
   promptValue: string = '';
   get state() { return this.dialogService.state; }
-
-  constructor(private dialogService: ConfirmDialogService) {}
 
   onConfirm(): void {
     if (this.state().config.isPrompt) {

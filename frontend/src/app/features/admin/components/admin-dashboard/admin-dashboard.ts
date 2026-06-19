@@ -3,7 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AdminService } from '../../services/admin.service';
-import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
+import { ConfirmDialogService } from '@ui/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-admin-dashboard',

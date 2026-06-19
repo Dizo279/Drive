@@ -7,8 +7,8 @@ import { FileService } from '../../services/file.service';
 import { AuthService } from '@features/auth/services/auth.service';
 import { Router, RouterLink, RouterModule } from '@angular/router';
 import { NotificationBellComponent } from '@notification/components/notification-bell/notification-bell';
-import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
-import { PreviewService } from '@shared/services/preview.service';
+import { ConfirmDialogService } from '@ui/services/confirm-dialog.service';
+import { PreviewService } from '@ui/services/preview.service';
 
 @Component({
   selector: 'app-file-list',

@@ -2,7 +2,7 @@
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FileService } from '../../services/file.service';
-import { ConfirmDialogService } from '@shared/services/confirm-dialog.service';
+import { ConfirmDialogService } from '@ui/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-trash-list',
