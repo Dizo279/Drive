@@ -1,5 +1,6 @@
 ﻿import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
@@ -14,6 +15,8 @@ import { AuthService } from '@features/auth/services/auth.service';
   imports: [CommonModule, FormsModule, RouterLink]
 })
 export class AccountSettingsComponent implements OnInit {
+  private readonly dialogService = inject(ConfirmDialogService);
+
   user: any = {
     fullName: '',
     avatarUrl: '',
@@ -42,7 +45,6 @@ export class AccountSettingsComponent implements OnInit {
     private http: HttpClient,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private dialogService: ConfirmDialogService,
     private authService: AuthService
   ) {}
 

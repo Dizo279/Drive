@@ -1,5 +1,6 @@
 ﻿import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AdminService } from '../../services/admin.service';
@@ -13,6 +14,8 @@ import { ConfirmDialogService } from '@ui/services/confirm-dialog.service';
   styleUrls: ['./admin-dashboard.css']
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy {
+  private readonly dialogService = inject(ConfirmDialogService);
+
   allUsers: any[] = [];
   filteredUsers: any[] = [];
   loading = false;
@@ -46,8 +49,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     private adminService: AdminService,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object,
-    private zone: NgZone,
-    private dialogService: ConfirmDialogService
+    private zone: NgZone
   ) {}
 
   ngOnInit() {

@@ -1,5 +1,6 @@
 ﻿import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -13,6 +14,8 @@ import { ConfirmDialogService } from '@ui/services/confirm-dialog.service';
   imports: [ReactiveFormsModule, FormsModule, CommonModule, RouterLink]
 })
 export class RegisterComponent {
+  private readonly dialogService = inject(ConfirmDialogService);
+
   registerForm: FormGroup;
   
   // Các biến điều khiển UI
@@ -24,8 +27,7 @@ export class RegisterComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router,
-    private dialogService: ConfirmDialogService
+    private router: Router
   ) {
     this.registerForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(2)]],

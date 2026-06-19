@@ -1,5 +1,6 @@
 ﻿import { Component, ChangeDetectorRef, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FileService } from '../../services/file.service';
 import { ConfirmDialogService } from '@ui/services/confirm-dialog.service';
@@ -12,6 +13,8 @@ import { ConfirmDialogService } from '@ui/services/confirm-dialog.service';
   imports: [CommonModule, RouterLink]
 })
 export class TrashListComponent implements OnInit {
+  private readonly dialogService = inject(ConfirmDialogService);
+
   items: any[] = [];
   loading = true;
   clearing = false;
@@ -19,8 +22,7 @@ export class TrashListComponent implements OnInit {
   constructor(
     private readonly fileService: FileService,
     private readonly cdr: ChangeDetectorRef,
-    private readonly zone: NgZone,
-    private readonly dialogService: ConfirmDialogService
+    private readonly zone: NgZone
   ) {}
 
   ngOnInit(): void {

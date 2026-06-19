@@ -1,5 +1,6 @@
 ﻿import { Component, OnInit, ChangeDetectorRef, NgZone, HostListener } from '@angular/core';
 import { HttpEventType, HttpClient, HttpHeaders } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { CommonModule} from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -18,6 +19,9 @@ import { PreviewService } from '@ui/services/preview.service';
   imports: [CommonModule, FormsModule, RouterLink, RouterModule, NotificationBellComponent]
 })
 export class FileListComponent implements OnInit {
+  private readonly dialogService = inject(ConfirmDialogService);
+  private readonly previewService = inject(PreviewService);
+
   allFiles: any[] = [];
   items: any[] = [];
   currentParentId: number | null = null;
@@ -79,8 +83,7 @@ export class FileListComponent implements OnInit {
     public cdr: ChangeDetectorRef,
     private zone: NgZone,
     private http: HttpClient,
-    private dialogService: ConfirmDialogService,
-    private previewService: PreviewService
+    
   ) {}
 
   ngOnInit(): void {
