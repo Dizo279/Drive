@@ -4,10 +4,11 @@ import { AuthService } from '@features/auth/services/auth.service';
 import { ConfirmDialogService } from '@ui/services/confirm-dialog.service';
 
 /**
- * Guard to prevent non-admin users from accessing administrative routes.
- * If unauthenticated: redirects to /login.
- * If authenticated but not an ADMIN: redirects to /files and triggers a danger alert message.
- */
+ * Guard để ngăn chặn người dùng không phải admin truy cập vào Administrative
+ * Nếu chưa xác thực: chuyển hướng đến /login.
+ * Nếu đã xác thực nhưng không phải ADMIN: chuyển hướng đến /files và hiển thị một thông báo cảnh báo nguy hiểm.
+ **/
+
 export const adminGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
@@ -24,10 +25,8 @@ export const adminGuard: CanActivateFn = (route, state) => {
     return true;
   }
 
-  // User is authenticated but does not have the ADMIN role
   router.navigate(['/files']);
   
-  // Show an alert indicating access denied (Premium UI dialog)
   dialogService.alert({
     title: 'Truy cập bị từ chối',
     message: 'Tài khoản của bạn không có quyền truy cập vào trang quản trị viên.',

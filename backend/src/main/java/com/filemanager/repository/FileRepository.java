@@ -20,13 +20,13 @@ public interface FileRepository extends JpaRepository<FileMetadata, Long> {
     List<FileMetadata> findByIsDeletedTrueAndDeletedAtBefore(LocalDateTime cutoff);
     List<FileMetadata> findByParentId(Long parentId);
 
-    
+    // Lấy tất cả các file/folder trong thùng rác của một user, nhưng chỉ lấy các item gốc (không lấy các item con của folder đã bị xóa)
     @Query("SELECT f FROM FileMetadata f WHERE f.ownerId = :ownerId AND f.isDeleted = true " +
            "AND (f.parentId IS NULL OR NOT EXISTS (SELECT 1 FROM FileMetadata p WHERE p.id = f.parentId AND p.isDeleted = true)) " +
            "ORDER BY f.deletedAt DESC")
     List<FileMetadata> findRootTrashItemsByOwner(@Param("ownerId") Long ownerId);
 
-    
+    // Tính tổng dung lượng đã sử dụng của một user (chỉ tính các file, không tính folder)
     @Query("SELECT COALESCE(SUM(f.fileSize), 0) FROM FileMetadata f " +
            "WHERE f.ownerId = :ownerId AND f.isFolder = false")
     long sumUsedQuotaByOwner(@Param("ownerId") Long ownerId);

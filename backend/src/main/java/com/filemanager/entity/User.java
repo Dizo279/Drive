@@ -44,22 +44,22 @@ public class User {
     // --- GETTER VÀ SETTER ---
     public Long getId() { return id; }
     public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-    public Long getUsedQuota() { return usedQuota; }
-    public void setUsedQuota(Long usedQuota) { this.usedQuota = usedQuota; }
-    public Long getMaxQuota() { return maxQuota; }
-    public void setMaxQuota(Long maxQuota) { this.maxQuota = maxQuota; }
-    
     public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
     public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
     public String getAvatarUrl() { return avatarUrl; }
-    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public String getPassword() { return password; }
+    public Long getUsedQuota() { return usedQuota; }
+    public Long getMaxQuota() { return maxQuota; }
     public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
     public String getTier() { return tier; }
+    
+    public void setUsername(String username) { this.username = username; }
+    public void setEmail(String email) { this.email = email; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public void setPassword(String password) { this.password = password; }
+    public void setUsedQuota(Long usedQuota) { this.usedQuota = usedQuota; }
+    public void setMaxQuota(Long maxQuota) { this.maxQuota = maxQuota; }
+    public void setRole(String role) { this.role = role; }
     public void setTier(String tier) { this.tier = tier; }
 }

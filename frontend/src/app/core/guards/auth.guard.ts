@@ -3,9 +3,11 @@ import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from '@features/auth/services/auth.service';
 
 /**
- * Guard to prevent unauthenticated users from accessing protected routes.
- * Redirects to /login if the user is not logged in.
+ * Guard để ngăn chặn người dùng chưa xác thực truy cập vào các route được bảo vệ.
+ * Nếu chưa xác thực: chuyển hướng đến /login.
+ * (Premium UX) Lưu lại URL đã cố gắng truy cập để chuyển hướng sau khi đăng nhập thành công.
  */
+
 export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
@@ -14,14 +16,13 @@ export const authGuard: CanActivateFn = (route, state) => {
     return true;
   }
 
-  // Store the attempted URL to redirect back after login (Premium UX)
   router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
   return false;
 };
 
 /**
- * Guard to prevent logged-in users from accessing auth routes (login, register).
- * Redirects to /files if the user is already logged in.
+ * Guard để ngăn chặn người dùng đã xác thực truy cập vào các route dành cho khách (như /login, /register).
+ * Nếu đã xác thực: chuyển hướng đến /files.
  */
 export const noAuthGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);

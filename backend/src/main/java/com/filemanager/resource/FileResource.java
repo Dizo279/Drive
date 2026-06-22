@@ -54,6 +54,7 @@ public class FileResource {
         public Long targetParentId;
     }
 
+    // DTO để trả về thông tin chia sẻ file
     public static class SharedItemDTO {
         private Long shareId;
         private Long fileId;
@@ -101,8 +102,8 @@ public class FileResource {
 
     @Inject
     private NotificationService notificationService;
-    // API UPLOAD FILE MỚI: Lưu file xuống disk, kiểm tra quota, sau đó lưu metadata vào Database
-   @POST
+    // API UPLOAD FILE
+    @POST
     @Path("/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)

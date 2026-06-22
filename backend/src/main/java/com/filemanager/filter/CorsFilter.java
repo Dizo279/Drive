@@ -18,6 +18,7 @@ public class CorsFilter implements ContainerResponseFilter {
         responseContext.getHeaders().add("Access-Control-Allow-Credentials", "true");
         
         // Nếu là OPTIONS request (preflight), respond ngay với 200 OK
+        // OPTIONS request là một phần của cơ chế CORS, trình duyệt sẽ gửi OPTIONS request trước khi gửi request chính để kiểm tra xem server có cho phép request từ nguồn khác hay không.
         if (requestContext.getMethod().equalsIgnoreCase("OPTIONS")) {
             responseContext.setStatus(Response.Status.OK.getStatusCode());
         }

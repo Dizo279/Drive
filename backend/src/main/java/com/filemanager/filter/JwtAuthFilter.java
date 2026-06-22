@@ -30,7 +30,7 @@ public class JwtAuthFilter implements ContainerRequestFilter {
         
         System.out.println("-----> [JwtFilter] Đang kiểm tra đường dẫn: " + path);
 
-        // Skip các endpoint auth cụ thể (tránh sai do khác format path)
+        // Skip các endpoint auth cụ thể
         if (path != null && (path.equals("/auth/login") || path.equals("auth/login")
                 || path.equals("/auth/register") || path.equals("auth/register")
                 || path.equals("/auth/refresh") || path.equals("auth/refresh")
@@ -38,7 +38,7 @@ public class JwtAuthFilter implements ContainerRequestFilter {
             return;
         }
 
-        // Cho phép các endpoint share tải file không cần token (giữ logic cũ)
+        // Cho phép các endpoint share tải file không cần token
         if (path != null && path.contains("shared/")) {
             return;
         }
@@ -52,6 +52,7 @@ public class JwtAuthFilter implements ContainerRequestFilter {
             token = authHeader.substring(7);
         } else {
             // Hỗ trợ SSE: Token có thể được truyền qua query parameter
+            
             token = requestContext.getUriInfo().getQueryParameters().getFirst("token");
         }
 

@@ -49,7 +49,7 @@ public class SecurityConfig {
         // Cho phép các phương thức HTTP cơ bản, đặc biệt là OPTIONS cho pre-flight request
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         
-        // Cho phép gửi kèm các header chứa Token
+        // Cho phép gửi kèm các header chứa Token.
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true);
         

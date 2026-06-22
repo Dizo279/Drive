@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-@Path("/admin") // Khớp chính xác với đường dẫn Angular đang gọi
+@Path("/admin")
 public class AdminResource {
 
     @Inject
@@ -33,7 +33,7 @@ public class AdminResource {
     @Inject
     private NotificationService notificationService;
 
-    // Hàm dùng chung để kiểm tra quyền Admin cực kỳ bảo mật
+    // Hàm dùng chung để kiểm tra quyền Admin
     private boolean isAdmin(ContainerRequestContext requestContext) {
         Object userIdObj = requestContext.getProperty("userId");
         if (userIdObj == null) return false;
@@ -112,7 +112,7 @@ public class AdminResource {
         if ("PREMIUM".equalsIgnoreCase(newTier)) {
             targetUser.setMaxQuota(107374182400L); // 100GB
         } else {
-            targetUser.setMaxQuota(1073741824L); // 1GB
+            targetUser.setMaxQuota(5368709120L); // 5GB
         }
         userRepository.save(targetUser);
         
